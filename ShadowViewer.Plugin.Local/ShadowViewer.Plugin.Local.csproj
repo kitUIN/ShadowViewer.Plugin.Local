@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>ShadowViewer.Plugin.Local</RootNamespace>
+    <RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+	  <Nullable>enable</Nullable>
+	  <LangVersion>12</LangVersion>
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+	  <PackageId>ShadowViewer.Plugin.Local</PackageId>
+
+
+	  <!--插件版本号(nuget包版本号)-->
+	  <Version>1.0.5.18</Version>
+	  <!--插件仓库地址(nuget包仓库地址)-->
+	  <RepositoryUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</RepositoryUrl>
+	  <!--插件介绍(nuget包介绍)-->
+	  <Description>ShadowViewer本地阅读插件</Description>
+	  <!--插件作者(nuget包作者)-->
+	  <Authors>kitUIN</Authors>
+
+	  <!--nuget数据 -->
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+	  <Copyright>Copyright 2023</Copyright>
+	  <PackageTags>kitUIN;wasdk;ShadowViewer;plugin;winui</PackageTags>
+	  <PackageOutputPath>..\..\NugetPackages</PackageOutputPath>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <NoWarn>MSB3277</NoWarn>
+	  <!--插件元数据 -->
+	  <PluginMeta>
+		  <PackageId>Local</PackageId>
+		  <PluginName>本地阅读器</PluginName>
+		  <Version>$(Version)</Version>
+		  <Logo>fluent://regular/\uE433</Logo>
+		  <PluginLang>zh-CN</PluginLang>
+		  <WebUri>$(RepositoryUrl)</WebUri>
+		  <Description>$(Description)</Description>
+		  <Authors>$(Authors)</Authors>
+	  </PluginMeta>
+  </PropertyGroup>
+	<ItemGroup>
+		<AdditionalFiles Include="Strings/**/*" />
+		<AdditionalFiles Include="plugin.json" />
+	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Core.csproj" />
+  </ItemGroup>
+
+</Project>
