@@ -47,7 +47,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240606-rc" />
-		<PackageReference Include="ShadowViewer.Core" Version="2024.7.27.2" />
+		<PackageReference Include="ShadowViewer.Core" Version="2024.7.27.14" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Pages\BookShelfPage.xaml">

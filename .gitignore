@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/ShadowViewer.Plugin.Local/Assets/FluentSystemIcons-Filled.ttf
+/ShadowViewer.Plugin.Local/Assets/FluentSystemIcons-Regular.ttf
