@@ -20,11 +20,15 @@
     },
     "Id": {
       "Type": "string",
-      "PropertyGroupName": "PackageId"
+      "PropertyGroupName": "Id"
     },
     "Name": {
       "Type": "string",
-      "PropertyGroupName": "PluginName"
+      "PropertyGroupName": "Name"
+    },
+    "DllName": {
+      "Type": "string",
+      "PropertyGroupName": "DllName"
     },
     "Version": {
       "Type": "string",
@@ -36,6 +40,10 @@
     }
   },
   "Required": [
+    "Description",
+    "Authors",
+    "WebUri",
+    "Logo",
     "Id",
     "Name",
     "Version",

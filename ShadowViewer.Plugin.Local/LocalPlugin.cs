@@ -10,6 +10,8 @@ using ShadowViewer.Plugins;
 using ShadowViewer.Services;
 using ShadowPluginLoader.MetaAttributes;
 using ShadowViewer.Plugin.Local.Pages;
+using ShadowViewer.Plugin.Local.ViewModels;
+using ShadowViewer.ViewModels;
 using SqlSugar;
 
 namespace ShadowViewer.Plugin.Local;
@@ -27,12 +29,11 @@ public partial class LocalPlugin : PluginBase
             compressServices, 
             pluginService, logger)
     {
-        //DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
-        //DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
-        //DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
+        DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
+        DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
+        DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
     }
-    /// <inheritdoc />
-    public override PluginMetaData MetaData => Meta;
+
 
     /// <summary>
     /// <inheritdoc/>
@@ -61,6 +62,8 @@ public partial class LocalPlugin : PluginBase
 
 
 
+    /// <inheritdoc />
+    public override PluginMetaData MetaData => Meta;
 
     /// <inheritdoc />
     public override string DisplayName => "本地阅读器";
