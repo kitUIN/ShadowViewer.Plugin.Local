@@ -16,6 +16,7 @@ using ShadowViewer.Plugin.Local.Helpers;
 using AttributesViewModel = ShadowViewer.Plugin.Local.ViewModels.AttributesViewModel;
 using FluentIcon.WinUI;
 using ShadowPluginLoader.WinUI;
+using Windows.Storage.Pickers;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -43,7 +44,7 @@ public sealed partial class AttributesPage : Page
     /// </summary>
     private async void Image_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        var file = await FileHelper.SelectPicFileAsync(XamlRoot);
+        var file = await FileHelper.SelectFileAsync(XamlRoot, "ShadowViewer_PicImageTapped", PickerViewMode.Thumbnail, FileHelper.Pngs); ;
         if (file != null) ViewModel.CurrentComic.Img = file.DecodePath();
     }
 

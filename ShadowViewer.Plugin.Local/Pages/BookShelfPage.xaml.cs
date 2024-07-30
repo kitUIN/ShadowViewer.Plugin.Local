@@ -87,8 +87,8 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private async void ShadowCommandAddFromZip_Click(object sender, RoutedEventArgs e)
     {
-        var files = await FileHelper.SelectMultipleFileAsync(this, PickerLocationId.Downloads, PickerViewMode.List, ".zip", ".rar", ".7z");
-        if (files.Count >0)
+        var files = await FileHelper.SelectMultipleFileAsync(this, "AddComicsFromZip", PickerViewMode.List, ".zip", ".rar", ".7z");
+        if (files.Any())
         {
             var passwords = new string[files.Count];
             caller.ImportComic(files, passwords, 0);

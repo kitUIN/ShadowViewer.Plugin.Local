@@ -18,7 +18,7 @@ using ShadowPluginLoader.WinUI;
 namespace ShadowViewer.Plugin.Local;
 
 [AutoPluginMeta]
-public partial class LocalPlugin : PluginBase
+public partial class LocalPlugin : AShadowViewerPlugin
 {
     public LocalPlugin(ICallableService callableService, 
         ISqlSugarClient sqlSugarClient,
