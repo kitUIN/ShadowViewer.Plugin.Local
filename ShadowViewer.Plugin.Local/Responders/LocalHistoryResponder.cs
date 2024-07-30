@@ -10,6 +10,8 @@ using ShadowViewer.Services;
 
 using SqlSugar;
 
+using ShadowPluginLoader.WinUI;
+
 namespace ShadowViewer.Plugin.Local.Responders;
 
 public class LocalHistoryResponder:HistoryResponderBase

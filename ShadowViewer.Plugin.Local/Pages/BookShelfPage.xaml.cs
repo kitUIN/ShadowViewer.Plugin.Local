@@ -29,18 +29,19 @@ using Windows.Storage;
 using Windows.System;
 using CommunityToolkit.WinUI.Controls;
 
+using ShadowPluginLoader.WinUI;
+using Windows.Storage.Pickers;
 namespace ShadowViewer.Plugin.Local.Pages;
 
 public sealed partial class BookShelfPage : Page
 {
     public static ILogger Logger { get; } = Log.ForContext<BookShelfPage>();
     public BookShelfViewModel ViewModel { get; set; }
-    private ICallableService caller;
+    private ICallableService caller = DiFactory.Services.Resolve<ICallableService>();
 
     public BookShelfPage()
     {
         InitializeComponent();
-        caller = DiFactory.Services.Resolve<ICallableService>();
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -86,8 +87,8 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private async void ShadowCommandAddFromZip_Click(object sender, RoutedEventArgs e)
     {
-        var files = await FileHelper.SelectMultipleFileAsync(this, ".zip", ".rar", ".7z");
-        if (files != null)
+        var files = await FileHelper.SelectMultipleFileAsync(this, PickerLocationId.Downloads, PickerViewMode.List, ".zip", ".rar", ".7z");
+        if (files.Count >0)
         {
             var passwords = new string[files.Count];
             caller.ImportComic(files, passwords, 0);

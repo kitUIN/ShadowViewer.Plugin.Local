@@ -13,6 +13,7 @@ using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.ViewModels;
 using SqlSugar;
+using ShadowPluginLoader.WinUI;
 
 namespace ShadowViewer.Plugin.Local;
 

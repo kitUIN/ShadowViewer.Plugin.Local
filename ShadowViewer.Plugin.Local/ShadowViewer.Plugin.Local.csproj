@@ -41,13 +41,8 @@
 	  </PluginMeta>
   </PropertyGroup>
 	<ItemGroup>
-		<AdditionalFiles Include="Strings/**/*" />
-		<None Remove="Pages\BookShelfPage.xaml" />
-		<AdditionalFiles Include="plugin.json" />
-	</ItemGroup>
-	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240606-rc" />
-		<PackageReference Include="ShadowViewer.Core" Version="2024.7.27.14" />
+		<PackageReference Include="ShadowViewer.Core" Version="2024.7.30.6" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Pages\BookShelfPage.xaml">

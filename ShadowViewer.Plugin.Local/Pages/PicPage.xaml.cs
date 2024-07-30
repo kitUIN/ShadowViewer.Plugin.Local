@@ -9,16 +9,16 @@ using ShadowViewer.Args;
 using ShadowViewer.Extensions;
 using ShadowViewer.Plugin.Local.ViewModels;
 
+using ShadowPluginLoader.WinUI;
 namespace ShadowViewer.Plugin.Local.Pages
 {
 
     public sealed partial class PicPage : Page
     {
-        public PicViewModel ViewModel { get; set; }
+        public PicViewModel ViewModel { get; } = DiFactory.Services.Resolve<PicViewModel>();
         public PicPage()
         {
             this.InitializeComponent();
-            ViewModel = DiFactory.Services.Resolve<PicViewModel>();
         }
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {

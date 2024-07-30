@@ -15,6 +15,7 @@ using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Helpers;
 using AttributesViewModel = ShadowViewer.Plugin.Local.ViewModels.AttributesViewModel;
 using FluentIcon.WinUI;
+using ShadowPluginLoader.WinUI;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -23,13 +24,12 @@ namespace ShadowViewer.Plugin.Local.Pages;
 /// </summary>
 public sealed partial class AttributesPage : Page
 {
-    private AttributesViewModel ViewModel { get; }
+    private AttributesViewModel ViewModel { get; } = DiFactory.Services.Resolve<AttributesViewModel>();
     private string TagId { get; set; }
 
     public AttributesPage()
     {
         InitializeComponent();
-        ViewModel = DiFactory.Services.Resolve<AttributesViewModel>();
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
