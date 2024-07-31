@@ -33,7 +33,7 @@
 		  <Id>Local</Id>
 		  <Name>本地阅读器</Name>
 		  <Version>$(Version)</Version>
-		  <Logo>fluent://regular/\uE433</Logo>
+		  <Logo>fluent://regular/\uF66D</Logo>
 		  <PluginLang>zh-CN</PluginLang>
 		  <WebUri>$(RepositoryUrl)</WebUri>
 		  <Description>$(Description)</Description>

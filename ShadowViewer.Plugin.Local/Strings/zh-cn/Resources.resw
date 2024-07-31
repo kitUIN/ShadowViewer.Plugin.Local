@@ -270,4 +270,10 @@
   <data name="Delete" xml:space="preserve">
     <value>删除</value>
   </data>
+  <data name="ComicFolder" xml:space="preserve">
+    <value>漫画文件夹</value>
+  </data>
+  <data name="ComicFolderDescription" xml:space="preserve">
+    <value>存放漫画的缓存文件夹</value>
+  </data>
 </root>
