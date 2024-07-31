@@ -9,9 +9,10 @@
     xmlns:icons="using:FluentIcon.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="using:ShadowViewer.Models"
+    xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
     mc:Ignorable="d">
     <Page.Resources>
-        <converters:SizeToFormatConverter x:Key="SizeConverter" />
+        <winuiConverters:FileSizeToFriendlyStringConverter x:Key="SizeConverter" />
         <x:Double x:Key="AttributesFontSize">16</x:Double>
         <x:Double x:Key="AttributesTitleWidth">70</x:Double>
         <!--#region 标签设置弹出-->

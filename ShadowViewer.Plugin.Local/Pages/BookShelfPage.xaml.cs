@@ -440,10 +440,9 @@ public sealed partial class BookShelfPage : Page
         if (ContentGridView.SelectedItems.Count > 0)
         {
             SelectionPanel.Visibility = Visibility.Visible;
-            long size = 0;
-            foreach (var item in ContentGridView.SelectedItems.Cast<LocalComic>().ToList()) size += item.Size;
+            var size = ContentGridView.SelectedItems.Cast<LocalComic>().ToList().Sum(item => item.Size);
             SelectionValue.Text = ContentGridView.SelectedItems.Count.ToString();
-            SizeValue.Text = SizeToFormatConverter.SizeFormat(size);
+            SizeValue.Text = CommunityToolkit.Common.Converters.ToFileSizeString(size);
         }
         else
         {
