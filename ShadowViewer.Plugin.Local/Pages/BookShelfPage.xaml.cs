@@ -414,7 +414,7 @@ public sealed partial class BookShelfPage : Page
     {
         var view = sender as GridView;
         if (e.Key == VirtualKey.A &&
-            WindowHelper.GetWindowForXamlRoot(XamlRoot)
+            WindowHelper.GetWindow(XamlRoot)
                 !.CoreWindow.GetKeyState(VirtualKey.Shift)
                 .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down))
             foreach (var comic in (ObservableCollection<LocalComic>)view!.ItemsSource)
