@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using DryIoc;
-using Microsoft.UI.Xaml.Controls;
 using Serilog;
-using ShadowViewer.Interfaces;
 using ShadowViewer.Models;
 using ShadowViewer.Plugins;
 using ShadowViewer.Services;
@@ -20,8 +16,9 @@ namespace ShadowViewer.Plugin.Local;
 [AutoPluginMeta]
 public partial class LocalPlugin : AShadowViewerPlugin
 {
-    public LocalPlugin(ICallableService caller, ISqlSugarClient db, CompressService compressService, ILogger logger, PluginLoader pluginService, INotifyService notifyService) : 
-        base(caller, db, compressService, logger, pluginService, notifyService)
+    public LocalPlugin(ICallableService caller, PluginEventService pluginEventService, ISqlSugarClient db,
+        CompressService compressService, ILogger logger, PluginLoader pluginService, INotifyService notifyService) :
+        base(caller, db, pluginEventService, compressService, logger, pluginService, notifyService)
     {
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
@@ -53,7 +50,6 @@ public partial class LocalPlugin : AShadowViewerPlugin
     /// <inheritdoc/>
     /// </summary>
     public override bool CanOpenFolder => false;
-
 
 
     /// <inheritdoc />
