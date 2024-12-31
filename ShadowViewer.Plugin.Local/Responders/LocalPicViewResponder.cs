@@ -12,7 +12,7 @@ using PicViewModel = ShadowViewer.Plugin.Local.ViewModels.PicViewModel;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
-public class LocalPicViewResponder : PicViewResponderBase
+public class LocalPicViewResponder : AbstractPicViewResponder
 {
     /// <summary>
     /// <inheritdoc />

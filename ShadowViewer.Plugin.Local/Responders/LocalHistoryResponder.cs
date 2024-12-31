@@ -14,7 +14,7 @@ using ShadowPluginLoader.WinUI;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
-public class LocalHistoryResponder:HistoryResponderBase
+public class LocalHistoryResponder: AbstractHistoryResponder 
 {
      
     public override IEnumerable<IHistory> GetHistories(HistoryMode mode = HistoryMode.Day)
