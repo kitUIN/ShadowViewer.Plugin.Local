@@ -65,7 +65,7 @@ namespace ShadowViewer.ViewModels
             Path = parameter.AbsolutePath.Split(new char[] { '/', }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? parameter.Host;
             Logger.Information("导航到{Path},Path={P}", OriginPath, Path);
             RefreshLocalComic();
-            if(Path == "local")
+            if(Path == "bookshelf")
             {
                 CurrentName = "本地";
             }

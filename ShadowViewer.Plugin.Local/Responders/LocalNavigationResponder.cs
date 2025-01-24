@@ -46,5 +46,20 @@ public class LocalNavigationResponder(
             _ => null
         };
     }
-
+    public override void Navigate(Uri uri, string[] urls)
+    {
+        if (urls.Length == 0) return;
+        switch (urls[0])
+        {
+            case "bookshelf":
+                Caller.NavigateTo(typeof(BookShelfPage), parameter: new Uri("shadow://local/bookshelf"));
+                break;
+            case "settings":
+                Caller.NavigateTo(typeof(BookShelfSettingsPage), parameter: new Uri("shadow://local/settings"));
+                break;
+            default:
+                Caller.NavigateTo(typeof(BookShelfPage), parameter: new Uri("shadow://local/bookshelf"));
+                break;
+        }
+    }
 }
