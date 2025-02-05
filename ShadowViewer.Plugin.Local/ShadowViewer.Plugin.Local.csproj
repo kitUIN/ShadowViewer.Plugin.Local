@@ -12,7 +12,7 @@
 
 
         <!--插件版本号(nuget包版本号)-->
-        <Version>1.2.1</Version>
+        <Version>1.2.2</Version>
         <!--插件仓库地址(nuget包仓库地址)-->
         <RepositoryUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</RepositoryUrl>
         <!--插件介绍(nuget包介绍)-->
@@ -47,10 +47,12 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240606-rc" />
     </ItemGroup>
-    <ItemGroup>
-        <PackageReference Include="ShadowViewer.Core" Version="2025.1.16.1" />
-        <!--<ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Core.csproj" />-->
-    </ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+		<ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Core.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' == 'Release'">
+		<PackageReference Include="ShadowViewer.Core" Version="2025.1.16.2" />
+	</ItemGroup>
     <ItemGroup>
       <AdditionalFiles Remove="D:\RiderProjects\ShadowViewer\ShadowViewer.Plugin.Local\ShadowViewer.Plugin.Local\plugin.json" />
     </ItemGroup>

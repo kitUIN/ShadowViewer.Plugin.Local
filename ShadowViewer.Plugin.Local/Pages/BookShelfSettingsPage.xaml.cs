@@ -1,9 +1,7 @@
 using DryIoc;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
-using ShadowViewer.Interfaces;
-using ShadowViewer.Plugin.Local.ViewModels;
-using ShadowViewer.ViewModels;
+using Microsoft.UI.Xaml.Navigation; 
+using ShadowViewer.Plugin.Local.ViewModels; 
 
 namespace ShadowViewer.Plugin.Local.Pages;
 

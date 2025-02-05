@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using DryIoc;
 using ShadowViewer.Enums;
-using ShadowViewer.Interfaces;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Responders;
@@ -11,6 +10,7 @@ using ShadowViewer.Services;
 using SqlSugar;
 
 using ShadowPluginLoader.WinUI;
+using ShadowViewer.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
@@ -52,8 +52,8 @@ public class LocalHistoryResponder: AbstractHistoryResponder
     }
 
     public LocalHistoryResponder(ICallableService callableService, ISqlSugarClient sqlSugarClient, 
-        CompressService compressServices, PluginLoader pluginService, string id) : base(callableService,
-            sqlSugarClient, compressServices, pluginService, id)
+        CompressService compressServices, PluginLoader pluginService, string id) : base(id,callableService,
+            sqlSugarClient, compressServices, pluginService)
     {
     }
 }

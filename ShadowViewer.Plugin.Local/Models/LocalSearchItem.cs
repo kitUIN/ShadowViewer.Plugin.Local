@@ -1,5 +1,5 @@
 ﻿using Microsoft.UI.Xaml.Controls;
-using ShadowViewer.Interfaces;
+using ShadowViewer.Models.Interfaces;
 using ShadowViewer.Plugin.Local.Enums;
 
 namespace ShadowViewer.Plugin.Local.Models;

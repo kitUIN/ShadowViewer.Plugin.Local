@@ -2,8 +2,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Serilog;
 using ShadowViewer.Args;
-using ShadowViewer.Interfaces;
 using ShadowViewer.Models;
+using ShadowViewer.Models.Interfaces;
 using ShadowViewer.Responders;
 using ShadowViewer.Services;
 using SqlSugar;

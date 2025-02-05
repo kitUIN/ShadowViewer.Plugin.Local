@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using ShadowViewer.Interfaces;
+using ShadowViewer.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Models;
 

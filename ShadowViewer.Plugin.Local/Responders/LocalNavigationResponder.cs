@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
-using ShadowViewer.Interfaces;
 using ShadowViewer.Models;
+using ShadowViewer.Models.Interfaces;
 using ShadowViewer.Plugin.Local.Helpers;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Responders;
@@ -19,7 +19,7 @@ public class LocalNavigationResponder(
     PluginLoader pluginService,
     string id
     ) : AbstractNavigationResponder(
-    callableService, sqlSugarClient, compressServices, pluginService, id
+    id, callableService, sqlSugarClient, compressServices, pluginService
     )
 {
     /// <summary>

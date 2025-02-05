@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using ShadowViewer.Args;
-using ShadowViewer.Interfaces;
+using ShadowViewer.Models.Interfaces;
 using ShadowViewer.Models;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Responders;
