@@ -37,7 +37,7 @@ public sealed partial class AttributesPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         if (e.Parameter is LocalComic comic) ViewModel.Init(comic.Id);
-        else if (e.Parameter is string id) ViewModel.Init(id);
+        else if (e.Parameter is long id) ViewModel.Init(id);
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ public sealed partial class AttributesPage : Page
     private async void Image_Tapped(object sender, TappedRoutedEventArgs e)
     {
         var file = await FileHelper.SelectFileAsync(XamlRoot, "ShadowViewer_PicImageTapped", PickerViewMode.Thumbnail, FileHelper.Pngs); ;
-        if (file != null) ViewModel.CurrentComic.Img = file.DecodePath();
+        // if (file != null) ViewModel.CurrentComic.Img = file.DecodePath();
     }
 
     /// <summary>
@@ -54,12 +54,13 @@ public sealed partial class AttributesPage : Page
     /// </summary>
     private async void AuthorButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = XamlHelper.CreateOneTextBoxDialog(XamlRoot,
-            ResourcesHelper.GetString(ResourceKey.Set),
-            ResourcesHelper.GetString(ResourceKey.Author),
-            "", ViewModel.CurrentComic.Author,
-            (s, e, t) => { ViewModel.CurrentComic.Author = t; });
-        await dialog.ShowAsync();
+        // var dialog = XamlHelper.CreateOneTextBoxDialog(XamlRoot,
+        //     ResourcesHelper.GetString(ResourceKey.Set),
+        //     ResourcesHelper.GetString(ResourceKey.Author),
+        //     "", 
+        //     ViewModel.CurrentComic.Author,
+        //     (s, e, t) => { ViewModel.CurrentComic.Author = t; });
+        // await dialog.ShowAsync();
     }
 
     /// <summary>
@@ -80,12 +81,12 @@ public sealed partial class AttributesPage : Page
     /// </summary>
     private async void GrouprButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = XamlHelper.CreateOneTextBoxDialog(XamlRoot,
-            ResourcesHelper.GetString(ResourceKey.Set),
-            ResourcesHelper.GetString(ResourceKey.Group),
-            "", ViewModel.CurrentComic.Group,
-            (s, e, t) => { ViewModel.CurrentComic.Group = t; });
-        await dialog.ShowAsync();
+        // var dialog = XamlHelper.CreateOneTextBoxDialog(XamlRoot,
+        //     ResourcesHelper.GetString(ResourceKey.Set),
+        //     ResourcesHelper.GetString(ResourceKey.Group),
+        //     "", ViewModel.CurrentComic.Group,
+        //     (s, e, t) => { ViewModel.CurrentComic.Group = t; });
+        // await dialog.ShowAsync();
     }
 
     /// <summary>

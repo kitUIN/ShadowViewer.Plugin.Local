@@ -24,11 +24,11 @@ public class LocalPicViewResponder : AbstractPicViewResponder
         if (viewModel.Affiliation != Id) return;
         viewModel.Images.Clear();
         var index = 0;
-        if (viewModel.Episodes.Count <= 0 || viewModel.Episodes[newValue] is not ShadowEpisode episode) return;
+        if (viewModel.Episodes.Count <= 0 || viewModel.Episodes[newValue] is not LocalUiEpisode episode) return;
         foreach (var item in Db.Queryable<LocalPicture>().Where(x => x.EpisodeId == episode.Source.Id)
                      .OrderBy(x => x.Name)
                      .ToList())
-            viewModel.Images.Add(new ShadowPicture(++index, item.Img));
+            viewModel.Images.Add(new LocalUiPicture(++index, item.Img));
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public class LocalPicViewResponder : AbstractPicViewResponder
         Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comic.Id).OrderBy(x => x.Order).ForEach(x =>
         {
             orders.Add(x.Order);
-            viewModel.Episodes.Add(new ShadowEpisode(x));
+            viewModel.Episodes.Add(new LocalUiEpisode(x));
         });
         if (viewModel.CurrentEpisodeIndex == -1 && orders.Count > 0)
             viewModel.CurrentEpisodeIndex = orders[0];

@@ -10,6 +10,7 @@ using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.ViewModels;
 using SqlSugar;
 using ShadowPluginLoader.WinUI;
+using ShadowViewer.Plugin.Local.Models;
 
 namespace ShadowViewer.Plugin.Local;
 
@@ -23,6 +24,8 @@ public partial class LocalPlugin : AShadowViewerPlugin
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
+        db.CodeFirst.InitTables<LocalReadingRecord>();
+        db.CodeFirst.InitTables<LocalAuthor, LocalComic, LocalComicAuthorMapping>();
     }
 
 

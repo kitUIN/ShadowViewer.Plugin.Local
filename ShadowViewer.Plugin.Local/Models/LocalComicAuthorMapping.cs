@@ -5,13 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShadowViewer.Models
+namespace ShadowViewer.Plugin.Local.Models
 {
-    public class ComicAuthor
+    public class LocalComicAuthorMapping
     {
-        [SugarColumn(IsPrimaryKey = true)]
+        
         public long ComicId { get; set; }
-        [SugarColumn(IsPrimaryKey = true)]
+        
+
         public long AuthorId { get; set; }
     }
 }

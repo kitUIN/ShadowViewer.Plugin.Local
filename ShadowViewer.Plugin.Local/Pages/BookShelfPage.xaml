@@ -6,7 +6,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:converters="using:ShadowViewer.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:dv="using:ShadowViewer.Models"
+    xmlns:dv="using:ShadowViewer.Plugin.Local.Models"
     xmlns:ex="using:ShadowViewer.Plugin.Local.Extensions"
     xmlns:icons="using:FluentIcon.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -42,7 +42,7 @@
                             Height="130"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Bottom"
-                            Source="{x:Bind Img}" />
+                            Source="{x:Bind Thumb}" />
                         <TextBlock
                             MaxWidth="100"
                             HorizontalAlignment="Center"
@@ -60,7 +60,7 @@
                         VerticalAlignment="Bottom"
                         FontSize="13"
                         Foreground="Gray"
-                        Text="{x:Bind Percent}" />
+                        Text="{x:Bind ReadingRecord.Percent}" />
                 </Grid>
             </Border>
         </DataTemplate>
@@ -90,7 +90,7 @@
                             Height="130"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            Source="{x:Bind Img, Mode=OneWay}" />
+                            Source="{x:Bind Thumb, Mode=OneWay}" />
                         <Grid>
                             <StackPanel
                                 Width="160"
@@ -111,7 +111,6 @@
                                     HorizontalAlignment="Left"
                                     FontSize="15"
                                     MaxLines="1"
-                                    Text="{x:Bind Author, Mode=OneWay}"
                                     TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <StackPanel
@@ -129,7 +128,7 @@
                                         HorizontalAlignment="Left"
                                         FontSize="15"
                                         Foreground="Gray"
-                                        Text="{x:Bind Percent, Mode=OneWay}" />
+                                        Text="{x:Bind ReadingRecord.Percent, Mode=OneWay}" />
                                     <TextBlock
                                         Width="70"
                                         HorizontalAlignment="Left"
@@ -139,7 +138,7 @@
                                         Text="{x:Bind Size, Mode=OneWay, Converter={StaticResource SizeConverter}}"
                                         TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal" Visibility="{x:Bind IsEpsDetailShow}">
+                                <StackPanel Orientation="Horizontal"  >
                                     <icons:FluentRegularIcon
                                         Margin="0,2,0,0"
                                         FontSize="15"
@@ -149,7 +148,7 @@
                                         Margin="3,0,0,0"
                                         FontSize="15"
                                         Foreground="Gray"
-                                        Text="{x:Bind EpisodeCounts, Mode=OneWay}" />
+                                        Text="{x:Bind EpisodeCount, Mode=OneWay}" />
                                     <TextBlock
                                         FontSize="15"
                                         Foreground="Gray"
@@ -163,7 +162,7 @@
                                         Margin="1,0,0,0"
                                         FontSize="15"
                                         Foreground="Gray"
-                                        Text="{x:Bind Counts, Mode=OneWay}" />
+                                        Text="{x:Bind Count, Mode=OneWay}" />
                                     <TextBlock
                                         FontSize="15"
                                         Foreground="Gray"
@@ -250,24 +249,24 @@
             IsLightDismissEnabled="True"
             PlacementMargin="20"
             PreferredPlacement="Center">
-            <TreeView x:Name="MoveTreeView" Margin="0,10,0,0">
-                <TreeView.ItemTemplate>
-                    <DataTemplate x:DataType="model:ShadowPath">
-                        <TreeViewItem
-                            DoubleTapped="TreeViewItem_DoubleTapped"
-                            IsDoubleTapEnabled="True"
-                            ItemsSource="{x:Bind Children}">
-                            <StackPanel
-                                Orientation="Horizontal"
-                                Spacing="5"
-                                ToolTipService.ToolTip="{x:Bind Name}">
-                                <Image Width="20" Source="{x:Bind Img}" />
-                                <TextBlock Text="{x:Bind Name}" />
-                            </StackPanel>
-                        </TreeViewItem>
-                    </DataTemplate>
-                </TreeView.ItemTemplate>
-            </TreeView>
+            <!-- <TreeView x:Name="MoveTreeView" Margin="0,10,0,0"> -->
+            <!--     <TreeView.ItemTemplate> -->
+            <!--         <DataTemplate x:DataType="model:ShadowPath"> -->
+            <!--             <TreeViewItem -->
+            <!--                 DoubleTapped="TreeViewItem_DoubleTapped" -->
+            <!--                 IsDoubleTapEnabled="True" -->
+            <!--                 ItemsSource="{x:Bind Children}"> -->
+            <!--                 <StackPanel -->
+            <!--                     Orientation="Horizontal" -->
+            <!--                     Spacing="5" -->
+            <!--                     ToolTipService.ToolTip="{x:Bind Name}"> -->
+            <!--                     <Image Width="20" Source="{x:Bind Img}" /> -->
+            <!--                     <TextBlock Text="{x:Bind Name}" /> -->
+            <!--                 </StackPanel> -->
+            <!--             </TreeViewItem> -->
+            <!--         </DataTemplate> -->
+            <!--     </TreeView.ItemTemplate> -->
+            <!-- </TreeView> -->
         </TeachingTip>
         <!--#endregion-->
     </Page.Resources>

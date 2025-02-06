@@ -68,4 +68,5 @@ public interface IComic
     /// 路径链接
     /// </summary>
     string Link { get; set; }
+
 }

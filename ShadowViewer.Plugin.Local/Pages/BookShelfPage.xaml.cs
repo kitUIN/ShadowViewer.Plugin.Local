@@ -135,10 +135,10 @@ public sealed partial class BookShelfPage : Page
     private void ShadowCommandMove_Click(object sender, RoutedEventArgs e)
     {
         HomeCommandBarFlyout.Hide();
-        MoveTreeView.ItemsSource = new List<ShadowPath>
-        {
-            new(ContentGridView.SelectedItems.Cast<LocalComic>().ToList().Select(c => c.Id))
-        };
+        // MoveTreeView.ItemsSource = new List<ShadowPath>
+        // {
+        //     new(ContentGridView.SelectedItems.Cast<LocalComic>().ToList().Select(c => c.Id))
+        // };
         MoveTeachingTip.IsOpen = true;
     }
 
@@ -161,7 +161,7 @@ public sealed partial class BookShelfPage : Page
 
     /// <summary>
     /// 触控/鼠标-漫画项右键<br />
-    /// 选中&显示悬浮菜单
+    /// 选中/显示悬浮菜单
     /// </summary>
     private void ContentGridView_RightTapped(object sender, RightTappedRoutedEventArgs e)
     {
@@ -190,14 +190,14 @@ public sealed partial class BookShelfPage : Page
     /// 弹出框-新建文件夹
     /// </summary>
     /// <returns></returns>
-    public ContentDialog CreateFolderDialog(XamlRoot xamlRoot, string parent)
+    public ContentDialog CreateFolderDialog(XamlRoot xamlRoot, long parentId = -1)
     {
-        var dialog = XamlHelper.CreateOneLineTextBoxDialog(ResourcesHelper.GetString(ResourceKey.NewFolder),
+        var dialog = XamlHelper.CreateOneLineTextBoxDialog(I18N.NewFolder,
             xamlRoot, "");
         dialog.PrimaryButtonClick += (s, e) =>
         {
             var name = ((TextBox)((StackPanel)((StackPanel)s.Content).Children[0]).Children[1]).Text;
-            ViewModel.LocalComics.Add(ComicHelper.CreateFolder(name, parent));
+            LocalComic.CreateFolder(name, parentId);
             ViewModel.RefreshLocalComic();
         };
         return dialog;
@@ -208,7 +208,7 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void TreeViewItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
-        MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
+        // MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
     }
 
     /// <summary>
@@ -218,7 +218,7 @@ public sealed partial class BookShelfPage : Page
     /// <param name="args">The arguments.</param>
     private void MoveTeachingTip_ActionButtonClick(TeachingTip sender, object args)
     {
-        MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
+        // MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
     }
 
     /// <summary>
@@ -227,16 +227,16 @@ public sealed partial class BookShelfPage : Page
     /// <param name="path">The path.</param>
     private void MoveToPath(ShadowPath path)
     {
-        if (path == null) return;
-        foreach (var comic in ContentGridView.SelectedItems.Cast<LocalComic>().ToList())
-            if (comic.Id != path.Id && path.IsFolder)
-                comic.Parent = path.Id;
-        long size = 0;
-        var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-        db.Queryable<LocalComic>().Where(x => x.Parent == path.Id).ToList().ForEach(x => size += x.Size);
-        path.SetSize(size);
-        MoveTeachingTip.IsOpen = false;
-        ViewModel.RefreshLocalComic();
+        // if (path == null) return;
+        // foreach (var comic in ContentGridView.SelectedItems.Cast<LocalComic>().ToList())
+        //     if (comic.Id != path.Id && path.IsFolder)
+        //         comic.Parent = path.Id;
+        // long size = 0;
+        // var db = DiFactory.Services.Resolve<ISqlSugarClient>();
+        // db.Queryable<LocalComic>().Where(x => x.Parent == path.Id).ToList().ForEach(x => size += x.Size);
+        // path.SetSize(size);
+        // MoveTeachingTip.IsOpen = false;
+        // ViewModel.RefreshLocalComic();
     }
 
     /// <summary>
@@ -244,18 +244,18 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void GridViewItem_Drop(object sender, DragEventArgs e)
     {
-        if (sender is FrameworkElement frame && frame.Tag is LocalComic comic && comic.IsFolder)
-        {
-            foreach (var item in ContentGridView.SelectedItems.Cast<LocalComic>().ToList())
-                if (!item.IsFolder)
-                    item.Parent = comic.Id;
-            long size = 0;
-            var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-            db.Queryable<LocalComic>().Where(x => x.Parent == comic.Id).ToList().ForEach(x => size += x.Size);
-            comic.Size = size;
-            comic.Update();
-            ViewModel.RefreshLocalComic();
-        }
+        // if (sender is FrameworkElement frame && frame.Tag is LocalComic comic && comic.IsFolder)
+        // {
+        //     foreach (var item in ContentGridView.SelectedItems.Cast<LocalComic>().ToList())
+        //         if (!item.IsFolder)
+        //             item.Parent = comic.Id;
+        //     long size = 0;
+        //     var db = DiFactory.Services.Resolve<ISqlSugarClient>();
+        //     db.Queryable<LocalComic>().Where(x => x.Parent == comic.Id).ToList().ForEach(x => size += x.Size);
+        //     comic.Size = size;
+        //     comic.Update();
+        //     ViewModel.RefreshLocalComic();
+        // }
     }
 
     /// <summary>
@@ -328,7 +328,7 @@ public sealed partial class BookShelfPage : Page
         SelectionPanel.Visibility = Visibility.Collapsed;
         ShelfInfo.Visibility = ConfigHelper.GetBoolean(LocalSettingKey.LocalIsBookShelfInfoBar).ToVisibility();
         StyleSegmented.SelectedIndex = ConfigHelper.GetBoolean(LocalSettingKey.LocalBookStyleDetail) ? 1 : 0;
-        ShadowCommandAddNewFolder.IsEnabled = ViewModel.Path == "local";
+        ShadowCommandAddNewFolder.IsEnabled = ViewModel.Path == -1;
     }
 
     /// <summary>   
@@ -398,13 +398,13 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void DeleteComics()
     {
-        var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-        foreach (var comic in ContentGridView.SelectedItems.ToList().Cast<LocalComic>())
-        {
-            if (ConfigHelper.GetBoolean(LocalSettingKey.LocalIsDeleteFilesWithComicDelete) && !comic.IsFolder &&
-                db.Queryable<CacheZip>().Any(x => x.ComicId == comic.Id)) comic.Link.DeleteDirectory();
-            ViewModel.LocalComics.Remove(comic);
-        }
+        // var db = DiFactory.Services.Resolve<ISqlSugarClient>();
+        // foreach (var comic in ContentGridView.SelectedItems.ToList().Cast<LocalComic>())
+        // {
+        //     if (ConfigHelper.GetBoolean(LocalSettingKey.LocalIsDeleteFilesWithComicDelete) && !comic.IsFolder &&
+        //         db.Queryable<CacheZip>().Any(x => x.ComicId == comic.Id)) comic.Link.DeleteDirectory();
+        //     ViewModel.LocalComics.Remove(comic);
+        // }
     }
 
     /// <summary>
@@ -479,23 +479,23 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void ContentGridView_ItemClick(object sender, ItemClickEventArgs e)
     {
-        if (e.ClickedItem is LocalComic comic)
-        {
-            comic.LastReadTime = DateTime.Now;
-            if (comic.IsFolder)
-                Frame.Navigate(GetType(), new Uri(ViewModel.OriginPath, comic.Id));
-            else
-            {
-                DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
-                {
-                    Id = comic.Id,
-                    Time = DateTime.Now,
-                    Icon = comic.Img,
-                    Title = comic.Name,
-                }).ExecuteCommand();
-                Frame.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
-                    new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
-            }
-        }
+        // if (e.ClickedItem is LocalComic comic)
+        // {
+        //     comic.LastReadTime = DateTime.Now;
+        //     if (comic.IsFolder)
+        //         Frame.Navigate(GetType(), new Uri(ViewModel.OriginPath, comic.Id));
+        //     else
+        //     {
+        //         DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
+        //         {
+        //             Id = comic.Id,
+        //             Time = DateTime.Now,
+        //             Icon = comic.Img,
+        //             Title = comic.Name,
+        //         }).ExecuteCommand();
+        //         Frame.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
+        //             new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
+        //     }
+        // }
     }
 }

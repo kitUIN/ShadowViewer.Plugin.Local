@@ -14,6 +14,7 @@ using ShadowViewer.Plugins;
 using ShadowViewer.Services;
 
 using SqlSugar;
+using LocalEpisode = ShadowViewer.Models.LocalEpisode;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -48,7 +49,7 @@ public partial class AttributesViewModel : ObservableObject
     private ISqlSugarClient Db { get; }
     private ILogger Logger { get; }
 
-    public void Init(string comicId)
+    public void Init(long comicId)
     {
         CurrentComic = Db.Queryable<LocalComic>().First(x => x.Id == comicId);
         ReLoadTags();

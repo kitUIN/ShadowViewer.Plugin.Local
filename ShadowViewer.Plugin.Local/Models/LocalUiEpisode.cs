@@ -1,16 +1,16 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using ShadowViewer.Models;
-using ShadowViewer.Models.Interfaces;
+using ShadowViewer.Plugin.Local.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Models;
 
-public partial class ShadowEpisode : ObservableObject, IShadowEpisode
+public partial class LocalUiEpisode : ObservableObject, IUiEpisode
 {
     public LocalEpisode Source { get; set; }
 
     [ObservableProperty] private string title;
 
-    public ShadowEpisode(LocalEpisode episode)
+    public LocalUiEpisode(LocalEpisode episode)
     {
         Source = episode;
         Title = episode.Name;

@@ -32,7 +32,7 @@ namespace ShadowViewer.ViewModels
         /// <summary>
         /// 当前文件夹ID
         /// </summary>
-        public string Path { get; private set; } = "local";
+        public long Path { get; private set; } = -1;
         /// <summary>
         /// 原始地址
         /// </summary>
@@ -63,17 +63,18 @@ namespace ShadowViewer.ViewModels
         {
             LocalComics.CollectionChanged += LocalComics_CollectionChanged;
             OriginPath = parameter;
-            Path = parameter.AbsolutePath.Split(new char[] { '/', }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? parameter.Host;
+            var path = parameter.AbsolutePath.Split(['/',], StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+            try
+            {
+                Path = long.Parse(path ?? "-1");
+            }
+            catch (FormatException)
+            {
+                Path = -1;
+            }
             Logger.Information("导航到{Path},Path={P}", OriginPath, Path);
             RefreshLocalComic();
-            if(Path == "bookshelf")
-            {
-                CurrentName = "本地";
-            }
-            else
-            {
-                CurrentName = Db.Queryable<LocalComic>().First(x => x.Id == Path).Name;
-            }
+            CurrentName = Path == -1 ? "本地" : Db.Queryable<LocalComic>().First(x => x.Id == Path).Name;
         }
 
         private void LocalComics_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -94,7 +95,7 @@ namespace ShadowViewer.ViewModels
                     if (e.NewItems != null)
                         foreach (LocalComic item in e.NewItems)
                         {
-                            if (item.Id is null) continue;
+                            // if (item.Id is null) continue;
                             if (!Db.Queryable<LocalComic>().Any(x => x.Id == item.Id))
                             {
                                 Db.Insertable(item).ExecuteCommand();
@@ -113,25 +114,25 @@ namespace ShadowViewer.ViewModels
         public void RefreshLocalComic()
         {
             LocalComics.Clear();
-            var comics = Db.Queryable<LocalComic>().Where(x => x.Parent == Path).ToList();
+            var comics = Db.Queryable<LocalComic>().Where(x => x.ParentId == Path).ToList();
             switch (Sorts)
             {
                 case ShadowSorts.AZ:
-                    comics.Sort(ComicHelper.AZSort); break;
+                    comics.Sort(LocalComic.AzSort); break;
                 case ShadowSorts.ZA:
-                    comics.Sort(ComicHelper.ZASort); break;
+                    comics.Sort(LocalComic.ZaSort); break;
                 case ShadowSorts.CA:
-                    comics.Sort(ComicHelper.CASort); break;
+                    comics.Sort(LocalComic.CaSort); break;
                 case ShadowSorts.CZ:
-                    comics.Sort(ComicHelper.CZSort); break;
+                    comics.Sort(LocalComic.CzSort); break;
                 case ShadowSorts.RA:
-                    comics.Sort(ComicHelper.RASort); break;
+                    comics.Sort(LocalComic.RaSort); break;
                 case ShadowSorts.RZ:
-                    comics.Sort(ComicHelper.RZSort); break;
-                case ShadowSorts.PA:
-                    comics.Sort(ComicHelper.PASort); break;
-                case ShadowSorts.PZ:
-                    comics.Sort(ComicHelper.PZSort); break;
+                    comics.Sort(LocalComic.RzSort); break;
+                // case ShadowSorts.PA:
+                //     comics.Sort(LocalComic.PaSort); break;
+                // case ShadowSorts.PZ:
+                //     comics.Sort(LocalComic.PzSort); break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

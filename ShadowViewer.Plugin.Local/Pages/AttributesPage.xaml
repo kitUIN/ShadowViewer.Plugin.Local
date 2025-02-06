@@ -110,7 +110,7 @@
                                 Width="170"
                                 Height="260"
                                 VerticalAlignment="Center"
-                                Source="{x:Bind ViewModel.CurrentComic.Img, Mode=OneWay}"
+                                Source="{x:Bind ViewModel.CurrentComic.Thumb, Mode=OneWay}"
                                 Tapped="Image_Tapped"
                                 ToolTipService.ToolTip="{ex:Locale Key=Revise}" />
                             <!--#endregion-->
@@ -167,7 +167,6 @@
                                                     MaxWidth="{x:Bind ViewModel.TextBlockMaxWidth, Mode=OneWay}"
                                                     FontSize="{StaticResource AttributesFontSize}"
                                                     IsTextSelectionEnabled="True"
-                                                    Text="{x:Bind ViewModel.CurrentComic.Author, Mode=OneWay}"
                                                     TextTrimming="CharacterEllipsis" />
                                                 <HyperlinkButton
                                                     x:Name="AuthorButton"
@@ -191,7 +190,6 @@
                                                     MaxWidth="{x:Bind ViewModel.TextBlockMaxWidth, Mode=OneWay}"
                                                     FontSize="{StaticResource AttributesFontSize}"
                                                     IsTextSelectionEnabled="True"
-                                                    Text="{x:Bind ViewModel.CurrentComic.Group, Mode=OneWay}"
                                                     TextTrimming="CharacterEllipsis" />
                                                 <HyperlinkButton
                                                     x:Name="GroupButton"
@@ -225,7 +223,7 @@
                                                 MaxWidth="{x:Bind ViewModel.TextBlockMaxWidth, Mode=OneWay}"
                                                 FontSize="{StaticResource AttributesFontSize}"
                                                 IsTextSelectionEnabled="True"
-                                                Text="{x:Bind ViewModel.CurrentComic.Percent, Mode=OneWay}"
+                                                Text="{x:Bind ViewModel.CurrentComic.ReadingRecord.Percent, Mode=OneWay}"
                                                 TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
                                         <!--#endregion-->
@@ -244,7 +242,7 @@
                                                 <TextBlock
                                                     FontSize="{StaticResource AttributesFontSize}"
                                                     IsTextSelectionEnabled="True"
-                                                    Text="{x:Bind ViewModel.CurrentComic.EpisodeCounts, Mode=OneWay}" />
+                                                    Text="{x:Bind ViewModel.CurrentComic.EpisodeCount, Mode=OneWay}" />
                                                 <TextBlock
                                                     FontSize="{StaticResource AttributesFontSize}"
                                                     IsTextSelectionEnabled="True"
@@ -253,7 +251,7 @@
                                                     Margin="5,0,0,0"
                                                     FontSize="{StaticResource AttributesFontSize}"
                                                     IsTextSelectionEnabled="True"
-                                                    Text="{x:Bind ViewModel.CurrentComic.Counts, Mode=OneWay}" />
+                                                    Text="{x:Bind ViewModel.CurrentComic.Count, Mode=OneWay}" />
                                                 <TextBlock
                                                     FontSize="{StaticResource AttributesFontSize}"
                                                     IsTextSelectionEnabled="True"
@@ -299,7 +297,7 @@
                                                     FontSize="{StaticResource AttributesFontSize}"
                                                     IsTextSelectionEnabled="True"
                                                     MaxLines="1"
-                                                    Text="{x:Bind ViewModel.CurrentComic.CreateTime, Mode=OneWay}"
+                                                    Text="{x:Bind ViewModel.CurrentComic.CreatedDateTime, Mode=OneWay}"
                                                     TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                             <!--#endregion-->
@@ -316,7 +314,7 @@
                                                     FontSize="{StaticResource AttributesFontSize}"
                                                     IsTextSelectionEnabled="True"
                                                     MaxLines="1"
-                                                    Text="{x:Bind ViewModel.CurrentComic.LastReadTime, Mode=OneWay}"
+                                                    Text="{x:Bind ViewModel.CurrentComic.UpdatedDateTime, Mode=OneWay}"
                                                     TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                             <!--#endregion-->
@@ -379,14 +377,14 @@
                                                                 MaxWidth="250"
                                                                 FontSize="{StaticResource AttributesFontSize}"
                                                                 IsTextSelectionEnabled="True"
-                                                                Text="{x:Bind ViewModel.CurrentComic.Img, Mode=OneWay}"
+                                                                Text="{x:Bind ViewModel.CurrentComic.Thumb, Mode=OneWay}"
                                                                 TextTrimming="CharacterEllipsis" />
                                                             <HyperlinkButton
                                                                 Grid.Column="2"
                                                                 Padding="4"
                                                                 VerticalAlignment="Bottom"
                                                                 Click="CopyButton_Click"
-                                                                Tag="{x:Bind ViewModel.CurrentComic.Img, Mode=OneWay}"
+                                                                Tag="{x:Bind ViewModel.CurrentComic.Thumb, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{ex:Locale Key=Copy}">
                                                                 <icons:FluentRegularIcon FontSize="15" Symbol="Copy24Regular" />
                                                             </HyperlinkButton>
@@ -410,14 +408,14 @@
                                                                 MaxWidth="250"
                                                                 FontSize="{StaticResource AttributesFontSize}"
                                                                 IsTextSelectionEnabled="True"
-                                                                Text="{x:Bind ViewModel.CurrentComic.Path, Mode=OneWay}"
+                                                                Text="{x:Bind ViewModel.CurrentComic.Link, Mode=OneWay}"
                                                                 TextTrimming="CharacterEllipsis" />
                                                             <HyperlinkButton
                                                                 Grid.Column="2"
                                                                 Padding="4"
                                                                 VerticalAlignment="Bottom"
                                                                 Click="CopyButton_Click"
-                                                                Tag="{x:Bind ViewModel.CurrentComic.Path, Mode=OneWay}"
+                                                                Tag="{x:Bind ViewModel.CurrentComic.Link, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{ex:Locale Key=Copy}">
                                                                 <icons:FluentRegularIcon FontSize="15" Symbol="Copy24Regular" />
                                                             </HyperlinkButton>
