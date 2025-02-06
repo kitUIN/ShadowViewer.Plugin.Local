@@ -3,6 +3,7 @@ using Serilog;
 using ShadowViewer.Enums;
 using ShadowViewer.Helpers;
 using ShadowViewer.Models;
+using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Services;
 using SqlSugar;
 using System;

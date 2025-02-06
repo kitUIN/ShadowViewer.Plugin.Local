@@ -9,6 +9,7 @@ using ShadowViewer.Helpers;
 using ShadowViewer.Models;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Helpers;
+using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugins;
 using ShadowViewer.Services;
 

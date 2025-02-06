@@ -17,6 +17,7 @@ using AttributesViewModel = ShadowViewer.Plugin.Local.ViewModels.AttributesViewM
 using FluentIcon.WinUI;
 using ShadowPluginLoader.WinUI;
 using Windows.Storage.Pickers;
+using ShadowViewer.Plugin.Local.Models;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
