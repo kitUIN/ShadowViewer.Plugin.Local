@@ -10,8 +10,6 @@ using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Plugins;
-using ShadowViewer.Core.Services;
 
 using SqlSugar;
 using LocalEpisode = ShadowViewer.Core.Models.LocalEpisode;

@@ -1,7 +1,6 @@
 ﻿using System;
 using DryIoc;
 using Serilog;
-using ShadowViewer.Plugins;
 using ShadowPluginLoader.MetaAttributes;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Plugin.Local.ViewModels;
