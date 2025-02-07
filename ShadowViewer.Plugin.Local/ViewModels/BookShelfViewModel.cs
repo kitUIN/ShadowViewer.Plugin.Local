@@ -1,10 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Serilog;
-using ShadowViewer.Enums;
-using ShadowViewer.Helpers;
-using ShadowViewer.Models;
+using ShadowViewer.Core.Enums;
+using ShadowViewer.Core.Services;
+using ShadowViewer.Core.Helpers;
+using ShadowViewer.Core.Models;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Services;
 using SqlSugar;
 using System;
 using System.Collections.ObjectModel;
@@ -64,13 +64,17 @@ namespace ShadowViewer.ViewModels
             LocalComics.CollectionChanged += LocalComics_CollectionChanged;
             OriginPath = parameter;
             var path = parameter.AbsolutePath.Split(['/',], StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
-            try
+            Path = -1;
+            if (path != "bookshelf")
             {
-                Path = long.Parse(path ?? "-1");
-            }
-            catch (FormatException)
-            {
-                Path = -1;
+                try
+                {
+                    Path = long.Parse(path ?? "-1");
+                }
+                catch (FormatException)
+                {
+                    
+                }
             }
             Logger.Information("导航到{Path},Path={P}", OriginPath, Path);
             RefreshLocalComic();

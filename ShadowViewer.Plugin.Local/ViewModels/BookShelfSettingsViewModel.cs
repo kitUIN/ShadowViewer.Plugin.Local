@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using ShadowViewer.Configs;
-using ShadowViewer.Helpers;
+using ShadowViewer.Core.Helpers;
 using ShadowViewer.Plugin.Local.Enums;
 
 namespace ShadowViewer.Plugin.Local.ViewModels

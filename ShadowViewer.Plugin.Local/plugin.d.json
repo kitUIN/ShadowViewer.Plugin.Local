@@ -1,5 +1,5 @@
 {
-  "Namespace": "ShadowViewer.Plugins",
+  "Namespace": "ShadowViewer.Core.Plugins",
   "Type": "PluginMetaData",
   "Properties": {
     "Description": {

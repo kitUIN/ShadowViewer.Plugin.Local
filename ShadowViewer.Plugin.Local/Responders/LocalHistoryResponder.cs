@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using DryIoc;
-using ShadowViewer.Enums;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Pages;
-using ShadowViewer.Responders;
-using ShadowViewer.Services;
+using ShadowViewer.Core.Responders;
 
 using SqlSugar;
 
 using ShadowPluginLoader.WinUI;
-using ShadowViewer.Models.Interfaces;
+using ShadowViewer.Core.Models.Interfaces;
+using ShadowViewer.Core;
+using ShadowViewer.Core.Services;
+using ShadowViewer.Core.Enums;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 

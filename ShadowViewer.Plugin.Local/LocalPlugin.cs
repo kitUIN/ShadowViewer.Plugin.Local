@@ -1,9 +1,7 @@
 ﻿using System;
 using DryIoc;
 using Serilog;
-using ShadowViewer.Models;
 using ShadowViewer.Plugins;
-using ShadowViewer.Services;
 using ShadowPluginLoader.MetaAttributes;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Plugin.Local.ViewModels;
@@ -11,12 +9,21 @@ using ShadowViewer.ViewModels;
 using SqlSugar;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Models;
+using ShadowViewer.Core.Plugins;
+using ShadowViewer.Core.Services;
+using ShadowViewer.Core;
+using ShadowViewer.Core.Models;
 
 namespace ShadowViewer.Plugin.Local;
-
+/// <summary>
+/// 
+/// </summary>
 [AutoPluginMeta]
 public partial class LocalPlugin : AShadowViewerPlugin
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public LocalPlugin(ICallableService caller, PluginEventService pluginEventService, ISqlSugarClient db,
         CompressService compressService, ILogger logger, PluginLoader pluginService, INotifyService notifyService) :
         base(caller, db, pluginEventService, compressService, logger, pluginService, notifyService)

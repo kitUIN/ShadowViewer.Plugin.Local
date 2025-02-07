@@ -6,17 +6,11 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 using Serilog;
-using ShadowViewer.Args;
-using ShadowViewer.Cache;
-using ShadowViewer.Converters;
-using ShadowViewer.Enums;
-using ShadowViewer.Extensions;
-using ShadowViewer.Helpers;
-using ShadowViewer.Models;
+using ShadowViewer.Core.Args;
+using ShadowViewer.Core.Cache;
+using ShadowViewer.Core.Converters;
 using ShadowViewer.Plugin.Local.Enums;
-using ShadowViewer.Plugin.Local.Helpers;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Services;
 using ShadowViewer.ViewModels;
 using SqlSugar;
 using System;
@@ -31,6 +25,13 @@ using CommunityToolkit.WinUI.Controls;
 
 using ShadowPluginLoader.WinUI;
 using Windows.Storage.Pickers;
+using ShadowViewer.Core.Helpers;
+using ShadowViewer.Core.Services;
+using ShadowViewer.Core.Extensions;
+using ShadowViewer.Core.Enums;
+using ShadowViewer.Core.Models;
+using ShadowViewer.Plugin.Local.I18n;
+
 namespace ShadowViewer.Plugin.Local.Pages;
 
 public sealed partial class BookShelfPage : Page

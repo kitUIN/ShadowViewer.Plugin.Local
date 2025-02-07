@@ -8,16 +8,14 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using ShadowViewer.Extensions;
-using ShadowViewer.Helpers;
-using ShadowViewer.Models;
-using ShadowViewer.Plugin.Local.Enums;
-using ShadowViewer.Plugin.Local.Helpers;
+using ShadowViewer.Plugin.Local.I18n;
 using AttributesViewModel = ShadowViewer.Plugin.Local.ViewModels.AttributesViewModel;
 using FluentIcon.WinUI;
 using ShadowPluginLoader.WinUI;
 using Windows.Storage.Pickers;
 using ShadowViewer.Plugin.Local.Models;
+using ShadowViewer.Core.Helpers;
+using ShadowViewer.Core.Models;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 

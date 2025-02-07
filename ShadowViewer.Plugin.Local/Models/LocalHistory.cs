@@ -1,6 +1,6 @@
 ﻿using System;
 using CommunityToolkit.Mvvm.ComponentModel;
-using ShadowViewer.Models.Interfaces;
+using ShadowViewer.Core.Models.Interfaces;
 using SqlSugar;
 
 namespace ShadowViewer.Plugin.Local.Models;

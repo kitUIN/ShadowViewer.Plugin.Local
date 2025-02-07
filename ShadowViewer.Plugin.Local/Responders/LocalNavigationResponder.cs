@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
+using ShadowViewer.Core;
+using ShadowViewer.Core.Models;
+using ShadowViewer.Core.Models.Interfaces;
+using ShadowViewer.Core.Services;
 using ShadowViewer.Models;
-using ShadowViewer.Models.Interfaces;
-using ShadowViewer.Plugin.Local.Helpers;
+using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Pages;
-using ShadowViewer.Responders;
-using ShadowViewer.Services;
+using ShadowViewer.Core.Responders;
 
 using SqlSugar;
 

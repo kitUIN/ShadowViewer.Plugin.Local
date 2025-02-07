@@ -5,11 +5,11 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using ShadowViewer.Args;
-using ShadowViewer.Extensions;
 using ShadowViewer.Plugin.Local.ViewModels;
 
 using ShadowPluginLoader.WinUI;
+using ShadowViewer.Core.Args;
+using ShadowViewer.Core.Extensions;
 namespace ShadowViewer.Plugin.Local.Pages
 {
 

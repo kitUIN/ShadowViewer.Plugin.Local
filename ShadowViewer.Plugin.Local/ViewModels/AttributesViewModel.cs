@@ -5,16 +5,16 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.Helpers;
 using Microsoft.UI.Xaml.Media;
 using Serilog;
-using ShadowViewer.Helpers;
-using ShadowViewer.Models;
-using ShadowViewer.Plugin.Local.Enums;
-using ShadowViewer.Plugin.Local.Helpers;
+using ShadowViewer.Core;
+using ShadowViewer.Core.Helpers;
+using ShadowViewer.Core.Models;
+using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugins;
-using ShadowViewer.Services;
+using ShadowViewer.Core.Services;
 
 using SqlSugar;
-using LocalEpisode = ShadowViewer.Models.LocalEpisode;
+using LocalEpisode = ShadowViewer.Core.Models.LocalEpisode;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
