@@ -192,37 +192,6 @@
                 ToolTipService.ToolTip="{i18N:Locale Key=Delete}" />
             <CommandBarFlyout.SecondaryCommands>
                 <AppBarButton
-                    x:Name="ShadowCommandAdd"
-                    Label="{i18N:Locale Key=Add}"
-                    ToolTipService.ToolTip="{i18N:Locale Key=Add}">
-                    <AppBarButton.Icon>
-                        <FontIcon Glyph="&#xECC8;" />
-                    </AppBarButton.Icon>
-                    <AppBarButton.Flyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem
-                                x:Name="ShadowCommandAddFromFolder"
-                                Click="ShadowCommandAddFromFolder_Click"
-                                Text="{i18N:Locale Key=NewFolder}"
-                                ToolTipService.ToolTip="{i18N:Locale Key=NewFolder}">
-                                <MenuFlyoutItem.Icon>
-                                    <FontIcon Glyph="&#xE82E;" />
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem
-                                x:Name="ShadowCommandAddFromZip"
-                                Click="ShadowCommandAddFromZip_Click"
-                                Text="{i18N:Locale Key=ImportFromZip}"
-                                ToolTipService.ToolTip="{i18N:Locale Key=ImportFromZip}">
-                                <MenuFlyoutItem.Icon>
-                                    <FontIcon Glyph="&#xF012;" />
-                                </MenuFlyoutItem.Icon>
-
-                            </MenuFlyoutItem>
-                        </MenuFlyout>
-                    </AppBarButton.Flyout>
-                </AppBarButton>
-                <AppBarButton
                     x:Name="ShadowCommandMove"
                     Click="ShadowCommandMove_Click"
                     Icon="MoveToFolder"

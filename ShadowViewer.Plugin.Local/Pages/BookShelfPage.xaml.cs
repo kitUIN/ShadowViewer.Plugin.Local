@@ -25,21 +25,25 @@ using CommunityToolkit.WinUI.Controls;
 
 using ShadowPluginLoader.WinUI;
 using Windows.Storage.Pickers;
+using DryIoc.ImTools;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Services;
 using ShadowViewer.Core.Extensions;
 using ShadowViewer.Core.Enums;
-using ShadowViewer.Core.Models;
 using ShadowViewer.Plugin.Local.I18n;
 
 namespace ShadowViewer.Plugin.Local.Pages;
-
+/// <summary>
+/// 书架页面
+/// </summary>
 public sealed partial class BookShelfPage : Page
 {
     public static ILogger Logger { get; } = Log.ForContext<BookShelfPage>();
     public BookShelfViewModel ViewModel { get; set; }
     private ICallableService caller = DiFactory.Services.Resolve<ICallableService>();
-
+    /// <summary>
+    /// 书架页面
+    /// </summary>
     public BookShelfPage()
     {
         InitializeComponent();
@@ -58,7 +62,6 @@ public sealed partial class BookShelfPage : Page
     {
         var isComicBook = ContentGridView.SelectedItems.Count > 0;
         var isSingle = ContentGridView.SelectedItems.Count == 1;
-        var isFolder = isSingle && ((LocalComic)ContentGridView.SelectedItem).IsFolder;
         var myOption = new FlyoutShowOptions()
         {
             ShowMode = FlyoutShowMode.Standard,
@@ -67,7 +70,6 @@ public sealed partial class BookShelfPage : Page
         ShadowCommandRename.IsEnabled = isComicBook & isSingle;
         ShadowCommandDelete.IsEnabled = isComicBook;
         ShadowCommandMove.IsEnabled = isComicBook;
-        ShadowCommandAdd.IsEnabled = isFolder;
         ShadowCommandStatus.IsEnabled = isComicBook & isSingle;
         HomeCommandBarFlyout.ShowAt(sender, myOption);
     }
@@ -337,16 +339,6 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     public async void DeleteMessageDialog()
     {
-        void Remember_Checked(object sender, RoutedEventArgs e)
-        {
-            ConfigHelper.Set(LocalSettingKey.LocalIsRememberDeleteFilesWithComicDelete,(sender as CheckBox)?.IsChecked ?? false);
-        }
-
-        void DeleteFiles_Checked(object sender, RoutedEventArgs e)
-        {
-            ConfigHelper.Set(LocalSettingKey.LocalIsDeleteFilesWithComicDelete, (sender as CheckBox)?.IsChecked ?? false);
-        }
-
         var dialog = XamlHelper.CreateContentDialog(XamlRoot);
         var stackPanel = new StackPanel();
         dialog.Title = ResourcesHelper.GetString(ResourceKey.IsDelete);
@@ -355,15 +347,15 @@ public sealed partial class BookShelfPage : Page
             Content = ResourcesHelper.GetString(ResourceKey.DeleteComicFiles),
             IsChecked = ConfigHelper.GetBoolean(LocalSettingKey.LocalIsDeleteFilesWithComicDelete),
         };
-        deleteFiles.Checked += DeleteFiles_Checked;
-        deleteFiles.Unchecked += DeleteFiles_Checked;
+        deleteFiles.Checked += DeleteFilesChecked;
+        deleteFiles.Unchecked += DeleteFilesChecked;
         var remember = new CheckBox()
         {
             Content = ResourcesHelper.GetString(ResourceKey.Remember),
             IsChecked = ConfigHelper.GetBoolean(LocalSettingKey.LocalIsRememberDeleteFilesWithComicDelete),
         };
-        remember.Checked += Remember_Checked;
-        remember.Unchecked += Remember_Checked;
+        remember.Checked += RememberChecked;
+        remember.Unchecked += RememberChecked;
         stackPanel.Children.Add(deleteFiles);
         stackPanel.Children.Add(remember);
         dialog.IsPrimaryButtonEnabled = true;
@@ -374,6 +366,18 @@ public sealed partial class BookShelfPage : Page
         dialog.PrimaryButtonClick += (ContentDialog s, ContentDialogButtonClickEventArgs e) => { DeleteComics(); };
         dialog.Focus(FocusState.Programmatic);
         await dialog.ShowAsync();
+        return;
+
+        void RememberChecked(object sender, RoutedEventArgs e)
+        {
+            LocalPlugin.Settings.LocalIsRememberDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ?? false;
+        }
+
+        void DeleteFilesChecked(object sender, RoutedEventArgs e)
+        {
+            LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ??
+                                                                     false;
+        }
     }
 
     /// <summary>
@@ -399,13 +403,13 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void DeleteComics()
     {
-        // var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-        // foreach (var comic in ContentGridView.SelectedItems.ToList().Cast<LocalComic>())
-        // {
-        //     if (ConfigHelper.GetBoolean(LocalSettingKey.LocalIsDeleteFilesWithComicDelete) && !comic.IsFolder &&
-        //         db.Queryable<CacheZip>().Any(x => x.ComicId == comic.Id)) comic.Link.DeleteDirectory();
-        //     ViewModel.LocalComics.Remove(comic);
-        // }
+        var db = DiFactory.Services.Resolve<ISqlSugarClient>();
+        foreach (var comic in ContentGridView.SelectedItems.ToList().Cast<LocalComic>())
+        {
+            if (LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder &&
+                db.Queryable<CacheZip>().Any(x => x.ComicId == comic.Id)) comic.Link?.DeleteDirectory();
+            ViewModel.LocalComics.Remove(comic);
+        }
     }
 
     /// <summary>
@@ -459,11 +463,10 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void Segmented_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        var se = sender as Segmented;
-        if (ContentGridView is null || se is null) return;
-        ConfigHelper.Set(LocalSettingKey.LocalBookStyleDetail, se!.SelectedIndex == 1);
+        if (ContentGridView is null || sender is not Segmented se) return;
+        LocalPlugin.Settings.LocalBookStyleDetail= se.SelectedIndex == 1;
         ContentGridView.ItemTemplate =
-            Resources[(ConfigHelper.GetBoolean(LocalSettingKey.LocalBookStyleDetail) ? "Detail" : "Simple") + "LocalComicItem"] as DataTemplate;
+            Resources[(LocalPlugin.Settings.LocalBookStyleDetail ? "Detail" : "Simple") + "LocalComicItem"] as DataTemplate;
     }
 
     /// <summary>
@@ -471,7 +474,7 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void RefreshContainer_RefreshRequested(RefreshContainer sender, RefreshRequestedEventArgs args)
     {
-        using var RefreshCompletionDeferral = args.GetDeferral();
+        using var refreshCompletionDeferral = args.GetDeferral();
         ViewModel.RefreshLocalComic();
     }
 
@@ -480,23 +483,22 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void ContentGridView_ItemClick(object sender, ItemClickEventArgs e)
     {
-        // if (e.ClickedItem is LocalComic comic)
-        // {
-        //     comic.LastReadTime = DateTime.Now;
-        //     if (comic.IsFolder)
-        //         Frame.Navigate(GetType(), new Uri(ViewModel.OriginPath, comic.Id));
-        //     else
-        //     {
-        //         DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
-        //         {
-        //             Id = comic.Id,
-        //             Time = DateTime.Now,
-        //             Icon = comic.Img,
-        //             Title = comic.Name,
-        //         }).ExecuteCommand();
-        //         Frame.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
-        //             new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
-        //     }
-        // }
+        if (e.ClickedItem is LocalComic comic)
+        {
+            if (comic.IsFolder)
+                ViewModel.Init(new Uri(ViewModel.OriginPath, comic.Id.ToString()));
+            else
+            {
+                // DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
+                // {
+                //     Id = comic.Id,
+                //     Time = DateTime.Now,
+                //     Icon = comic.Thumb,
+                //     Title = comic.Name,
+                // }).ExecuteCommand();
+                Frame.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
+                    new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
+            }
+        }
     }
 }
