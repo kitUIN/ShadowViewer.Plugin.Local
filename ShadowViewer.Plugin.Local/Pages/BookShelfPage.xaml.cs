@@ -504,13 +504,13 @@ public sealed partial class BookShelfPage : Page
                 ViewModel.Init(new Uri(ViewModel.OriginPath, comic.Id.ToString()));
             else
             {
-                // DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
-                // {
-                //     Id = comic.Id,
-                //     Time = DateTime.Now,
-                //     Icon = comic.Thumb,
-                //     Title = comic.Name,
-                // }).ExecuteCommand();
+                DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
+                {
+                    Id = comic.Id,
+                    Time = DateTime.Now,
+                    Icon = comic.Thumb,
+                    Title = comic.Name,
+                }).ExecuteCommand();
                 Frame.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
                     new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
             }

@@ -7,7 +7,7 @@ namespace ShadowViewer.Plugin.Local.Models;
 
 public partial class LocalHistory : ObservableObject, IHistory
 {
-    [ObservableProperty][property:SugarColumn(IsPrimaryKey = true)] private string id;
+    [ObservableProperty][property:SugarColumn(IsPrimaryKey = true)] private long id;
     [ObservableProperty] private string? title;
     [ObservableProperty] private string? icon;
     [ObservableProperty] private DateTime time;
