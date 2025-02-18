@@ -86,7 +86,13 @@ public sealed partial class BookShelfPage : Page
     private async void ShadowCommandAddFromFolder_Click(object sender, RoutedEventArgs e)
     {
         var folder = await FileHelper.SelectFolderAsync(this, "AddNewComic");
-        if (folder != null) caller.ImportComic(new List<IStorageItem> { folder }, new string[1], 0);
+        // if (folder != null) caller.ImportComic(new List<IStorageItem> { folder }, new string[1], 0);
+        if (folder != null)
+        {
+            var token = new CancellationToken();
+            await DiFactory.Services.Resolve<ComicService>()
+                .ImportComicFromFolderAsync(folder.Path, LocalPlugin.Meta.Id, -1, token);
+        }
     }
 
     /// <summary>
@@ -101,7 +107,7 @@ public sealed partial class BookShelfPage : Page
             var token = new CancellationToken();
             // var passwords = new string[files.Count];
             // caller.ImportComic(files, passwords, 0);
-            await DiFactory.Services.Resolve<ComicService>().DeCompressImportAsync(files[0].Path,
+            await DiFactory.Services.Resolve<ComicService>().ImportComicFromZipAsync(files[0].Path,
                 CoreSettings.ComicsPath, LocalPlugin.Meta.Id, -1, token);
         }
     }

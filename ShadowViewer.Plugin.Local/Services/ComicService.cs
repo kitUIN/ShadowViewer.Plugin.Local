@@ -32,6 +32,24 @@ namespace ShadowViewer.Plugin.Local.Services
         [Autowired] private ICallableService Caller { get; }
         [Autowired] private ISqlSugarClient Db { get; }
 
+        public async Task ImportComicFromFolderAsync(string folder,
+            string affiliation,
+            long parentId,
+            CancellationToken token,
+            IProgress<MemoryStream>? thumbProgress = null,
+            IProgress<double>? progress = null)
+        {
+            var comicId = await Db.Insertable(new LocalComic()
+            {
+                Name = Path.GetFileNameWithoutExtension(folder),
+                Thumb = "mx-appx:///default.png",
+                Affiliation = affiliation,
+                ParentId = parentId,
+                IsFolder = false
+            }).ExecuteReturnSnowflakeIdAsync(token);
+            await SaveComic(token, folder, comicId);
+        }
+
         /// <summary>
         /// 解压压缩包并且导入
         /// </summary>
@@ -45,7 +63,7 @@ namespace ShadowViewer.Plugin.Local.Services
         /// <param name="readerOptions"></param>
         /// <returns></returns>
         /// <exception cref="TaskCanceledException"></exception>
-        public async Task<object> DeCompressImportAsync(string zip,
+        public async Task<object> ImportComicFromZipAsync(string zip,
             string destinationDirectory,
             string affiliation,
             long parentId,

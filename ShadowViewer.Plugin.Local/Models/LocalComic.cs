@@ -50,7 +50,7 @@ public partial class LocalComic : ObservableObject
     /// 漫画缩略图
     /// </summary>
     [ObservableProperty]
-    [property: SugarColumn(ColumnDataType = "TEXT", ColumnDescription = "漫画缩略图")]
+    [property: SugarColumn(ColumnDataType = "TEXT", DefaultValue = "mx-appx:///default.png", ColumnDescription = "漫画缩略图")]
     private string thumb;
 
     /// <summary>
