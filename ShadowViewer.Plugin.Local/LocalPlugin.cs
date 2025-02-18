@@ -12,6 +12,7 @@ using ShadowViewer.Core.Plugins;
 using ShadowViewer.Core.Services;
 using ShadowViewer.Core;
 using ShadowViewer.Core.Models;
+using ShadowViewer.Plugin.Local.Services;
 
 namespace ShadowViewer.Plugin.Local;
 /// <summary>
@@ -27,6 +28,7 @@ public partial class LocalPlugin : AShadowViewerPlugin
         CompressService compressService, ILogger logger, PluginLoader pluginService, INotifyService notifyService) :
         base(caller, db, pluginEventService, compressService, logger, pluginService, notifyService)
     {
+        DiFactory.Services.Register<ComicService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);

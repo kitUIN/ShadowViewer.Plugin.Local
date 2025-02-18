@@ -235,297 +235,301 @@
             <!-- </TreeView> -->
         </TeachingTip>
         <!--#endregion-->
+
     </Page.Resources>
-    <Grid
-        x:Name="Root"
-        MinWidth="700"
-        Background="{ThemeResource LayerFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        BorderThickness="1"
-        CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="48" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="30" />
-        </Grid.RowDefinitions>
-        <!--#region 顶部工具栏-->
+    <Grid>
         <Grid
-            Grid.Row="0"
-            Margin="5,0"
-            VerticalAlignment="Top">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <CommandBar
-                x:Name="LeftCommandBar"
-                Grid.Column="0"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                Background="Transparent"
-                DefaultLabelPosition="Right"
-                IsOpen="False">
-                <AppBarButton Label="{i18N:Locale Key=Add}">
-                    <ToolTipService.ToolTip>
-                        <ToolTip Content="{i18N:Locale Key=Add}" />
-                    </ToolTipService.ToolTip>
-                    <AppBarButton.Icon>
-                        <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xECC8;" />
-                    </AppBarButton.Icon>
-                    <AppBarButton.Flyout>
-                        <MenuFlyout Placement="Bottom">
-                            <MenuFlyoutItem
-                                x:Name="ShadowCommandAddNewFolder"
-                                Click="ShadowCommandAddNewFolder_Click"
-                                Icon="NewFolder"
-                                Text="{i18N:Locale Key=NewFolder}">
-                                <ToolTipService.ToolTip>
-                                    <ToolTip Content="{i18N:Locale Key=NewFolder}" />
-                                </ToolTipService.ToolTip>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem Click="ShadowCommandAddFromFolder_Click" Text="{i18N:Locale Key=ImportFromFolder}">
-                                <MenuFlyoutItem.Icon>
-                                    <FontIcon Glyph="&#xE82E;" />
-                                </MenuFlyoutItem.Icon>
-                                <ToolTipService.ToolTip>
-                                    <ToolTip Content="{i18N:Locale Key=ImportFromFolder}" />
-                                </ToolTipService.ToolTip>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem Click="ShadowCommandAddFromZip_Click" Text="{i18N:Locale Key=ImportFromZip}">
-                                <MenuFlyoutItem.Icon>
-                                    <FontIcon Glyph="&#xF012;" />
-                                </MenuFlyoutItem.Icon>
-                                <ToolTipService.ToolTip>
-                                    <ToolTip Content="{i18N:Locale Key=ImportFromZip}" />
-                                </ToolTipService.ToolTip>
-                            </MenuFlyoutItem>
-                        </MenuFlyout>
-                    </AppBarButton.Flyout>
-                </AppBarButton>
-                <AppBarButton Click="ShadowCommandRefresh_Click" Label="{i18N:Locale Key=Refresh}">
-                    <ToolTipService.ToolTip>
-                        <ToolTip Content="{i18N:Locale Key=Refresh}" />
-                    </ToolTipService.ToolTip>
-                    <AppBarButton.Icon>
-                        <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xE72C;" />
-                    </AppBarButton.Icon>
-                </AppBarButton>
-            </CommandBar>
-            <controls:Segmented
-                x:Name="StyleSegmented"
-                Grid.Column="1"
+            x:Name="Root"
+            MinWidth="700"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="30" />
+            </Grid.RowDefinitions>
+            <!--#region 顶部工具栏-->
+            <Grid
+                Grid.Row="0"
+                Margin="5,0"
+                VerticalAlignment="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <CommandBar
+                    x:Name="LeftCommandBar"
+                    Grid.Column="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    DefaultLabelPosition="Right"
+                    IsOpen="False">
+                    <AppBarButton Label="{i18N:Locale Key=Add}">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Content="{i18N:Locale Key=Add}" />
+                        </ToolTipService.ToolTip>
+                        <AppBarButton.Icon>
+                            <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xECC8;" />
+                        </AppBarButton.Icon>
+                        <AppBarButton.Flyout>
+                            <MenuFlyout Placement="Bottom">
+                                <MenuFlyoutItem
+                                    x:Name="ShadowCommandAddNewFolder"
+                                    Click="ShadowCommandAddNewFolder_Click"
+                                    Icon="NewFolder"
+                                    Text="{i18N:Locale Key=NewFolder}">
+                                    <ToolTipService.ToolTip>
+                                        <ToolTip Content="{i18N:Locale Key=NewFolder}" />
+                                    </ToolTipService.ToolTip>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="ShadowCommandAddFromFolder_Click" Text="{i18N:Locale Key=ImportFromFolder}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE82E;" />
+                                    </MenuFlyoutItem.Icon>
+                                    <ToolTipService.ToolTip>
+                                        <ToolTip Content="{i18N:Locale Key=ImportFromFolder}" />
+                                    </ToolTipService.ToolTip>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="ShadowCommandAddFromZip_Click" Text="{i18N:Locale Key=ImportFromZip}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xF012;" />
+                                    </MenuFlyoutItem.Icon>
+                                    <ToolTipService.ToolTip>
+                                        <ToolTip Content="{i18N:Locale Key=ImportFromZip}" />
+                                    </ToolTipService.ToolTip>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
+                    <AppBarButton Click="ShadowCommandRefresh_Click" Label="{i18N:Locale Key=Refresh}">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Content="{i18N:Locale Key=Refresh}" />
+                        </ToolTipService.ToolTip>
+                        <AppBarButton.Icon>
+                            <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xE72C;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                </CommandBar>
+                <controls:Segmented
+                    x:Name="StyleSegmented"
+                    Grid.Column="1"
+                    HorizontalAlignment="Center"
+                    SelectionChanged="Segmented_SelectionChanged"
+                    SelectionMode="Single">
+                    <controls:SegmentedItem
+                        Width="60"
+                        IsSelected="True"
+                        ToolTipService.ToolTip="{i18N:Locale Key=SimpleView}">
+                        <controls:SegmentedItem.Icon>
+                            <FontIcon Glyph="&#xE163;" />
+                        </controls:SegmentedItem.Icon>
+                    </controls:SegmentedItem>
+                    <controls:SegmentedItem Width="60" ToolTipService.ToolTip="{i18N:Locale Key=DetailView}">
+                        <controls:SegmentedItem.Icon>
+                            <FontIcon Glyph="&#xE161;" />
+                        </controls:SegmentedItem.Icon>
+                    </controls:SegmentedItem>
+                    <controls:SegmentedItem Width="60">
+                        <controls:SegmentedItem.Icon>
+                            <FontIcon Glyph="&#xE161;" />
+                        </controls:SegmentedItem.Icon>
+                    </controls:SegmentedItem>
+                </controls:Segmented>
+                <CommandBar
+                    x:Name="RightCommandBar"
+                    Grid.Column="2"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    DefaultLabelPosition="Right"
+                    IsOpen="False">
+                    <AppBarButton Label="{i18N:Locale Key=Filter}">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Content="{i18N:Locale Key=Filter}" />
+                        </ToolTipService.ToolTip>
+                        <AppBarButton.Icon>
+                            <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xE71C;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton x:Name="SortAppBarButton" Label="{i18N:Locale Key=Sort}">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Content="{i18N:Locale Key=Sort}" />
+                        </ToolTipService.ToolTip>
+                        <AppBarButton.Icon>
+                            <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xE8CB;" />
+                        </AppBarButton.Icon>
+                        <AppBarButton.Flyout>
+                            <MenuFlyout x:Name="SortFlyout" Placement="Bottom">
+                                <MenuFlyoutItem
+                                    Click="MenuFlyoutItem_Click"
+                                    Tag="PA"
+                                    Text="{i18N:Locale Key=Pa}" />
+                                <MenuFlyoutItem
+                                    Click="MenuFlyoutItem_Click"
+                                    Tag="PZ"
+                                    Text="{i18N:Locale Key=Pz}" />
+                                <MenuFlyoutItem
+                                    Click="MenuFlyoutItem_Click"
+                                    Tag="AZ"
+                                    Text="{i18N:Locale Key=Az}" />
+                                <MenuFlyoutItem
+                                    Click="MenuFlyoutItem_Click"
+                                    Tag="ZA"
+                                    Text="{i18N:Locale Key=Za}" />
+                                <MenuFlyoutItem
+                                    Click="MenuFlyoutItem_Click"
+                                    Tag="RA"
+                                    Text="{i18N:Locale Key=Ra}" />
+                                <MenuFlyoutItem
+                                    Click="MenuFlyoutItem_Click"
+                                    Tag="RZ"
+                                    Text="{i18N:Locale Key=Rz}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE7B3;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem
+                                    Click="MenuFlyoutItem_Click"
+                                    Tag="CA"
+                                    Text="{i18N:Locale Key=Ca}" />
+                                <MenuFlyoutItem
+                                    Click="MenuFlyoutItem_Click"
+                                    Tag="CZ"
+                                    Text="{i18N:Locale Key=Cz}" />
+                            </MenuFlyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
+                </CommandBar>
+            </Grid>
+            <!--#endregion-->
+
+            <!--#region 漫画-->
+            <ScrollViewer
+                Grid.Row="1"
+                Padding="5,0"
+                HorizontalScrollBarVisibility="Disabled"
+                HorizontalScrollMode="Disabled"
+                IsVerticalScrollChainingEnabled="True"
+                VerticalScrollBarVisibility="Auto"
+                VerticalScrollMode="Enabled">
+                <RefreshContainer RefreshRequested="RefreshContainer_RefreshRequested">
+                    <GridView
+                        x:Name="ContentGridView"
+                        Padding="5"
+                        AllowDrop="False"
+                        CanDragItems="True"
+                        CanReorderItems="False"
+                        DragItemsStarting="ContentGridView_DragItemsStarting"
+                        FlowDirection="LeftToRight"
+                        IsDoubleTapEnabled="False"
+                        IsItemClickEnabled="True"
+                        ItemClick="ContentGridView_ItemClick"
+                        ItemTemplate="{StaticResource SimpleLocalComicItem}"
+                        ItemsSource="{x:Bind ViewModel.LocalComics}"
+                        KeyDown="GridViewOnKeyDown"
+                        SelectionChanged="ContentGridView_SelectionChanged"
+                        SelectionMode="Single" />
+                </RefreshContainer>
+            </ScrollViewer>
+            <!--#endregion-->
+
+            <!--#region 中部指导-->
+            <Grid
+                Grid.Row="1"
                 HorizontalAlignment="Center"
-                SelectionChanged="Segmented_SelectionChanged"
-                SelectionMode="Single">
-                <controls:SegmentedItem
-                    Width="60"
-                    IsSelected="True"
-                    ToolTipService.ToolTip="{i18N:Locale Key=SimpleView}">
-                    <controls:SegmentedItem.Icon>
-                        <FontIcon Glyph="&#xE163;" />
-                    </controls:SegmentedItem.Icon>
-                </controls:SegmentedItem>
-                <controls:SegmentedItem Width="60" ToolTipService.ToolTip="{i18N:Locale Key=DetailView}">
-                    <controls:SegmentedItem.Icon>
-                        <FontIcon Glyph="&#xE161;" />
-                    </controls:SegmentedItem.Icon>
-                </controls:SegmentedItem>
-                <controls:SegmentedItem Width="60">
-                    <controls:SegmentedItem.Icon>
-                        <FontIcon Glyph="&#xE161;" />
-                    </controls:SegmentedItem.Icon>
-                </controls:SegmentedItem>
-            </controls:Segmented>
-            <CommandBar
-                x:Name="RightCommandBar"
-                Grid.Column="2"
-                HorizontalAlignment="Right"
                 VerticalAlignment="Center"
-                Background="Transparent"
-                DefaultLabelPosition="Right"
-                IsOpen="False">
-                <AppBarButton Label="{i18N:Locale Key=Filter}">
-                    <ToolTipService.ToolTip>
-                        <ToolTip Content="{i18N:Locale Key=Filter}" />
-                    </ToolTipService.ToolTip>
-                    <AppBarButton.Icon>
-                        <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xE71C;" />
-                    </AppBarButton.Icon>
-                </AppBarButton>
-                <AppBarButton x:Name="SortAppBarButton" Label="{i18N:Locale Key=Sort}">
-                    <ToolTipService.ToolTip>
-                        <ToolTip Content="{i18N:Locale Key=Sort}" />
-                    </ToolTipService.ToolTip>
-                    <AppBarButton.Icon>
-                        <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xE8CB;" />
-                    </AppBarButton.Icon>
-                    <AppBarButton.Flyout>
-                        <MenuFlyout x:Name="SortFlyout" Placement="Bottom">
-                            <MenuFlyoutItem
-                                Click="MenuFlyoutItem_Click"
-                                Tag="PA"
-                                Text="{i18N:Locale Key=Pa}" />
-                            <MenuFlyoutItem
-                                Click="MenuFlyoutItem_Click"
-                                Tag="PZ"
-                                Text="{i18N:Locale Key=Pz}" />
-                            <MenuFlyoutItem
-                                Click="MenuFlyoutItem_Click"
-                                Tag="AZ"
-                                Text="{i18N:Locale Key=Az}" />
-                            <MenuFlyoutItem
-                                Click="MenuFlyoutItem_Click"
-                                Tag="ZA"
-                                Text="{i18N:Locale Key=Za}" />
-                            <MenuFlyoutItem
-                                Click="MenuFlyoutItem_Click"
-                                Tag="RA"
-                                Text="{i18N:Locale Key=Ra}" />
-                            <MenuFlyoutItem
-                                Click="MenuFlyoutItem_Click"
-                                Tag="RZ"
-                                Text="{i18N:Locale Key=Rz}">
-                                <MenuFlyoutItem.Icon>
-                                    <FontIcon Glyph="&#xE7B3;" />
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem
-                                Click="MenuFlyoutItem_Click"
-                                Tag="CA"
-                                Text="{i18N:Locale Key=Ca}" />
-                            <MenuFlyoutItem
-                                Click="MenuFlyoutItem_Click"
-                                Tag="CZ"
-                                Text="{i18N:Locale Key=Cz}" />
-                        </MenuFlyout>
-                    </AppBarButton.Flyout>
-                </AppBarButton>
-            </CommandBar>
-        </Grid>
-        <!--#endregion-->
-
-        <!--#region 漫画-->
-        <ScrollViewer
-            Grid.Row="1"
-            Padding="5,0"
-            HorizontalScrollBarVisibility="Disabled"
-            HorizontalScrollMode="Disabled"
-            IsVerticalScrollChainingEnabled="True"
-            VerticalScrollBarVisibility="Auto"
-            VerticalScrollMode="Enabled">
-            <RefreshContainer RefreshRequested="RefreshContainer_RefreshRequested">
-                <GridView
-                    x:Name="ContentGridView"
-                    Padding="5"
-                    AllowDrop="False"
-                    CanDragItems="True"
-                    CanReorderItems="False"
-                    DragItemsStarting="ContentGridView_DragItemsStarting"
-                    FlowDirection="LeftToRight"
-                    IsDoubleTapEnabled="False"
-                    IsItemClickEnabled="True"
-                    ItemClick="ContentGridView_ItemClick"
-                    ItemTemplate="{StaticResource SimpleLocalComicItem}"
-                    ItemsSource="{x:Bind ViewModel.LocalComics}"
-                    KeyDown="GridViewOnKeyDown"
-                    SelectionChanged="ContentGridView_SelectionChanged"
-                    SelectionMode="Single" />
-            </RefreshContainer>
-        </ScrollViewer>
-        <!--#endregion-->
-
-        <!--#region 中部指导-->
-        <Grid
-            Grid.Row="1"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
-            <TextBlock
-                MaxWidth="500"
-                FontSize="17"
-                FontWeight="Bold"
-                Text="{i18N:Locale Key=BookShelfEmpty}"
-                TextWrapping="Wrap" />
-        </Grid>
-        <!--#endregion-->
-
-        <!--#region 左下角信息栏-->
-        <Grid
-            x:Name="ShelfInfo"
-            Grid.Row="2"
-            VerticalAlignment="Bottom">
-            <StackPanel
-                Margin="6,0,0,2"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Bottom"
-                Orientation="Horizontal">
-                <StackPanel
-                    Margin="10,0,0,0"
-                    Orientation="Horizontal"
-                    Spacing="3">
-                    <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{x:Bind ViewModel.FolderTotalCounts, Mode=OneWay}" />
-                    <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=Object}" />
-                </StackPanel>
+                Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
                 <TextBlock
-                    Margin="10,0,0,0"
-                    FontSize="{StaticResource InfoTextSize}"
-                    Text="|" />
+                    MaxWidth="500"
+                    FontSize="17"
+                    FontWeight="Bold"
+                    Text="{i18N:Locale Key=BookShelfEmpty}"
+                    TextWrapping="Wrap" />
+            </Grid>
+            <!--#endregion-->
+
+            <!--#region 左下角信息栏-->
+            <Grid
+                x:Name="ShelfInfo"
+                Grid.Row="2"
+                VerticalAlignment="Bottom">
                 <StackPanel
-                    Margin="10,0,0,0"
-                    Orientation="Horizontal"
-                    Spacing="3">
-                    <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=CurrentFolder}" />
-                    <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{x:Bind ViewModel.CurrentName, Mode=OneWay}" />
-                </StackPanel>
-                <TextBlock
-                    Margin="10,0,0,0"
-                    FontSize="{StaticResource InfoTextSize}"
-                    Text="|" />
-                <StackPanel
-                    x:Name="SelectionPanel"
-                    Margin="10,0,0,0"
-                    Orientation="Horizontal"
-                    Spacing="5">
-                    <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=SelectionHeader}" />
-                    <TextBlock x:Name="SelectionValue" FontSize="{StaticResource InfoTextSize}" />
-                    <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=Object}" />
-                    <TextBlock
-                        x:Name="SizeValue"
-                        Margin="5,0,0,0"
-                        FontSize="{StaticResource InfoTextSize}" />
+                    Margin="6,0,0,2"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    Orientation="Horizontal">
+                    <StackPanel
+                        Margin="10,0,0,0"
+                        Orientation="Horizontal"
+                        Spacing="3">
+                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{x:Bind ViewModel.FolderTotalCounts, Mode=OneWay}" />
+                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=Object}" />
+                    </StackPanel>
                     <TextBlock
                         Margin="10,0,0,0"
                         FontSize="{StaticResource InfoTextSize}"
                         Text="|" />
+                    <StackPanel
+                        Margin="10,0,0,0"
+                        Orientation="Horizontal"
+                        Spacing="3">
+                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=CurrentFolder}" />
+                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{x:Bind ViewModel.CurrentName, Mode=OneWay}" />
+                    </StackPanel>
+                    <TextBlock
+                        Margin="10,0,0,0"
+                        FontSize="{StaticResource InfoTextSize}"
+                        Text="|" />
+                    <StackPanel
+                        x:Name="SelectionPanel"
+                        Margin="10,0,0,0"
+                        Orientation="Horizontal"
+                        Spacing="5">
+                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=SelectionHeader}" />
+                        <TextBlock x:Name="SelectionValue" FontSize="{StaticResource InfoTextSize}" />
+                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=Object}" />
+                        <TextBlock
+                            x:Name="SizeValue"
+                            Margin="5,0,0,0"
+                            FontSize="{StaticResource InfoTextSize}" />
+                        <TextBlock
+                            Margin="10,0,0,0"
+                            FontSize="{StaticResource InfoTextSize}"
+                            Text="|" />
+                    </StackPanel>
+
                 </StackPanel>
+            </Grid>
+            <!--#endregion-->
 
-            </StackPanel>
+            <!--#region 右下角按钮-->
+            <Grid
+                Grid.Row="2"
+                Padding="2"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom">
+                <StackPanel Orientation="Horizontal">
+                    <HyperlinkButton Height="28">
+                        <FontIcon FontSize="14" Glyph="&#xE897;" />
+                        <ToolTipService.ToolTip>
+                            <ToolTip x:Uid="Xaml/ToolTip/Help" />
+                        </ToolTipService.ToolTip>
+                    </HyperlinkButton>
+                    <HyperlinkButton Height="28" Click="SettingsButton_Click">
+                        <FontIcon FontSize="14" Glyph="&#xE713;" />
+                        <ToolTipService.ToolTip>
+                            <ToolTip x:Uid="Xaml/ToolTip/BookSettings" />
+                        </ToolTipService.ToolTip>
+                    </HyperlinkButton>
+                </StackPanel>
+            </Grid>
+            <!--#endregion-->
+
         </Grid>
-        <!--#endregion-->
-
-        <!--#region 右下角按钮-->
-        <Grid
-            Grid.Row="2"
-            Padding="2"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Bottom">
-            <StackPanel Orientation="Horizontal">
-                <HyperlinkButton Height="28">
-                    <FontIcon FontSize="14" Glyph="&#xE897;" />
-                    <ToolTipService.ToolTip>
-                        <ToolTip x:Uid="Xaml/ToolTip/Help" />
-                    </ToolTipService.ToolTip>
-                </HyperlinkButton>
-                <HyperlinkButton Height="28" Click="SettingsButton_Click">
-                    <FontIcon FontSize="14" Glyph="&#xE713;" />
-                    <ToolTipService.ToolTip>
-                        <ToolTip x:Uid="Xaml/ToolTip/BookSettings" />
-                    </ToolTipService.ToolTip>
-                </HyperlinkButton>
-            </StackPanel>
-        </Grid>
-        <!--#endregion-->
-
     </Grid>
+
 </Page>

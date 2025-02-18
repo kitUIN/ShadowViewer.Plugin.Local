@@ -12,7 +12,6 @@ using ShadowViewer.Core.Models.Interfaces;
 using ShadowViewer.Core;
 using ShadowViewer.Core.Services;
 using ShadowViewer.Core.Enums;
-
 namespace ShadowViewer.Plugin.Local.Responders;
 
 public class LocalHistoryResponder: AbstractHistoryResponder 

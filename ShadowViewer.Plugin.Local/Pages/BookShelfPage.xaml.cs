@@ -22,17 +22,20 @@ using Windows.Foundation;
 using Windows.Storage;
 using Windows.System;
 using CommunityToolkit.WinUI.Controls;
-
 using ShadowPluginLoader.WinUI;
 using Windows.Storage.Pickers;
 using DryIoc.ImTools;
+using ShadowViewer.Core;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Services;
 using ShadowViewer.Core.Extensions;
 using ShadowViewer.Core.Enums;
 using ShadowViewer.Plugin.Local.I18n;
+using ShadowViewer.Plugin.Local.Services;
+using System.Threading;
 
 namespace ShadowViewer.Plugin.Local.Pages;
+
 /// <summary>
 /// 书架页面
 /// </summary>
@@ -41,6 +44,7 @@ public sealed partial class BookShelfPage : Page
     public static ILogger Logger { get; } = Log.ForContext<BookShelfPage>();
     public BookShelfViewModel ViewModel { get; set; }
     private ICallableService caller = DiFactory.Services.Resolve<ICallableService>();
+
     /// <summary>
     /// 书架页面
     /// </summary>
@@ -90,11 +94,15 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private async void ShadowCommandAddFromZip_Click(object sender, RoutedEventArgs e)
     {
-        var files = await FileHelper.SelectMultipleFileAsync(this, "AddComicsFromZip", PickerViewMode.List, ".zip", ".rar", ".7z");
+        var files = await FileHelper.SelectMultipleFileAsync(this, "AddComicsFromZip", PickerViewMode.List, ".zip",
+            ".rar", ".7z");
         if (files.Any())
         {
-            var passwords = new string[files.Count];
-            caller.ImportComic(files, passwords, 0);
+            var token = new CancellationToken();
+            // var passwords = new string[files.Count];
+            // caller.ImportComic(files, passwords, 0);
+            await DiFactory.Services.Resolve<ComicService>().DeCompressImportAsync(files[0].Path,
+                CoreSettings.ComicsPath, LocalPlugin.Meta.Id, -1, token);
         }
     }
 
@@ -464,9 +472,10 @@ public sealed partial class BookShelfPage : Page
     private void Segmented_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ContentGridView is null || sender is not Segmented se) return;
-        LocalPlugin.Settings.LocalBookStyleDetail= se.SelectedIndex == 1;
+        LocalPlugin.Settings.LocalBookStyleDetail = se.SelectedIndex == 1;
         ContentGridView.ItemTemplate =
-            Resources[(LocalPlugin.Settings.LocalBookStyleDetail ? "Detail" : "Simple") + "LocalComicItem"] as DataTemplate;
+            Resources[(LocalPlugin.Settings.LocalBookStyleDetail ? "Detail" : "Simple") + "LocalComicItem"] as
+                DataTemplate;
     }
 
     /// <summary>
