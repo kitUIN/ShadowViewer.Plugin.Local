@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DryIoc;
 using Serilog;
 using ShadowPluginLoader.MetaAttributes;
@@ -32,6 +32,8 @@ public partial class LocalPlugin : AShadowViewerPlugin
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
+        db.CodeFirst.InitTables<LocalEpisode>();
+        db.CodeFirst.InitTables<LocalPicture>();
         db.CodeFirst.InitTables<CacheImg>();
         db.CodeFirst.InitTables<LocalAuthor, LocalComic, LocalReadingRecord, LocalComicAuthorMapping>();
     }
