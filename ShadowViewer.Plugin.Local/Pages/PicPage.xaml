@@ -5,6 +5,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interfaces="using:ShadowViewer.Plugin.Local.Models.Interfaces"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
     mc:Ignorable="d">
 
     <Grid
@@ -13,36 +15,37 @@
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
         CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
-        <ScrollViewer
-            Tapped="ScrollViewer_Tapped"
-            VerticalScrollBarVisibility="Hidden"
-            ViewChanged="ScrollViewer_ViewChanged">
-            <ItemsRepeater
-                x:Name="PicViewer"
-                HorizontalAlignment="Center"
-                ItemsSource="{x:Bind ViewModel.Images, Mode=OneWay}"
-                KeyDown="ScrollViewer_KeyDown"
-                Loaded="PicViewer_Loaded"
-                ScrollViewer.VerticalScrollBarVisibility="Hidden">
-                <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="interfaces:IUiPicture">
-                        <Grid Padding="100,0" Tag="{x:Bind}">
-                            <TextBlock
-                                Padding="0,100"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                FontSize="45"
-                                Text="{x:Bind Index}" />
-                            <Image Source="{x:Bind Source, Mode=OneWay}" />
-                        </Grid>
-                    </DataTemplate>
-                </ItemsRepeater.ItemTemplate>
-                <ItemsRepeater.Layout>
-                    <StackLayout Orientation="Vertical" Spacing="0" />
-                </ItemsRepeater.Layout>
-            </ItemsRepeater>
-        </ScrollViewer>
-
+        <!-- <ScrollViewer -->
+        <!--     Tapped="ScrollViewer_Tapped" -->
+        <!--     VerticalScrollBarVisibility="Hidden" -->
+        <!--     ViewChanged="ScrollViewer_ViewChanged"> -->
+        <!--      -->
+        <!-- </ScrollViewer> -->
+        <ListView
+            x:Name="PicViewer"
+            HorizontalAlignment="Center"
+            ItemsSource="{x:Bind ViewModel.Images, Mode=OneWay}"
+            KeyDown="ScrollViewer_KeyDown"
+            Loaded="PicViewer_Loaded" 
+            SelectionMode="None"
+            ScrollViewer.VerticalScrollBarVisibility="Hidden">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="interfaces:IUiPicture">
+                    <Grid Padding="100,0" Tag="{x:Bind}">
+                        <TextBlock
+                            Padding="0,100"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontSize="45"
+                            Text="{x:Bind Index}" />
+                        <Image Source="{x:Bind Source, Mode=OneWay}" />
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <!-- <ListV.Layout> -->
+            <!--     <StackLayout Orientation="Vertical" Spacing="0" /> -->
+            <!-- </ListV.Layout> -->
+        </ListView>
         <Grid Grid.Column="0" VerticalAlignment="Bottom">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="80" />
@@ -71,8 +74,9 @@
                         VerticalAlignment="Center"
                         Maximum="{x:Bind ViewModel.Images.Count, Mode=OneWay}"
                         Minimum="1"
-                        SmallChange="1"
-                        StepFrequency="1"
+                        SmallChange="1" 
+                        StepFrequency="1" 
+                        Loaded="PageSlider_OnLoaded"
                         ValueChanged="PageSlider_ValueChanged"
                         Value="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}" />
                     <TextBlock VerticalAlignment="Center" Text="{x:Bind ViewModel.Images.Count, Mode=OneWay}" />
