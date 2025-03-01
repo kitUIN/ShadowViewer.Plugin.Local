@@ -22,6 +22,7 @@ using ShadowViewer.Core.Services;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Services;
 using SqlSugar;
+using SharpCompress.Common;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -104,32 +105,6 @@ public partial class BookShelfViewModel: ObservableObject
 
     private void LocalComics_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
-        switch (e.Action)
-        {
-            case NotifyCollectionChangedAction.Remove:
-            {
-                if (e.OldItems != null)
-                    foreach (LocalComic item in e.OldItems)
-                    {
-                        Db.Deleteable(item).ExecuteCommand();
-                    }
-                break;
-            }
-            case NotifyCollectionChangedAction.Add:
-            {
-                if (e.NewItems != null)
-                    foreach (LocalComic item in e.NewItems)
-                    {
-                        // if (item.Id is null) continue;
-                        if (!Db.Queryable<LocalComic>().Any(x => x.Id == item.Id))
-                        {
-                            Db.Insertable(item).ExecuteCommand();
-                        }
-                    }
-
-                break;
-            }
-        }
         IsEmpty = LocalComics.Count == 0;
         FolderTotalCounts = LocalComics.Count;
     }
@@ -139,7 +114,10 @@ public partial class BookShelfViewModel: ObservableObject
     public void RefreshLocalComic()
     {
         LocalComics.Clear();
-        var comics = Db.Queryable<LocalComic>().Where(x => x.ParentId == Path).ToList();
+        var comics = Db.Queryable<LocalComic>()
+            .Includes(x=>x.ReadingRecord)
+            .Where(x => x.ParentId == Path)
+            .ToList();
         switch (Sorts)
         {
             case ShadowSorts.AZ:
@@ -187,11 +165,12 @@ public partial class BookShelfViewModel: ObservableObject
             var zipThumb = new Image()
             {
                 Width = 120,
-                Height = 160
+                Height = 160,
+                Visibility = Visibility.Collapsed
             };
             var infoBar = new InfoBar()
             {
-                Title = I18n.I18N.ImportComic,
+                Title = I18n.I18N.ImportComic + ": " + System.IO.Path.GetFileNameWithoutExtension(file.Path),
                 Severity = InfoBarSeverity.Informational,
                 IsClosable = false,
                 IsIconVisible = true,
@@ -224,6 +203,7 @@ public partial class BookShelfViewModel: ObservableObject
                             var bitmapImage = new BitmapImage();
                             await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
                             zipThumb.Source = bitmapImage;
+                            zipThumb.Visibility = Visibility.Visible;
                         });
                     }
                     catch (Exception e)

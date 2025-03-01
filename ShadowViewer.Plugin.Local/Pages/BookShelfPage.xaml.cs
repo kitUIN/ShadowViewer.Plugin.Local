@@ -33,6 +33,7 @@ using ShadowViewer.Core.Enums;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Services;
 using System.Threading;
+using ShadowViewer.Core.Models;
 using ShadowViewer.Plugin.Local.ViewModels;
 
 namespace ShadowViewer.Plugin.Local.Pages;
@@ -404,10 +405,26 @@ public sealed partial class BookShelfPage : Page
     private void DeleteComics()
     {
         var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-        foreach (var comic in ContentGridView.SelectedItems.ToList().Cast<LocalComic>())
+        foreach (LocalComic comic in ContentGridView.SelectedItems)
         {
-            if (LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder &&
-                db.Queryable<CacheZip>().Any(x => x.ComicId == comic.Id)) comic.Link?.DeleteDirectory();
+            if (LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder)
+            {
+                comic.Link?.DeleteDirectory();
+                db.Updateable<CacheZip>()
+                    .SetColumns(x => x.ComicId == null)
+                    .Where(x => x.ComicId == comic.Id)
+                    .ExecuteCommand();
+                db.Deleteable<LocalEpisode>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
+                db.Deleteable<LocalPicture>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
+                db.Deleteable<LocalComic>().Where(x => x.Id == comic.Id).ExecuteCommand();
+            }
+            else
+            {
+                db.Updateable<LocalComic>()
+                    .SetColumns(x => x.IsDelete == true)
+                    .Where(x => x.Id == comic.Id)
+                    .ExecuteCommand();
+            }
             ViewModel.LocalComics.Remove(comic);
         }
     }

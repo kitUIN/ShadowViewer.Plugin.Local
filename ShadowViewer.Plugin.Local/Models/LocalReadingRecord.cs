@@ -1,10 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SqlSugar;
 
 namespace ShadowViewer.Plugin.Local.Models
@@ -15,15 +11,15 @@ namespace ShadowViewer.Plugin.Local.Models
         /// <inheritdoc cref="IReadingRecord.Id" />
         /// </summary>
         [ObservableProperty]
-        [property: SugarColumn(IsPrimaryKey = true, IsIdentity = true, IsNullable = false)]
+        [property: SugarColumn(IsPrimaryKey = true, IsNullable = false)]
         private long id;
 
         /// <summary>
-        /// <inheritdoc cref="IReadingRecord.ComicId" />
+        /// <inheritdoc cref="IReadingRecord.ExtraComicId" />
         /// </summary>
         [ObservableProperty]
-        [property: SugarColumn(IsPrimaryKey = true, ColumnDescription = "漫画Id")]
-        private long comicId;
+        [property: SugarColumn(IsNullable = true, ColumnDescription = "额外的漫画Id")]
+        private string? extraComicId;
 
         /// <summary>
         /// <inheritdoc cref="IReadingRecord.Percent" />

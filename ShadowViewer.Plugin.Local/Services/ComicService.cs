@@ -65,7 +65,7 @@ namespace ShadowViewer.Plugin.Local.Services
         /// <param name="readerOptions"></param>
         /// <returns></returns>
         /// <exception cref="TaskCanceledException"></exception>
-        public async Task<object> ImportComicFromZipAsync(string zip,
+        public async Task ImportComicFromZipAsync(string zip,
             string destinationDirectory,
             string affiliation,
             long parentId,
@@ -74,33 +74,44 @@ namespace ShadowViewer.Plugin.Local.Services
             IProgress<double>? progress = null,
             ReaderOptions? readerOptions = null)
         {
-            var comicId = await Db.Insertable(new LocalComic()
-            {
-                Name = Path.GetFileNameWithoutExtension(zip),
-                Thumb = "mx-appx:///default.png",
-                Affiliation = affiliation,
-                ParentId = parentId,
-                IsFolder = false
-            }).ExecuteReturnSnowflakeIdAsync(token);
+            var hasCache = false;
+            var comicId = SnowFlakeSingle.Instance.NextId();
             Logger.Information("进入{Zip}解压流程", zip);
             var path = Path.Combine(destinationDirectory, comicId.ToString());
             var md5 = EncryptingHelper.CreateMd5(zip);
             var sha1 = EncryptingHelper.CreateSha1(zip);
             var start = DateTime.Now;
-            var cacheZip = await Db.Queryable<CacheZip>().FirstAsync(x => x.Sha1 == sha1 && x.Md5 == md5, token);
+            var cacheZip = await Db.Queryable<CacheZip>()
+                .FirstAsync(x => x.Sha1 == sha1 && x.Md5 == md5, token);
             cacheZip ??= CacheZip.Create(md5, sha1);
             if (cacheZip.ComicId != null)
             {
                 comicId = (long)cacheZip.ComicId;
-                path = Path.Combine(destinationDirectory, comicId.ToString());
                 // 缓存文件未被删除
                 if (Directory.Exists(cacheZip.CachePath))
                 {
+                    var updateComicId = await Db.Updateable<LocalComic>()
+                        .SetColumns(x => x.IsDelete == false)
+                        .Where(x => x.Id == comicId)
+                        .ExecuteCommandAsync(token);
                     Logger.Information("{Zip}文件存在缓存记录,直接载入漫画{cid}", zip, cacheZip.ComicId);
-                    return cacheZip;
+                    return;
                 }
             }
 
+            await Db.InsertNav(new LocalComic()
+                {
+                    Name = Path.GetFileNameWithoutExtension(zip),
+                    Thumb = "mx-appx:///default.png",
+                    Affiliation = affiliation,
+                    ParentId = parentId,
+                    IsFolder = false,
+                    Link = path,
+                    Id = comicId,
+                    ReadingRecord = new LocalReadingRecord(),
+                })
+                .Include(z1 => z1.ReadingRecord)
+                .ExecuteCommandAsync();
             await using var fStream = File.OpenRead(zip);
             await using var stream = NonDisposingStream.Create(fStream);
             if (token.IsCancellationRequested) throw new TaskCanceledException();
@@ -124,6 +135,11 @@ namespace ShadowViewer.Plugin.Local.Services
                 thumbProgress?.Report(new MemoryStream(bytes));
             }
 
+            if (hasCache)
+            {
+                progress?.Report(100D);
+                return;
+            }
             Logger.Information("开始解压:{Zip}", zip);
 
             var i = 0;
@@ -138,15 +154,22 @@ namespace ShadowViewer.Plugin.Local.Services
             }
 
             var node = await SaveComic(token, path, comicId);
+            var episodeCount = await Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comicId).CountAsync(token);
+            var count = await Db.Queryable<LocalPicture>().Where(x => x.ComicId == comicId).CountAsync(token);
+            await Db.Updateable<LocalComic>()
+                .SetColumns(it => it.Size == node.Size)
+                .SetColumns(it => it.EpisodeCount == episodeCount)
+                .SetColumns(it => it.Count == count)
+                .Where(x => x.Id == comicId)
+                .ExecuteCommandAsync(token);
             progress?.Report(100D);
             var stop = DateTime.Now;
             cacheZip.ComicId = comicId;
             cacheZip.CachePath = path;
             cacheZip.Name = Path.GetFileNameWithoutExtension(zip)
-                .Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries).Last();
+                .Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries).Last();
             await Db.Storageable(cacheZip).ExecuteCommandAsync(token);
             Logger.Information("解压成功:{Zip} 页数:{Pages} 耗时: {Time} s", zip, totalCount, (stop - start).TotalSeconds);
-            return node;
         }
 
         /// <summary>

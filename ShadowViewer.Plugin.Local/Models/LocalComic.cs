@@ -37,21 +37,21 @@ public partial class LocalComic : ObservableObject
     /// 漫画Id
     /// </summary>
     [ObservableProperty]
-    [property: SugarColumn(IsNullable = true,ColumnDescription = "漫画Id")]
+    [property: SugarColumn(IsNullable = true, ColumnDescription = "漫画Id")]
     private string? comicId;
     /// <summary>
     /// 漫画名称
     /// </summary>
     [ObservableProperty]
-    [property: SugarColumn(ColumnDataType = "Nvarchar(255)", ColumnDescription = "漫画名称")]
-    private string name;
+    [property: SugarColumn(ColumnDataType = "Nvarchar(255)", ColumnDescription = "漫画名称", IsNullable = false)]
+    private string? name;
 
     /// <summary>
     /// 漫画缩略图
     /// </summary>
     [ObservableProperty]
     [property: SugarColumn(ColumnDataType = "TEXT", DefaultValue = "mx-appx:///default.png", ColumnDescription = "漫画缩略图")]
-    private string thumb;
+    private string thumb = "mx-appx:///default.png"; 
 
     /// <summary>
     /// 漫画备注
@@ -83,7 +83,7 @@ public partial class LocalComic : ObservableObject
     /// </summary>
     [ObservableProperty]
     [property: SugarColumn(ColumnDescription = "分类", IsNullable = false)]
-    private string affiliation;
+    private string? affiliation;
 
 
     /// <summary>
@@ -111,7 +111,19 @@ public partial class LocalComic : ObservableObject
     [property: SugarColumn(ColumnDescription = "是否是文件夹")]
     private bool isFolder;
 
-    
+    /// <summary>
+    /// 是否删除
+    /// </summary>
+    [ObservableProperty]
+    [property: SugarColumn(ColumnDescription = "是否删除")]
+    private bool isDelete;
+
+    /// <summary>
+    /// 是否损坏
+    /// </summary>
+    [ObservableProperty]
+    [property: SugarColumn(ColumnDescription = "是否损坏")]
+    private bool isBroken;
 
     /// <summary>
     /// 作者
@@ -129,7 +141,7 @@ public partial class LocalComic : ObservableObject
     /// <summary>
     /// 阅读记录
     /// </summary>
-    [Navigate(NavigateType.OneToOne, nameof(LocalReadingRecord.ComicId))]
+    [Navigate(NavigateType.OneToOne, nameof(Id))]
     public LocalReadingRecord ReadingRecord { get; set; }
 
     /// <summary>

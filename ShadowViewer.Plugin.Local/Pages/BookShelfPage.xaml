@@ -13,9 +13,14 @@
     mc:Ignorable="d">
     <Page.Resources>
         <winuiConverters:FileSizeToFriendlyStringConverter x:Key="SizeConverter" />
+        <winuiConverters:StringFormatConverter x:Key="StringFormatConverter" />
         <x:Double x:Key="InfoTextSize">13</x:Double>
         <x:Double x:Key="InfoIconSize">17</x:Double>
         <x:Double x:Key="InfoButtonHeight">32</x:Double>
+        <x:Double x:Key="BookShelfThumbWidth">120</x:Double>
+        <x:Double x:Key="BookShelfThumbHeight">160</x:Double>
+        <x:Double x:Key="BookShelfComicTitleFontSize">18</x:Double>
+        <x:Double x:Key="BookShelfComicSubInfoFontSize">16</x:Double>
         <!--#region 简单视图-->
         <DataTemplate x:Key="SimpleLocalComicItem" x:DataType="dv:LocalComic">
             <Border
@@ -29,39 +34,39 @@
                 RightTapped="ContentGridView_RightTapped"
                 Tag="{x:Bind}">
                 <Grid
-                    Width="150"
-                    Height="200"
                     Padding="6">
-                    <Grid VerticalAlignment="Top">
+                    <Grid VerticalAlignment="Top" 
+                          Width="150"
+                          Height="200">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="160"></RowDefinition>
                             <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="Auto"></RowDefinition>
                         </Grid.RowDefinitions>
                         <Image Grid.Row="0"
-                            x:Name="connectedElement"
-                            Width="120"
-                            Height="160"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Bottom"
-                            Source="{x:Bind Thumb}" />
+                               x:Name="connectedElement"
+                               Height="{StaticResource BookShelfThumbHeight}"
+                               Width="{StaticResource BookShelfThumbWidth}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Bottom"
+                               Source="{x:Bind Thumb}" />
                         <TextBlock
                             MaxWidth="100" Grid.Row="1"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontSize="16"
+                            FontSize="{StaticResource BookShelfComicTitleFontSize}"
                             MaxLines="1"
+                            FontWeight="Bold"
                             Text="{x:Bind Name}"
                             TextTrimming="CharacterEllipsis"
                             TextWrapping="Wrap"
                             ToolTipService.ToolTip="{x:Bind Name}" />
+                        <TextBlock Grid.Row="2"
+                                   HorizontalAlignment="Center"
+                                   FontSize="13"
+                                   Foreground="Gray"
+                                   Text="{x:Bind ReadingRecord.Percent, Converter={StaticResource StringFormatConverter}, ConverterParameter='{}{0:0.##}%'}" />
                     </Grid>
-                    <TextBlock
-                        MaxWidth="100"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Bottom"
-                        FontSize="13"
-                        Foreground="Gray"
-                        Text="{x:Bind ReadingRecord.Percent}" />
                 </Grid>
             </Border>
         </DataTemplate>
@@ -80,22 +85,22 @@
                 RightTapped="ContentGridView_RightTapped"
                 Tag="{x:Bind}">
                 <Grid
-                    Width="330"
-                    Height="200"
+                    Width="400"
+                    Height="180"
                     Padding="10">
                     <Grid
                         VerticalAlignment="Top"
                         ColumnSpacing="10">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="160"></ColumnDefinition>
+                            <ColumnDefinition Width="120"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <Image Grid.Column="0"
-                            Height="160"                           
-                            Width="120"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Source="{x:Bind Thumb, Mode=OneWay}" />
+                               Height="{StaticResource BookShelfThumbHeight}"
+                               Width="{StaticResource BookShelfThumbWidth}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Source="{x:Bind Thumb, Mode=OneWay}" />
                         <Grid Grid.Column="1">
                             <StackPanel
                                 Width="160"
@@ -105,7 +110,7 @@
                                 <TextBlock
                                     Width="150"
                                     HorizontalAlignment="Left"
-                                    FontSize="18"
+                                    FontSize="{StaticResource BookShelfComicTitleFontSize}"
                                     FontWeight="Bold"
                                     MaxLines="2"
                                     Text="{x:Bind Name, Mode=OneWay}"
@@ -131,13 +136,13 @@
                                     <TextBlock
                                         MaxWidth="60"
                                         HorizontalAlignment="Left"
-                                        FontSize="15"
+                                        FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
                                         Text="{x:Bind ReadingRecord.Percent, Mode=OneWay}" />
                                     <TextBlock
                                         Width="70"
                                         HorizontalAlignment="Left"
-                                        FontSize="15"
+                                        FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
                                         MaxLines="1"
                                         Text="{x:Bind Size, Mode=OneWay, Converter={StaticResource SizeConverter}}"
@@ -146,30 +151,30 @@
                                 <StackPanel Orientation="Horizontal">
                                     <icons:FluentRegularIcon
                                         Margin="0,2,0,0"
-                                        FontSize="15"
+                                        FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
                                         Symbol="Archive24Regular" />
                                     <TextBlock
                                         Margin="3,0,0,0"
-                                        FontSize="15"
+                                        FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
                                         Text="{x:Bind EpisodeCount, Mode=OneWay}" />
                                     <TextBlock
-                                        FontSize="15"
+                                        FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
                                         Text="E" />
                                     <icons:FluentRegularIcon
                                         Margin="5,2,0,0"
-                                        FontSize="15"
+                                        FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
                                         Symbol="DocumentOnePage24Regular" />
                                     <TextBlock
                                         Margin="1,0,0,0"
-                                        FontSize="15"
+                                        FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
                                         Text="{x:Bind Count, Mode=OneWay}" />
                                     <TextBlock
-                                        FontSize="15"
+                                        FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
                                         Text="P" />
                                 </StackPanel>
@@ -303,7 +308,7 @@
                                         <ToolTip Content="{i18N:Locale Key=ImportFromFolder}" />
                                     </ToolTipService.ToolTip>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem CommandParameter="{x:Bind RootPage}" 
+                                <MenuFlyoutItem CommandParameter="{x:Bind RootPage}"
                                                 Command="{x:Bind ViewModel.AddComicFromZipCommand}"
                                                 Text="{i18N:Locale Key=ImportFromZip}">
                                     <MenuFlyoutItem.Icon>

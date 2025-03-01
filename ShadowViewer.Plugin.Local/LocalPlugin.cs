@@ -32,9 +32,8 @@ public partial class LocalPlugin : AShadowViewerPlugin
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
-        db.CodeFirst.InitTables<LocalReadingRecord>();
         db.CodeFirst.InitTables<CacheImg>();
-        db.CodeFirst.InitTables<LocalAuthor, LocalComic, LocalComicAuthorMapping>();
+        db.CodeFirst.InitTables<LocalAuthor, LocalComic, LocalReadingRecord, LocalComicAuthorMapping>();
     }
 
 

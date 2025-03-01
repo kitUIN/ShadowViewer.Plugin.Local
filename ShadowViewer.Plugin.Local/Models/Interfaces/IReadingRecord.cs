@@ -17,9 +17,9 @@ public interface IReadingRecord
     long Id { get; set; }
 
     /// <summary>
-    /// 漫画Id
+    /// 额外的漫画Id
     /// </summary>
-    long ComicId { get; set; }
+    string? ExtraComicId { get; set; }
 
     /// <summary>
     /// 阅读进度
