@@ -81,17 +81,18 @@
                 Tag="{x:Bind}">
                 <Grid
                     Width="330"
-                    Height="150"
+                    Height="200"
                     Padding="10">
                     <Grid
                         VerticalAlignment="Top"
                         ColumnSpacing="10">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="120"></ColumnDefinition>
+                            <ColumnDefinition Width="160"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <Image Grid.Column="0"
-                            Height="130"
+                            Height="160"                           
+                            Width="120"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Source="{x:Bind Thumb, Mode=OneWay}" />
