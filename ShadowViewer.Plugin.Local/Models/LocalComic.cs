@@ -203,14 +203,14 @@ public partial class LocalComic : ObservableObject
     /// 创建时间晚-早
     /// </summary>
     public static int CzSort(LocalComic x, LocalComic y) => y.CreatedDateTime.CompareTo(x.CreatedDateTime);
-    // /// <summary>
-    // /// 阅读进度小-大
-    // /// </summary>
-    // public static int PaSort(LocalComic x, LocalComic y) => x.Percent.CompareTo(y.Percent);
-    // /// <summary>
-    // /// 阅读进度大-小
-    // /// </summary>
-    // public static int PzSort(LocalComic x, LocalComic y) => y.Percent.CompareTo(x.Percent);
+    /// <summary>
+    /// 阅读进度小-大
+    /// </summary>
+    public static int PaSort(LocalComic x, LocalComic y) => x.ReadingRecord.Percent.CompareTo(y.ReadingRecord.Percent);
+    /// <summary>
+    /// 阅读进度大-小
+    /// </summary>
+    public static int PzSort(LocalComic x, LocalComic y) => y.ReadingRecord.Percent.CompareTo(x.ReadingRecord.Percent);
 
     #endregion
 }

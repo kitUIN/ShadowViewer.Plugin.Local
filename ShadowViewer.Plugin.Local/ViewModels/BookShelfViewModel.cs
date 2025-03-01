@@ -16,6 +16,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Serilog;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core;
+using ShadowViewer.Controls.Extensions;
 using ShadowViewer.Core.Enums;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Services;
@@ -48,7 +49,7 @@ public partial class BookShelfViewModel: ObservableObject
     /// <summary>
     /// 当前文件夹ID
     /// </summary>
-    public long Path { get; private set; } = -1;
+    public long ParentId { get; private set; } = -1;
     /// <summary>
     /// 原始地址
     /// </summary>
@@ -86,21 +87,21 @@ public partial class BookShelfViewModel: ObservableObject
         LocalComics.CollectionChanged += LocalComics_CollectionChanged;
         OriginPath = parameter;
         var path = parameter.AbsolutePath.Split(['/',], StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
-        Path = -1;
+        ParentId = -1;
         if (path != "bookshelf")
         {
             try
             {
-                Path = long.Parse(path ?? "-1");
+                ParentId = long.Parse(path ?? "-1");
             }
             catch (FormatException)
             {
                     
             }
         }
-        Logger.Information("导航到{Path},Path={P}", OriginPath, Path);
+        Logger.Information("导航到{Path},Path={P}", OriginPath, ParentId);
         RefreshLocalComic();
-        CurrentName = Path == -1 ? "本地" : Db.Queryable<LocalComic>().First(x => x.Id == Path).Name;
+        CurrentName = ParentId == -1 ? "本地" : Db.Queryable<LocalComic>().First(x => x.Id == ParentId).Name;
     }
 
     private void LocalComics_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -116,7 +117,7 @@ public partial class BookShelfViewModel: ObservableObject
         LocalComics.Clear();
         var comics = Db.Queryable<LocalComic>()
             .Includes(x=>x.ReadingRecord)
-            .Where(x => x.ParentId == Path)
+            .Where(x => x.ParentId == ParentId)
             .ToList();
         switch (Sorts)
         {
@@ -132,10 +133,10 @@ public partial class BookShelfViewModel: ObservableObject
                 comics.Sort(LocalComic.RaSort); break;
             case ShadowSorts.RZ:
                 comics.Sort(LocalComic.RzSort); break;
-            // case ShadowSorts.PA:
-            //     comics.Sort(LocalComic.PaSort); break;
-            // case ShadowSorts.PZ:
-            //     comics.Sort(LocalComic.PzSort); break;
+            case ShadowSorts.PA:
+                comics.Sort(LocalComic.PaSort); break;
+            case ShadowSorts.PZ:
+                comics.Sort(LocalComic.PzSort); break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -193,7 +194,7 @@ public partial class BookShelfViewModel: ObservableObject
 
             await ComicService.ImportComicFromZipAsync(file.Path,
                 CoreSettings.ComicsPath,
-                LocalPlugin.Meta.Id, -1, token,
+                LocalPlugin.Meta.Id, ParentId, token,
                 new Progress<MemoryStream>(async void (thumbStream) =>
                 {
                     try
@@ -222,12 +223,7 @@ public partial class BookShelfViewModel: ObservableObject
                             {
                                 infoBar.Severity = InfoBarSeverity.Success;
                                 infoBar.Title = I18n.I18N.ImportComicSuccess;
-                                await Task.Delay(TimeSpan.FromSeconds(4), token);
-                                var parent = infoBar.Parent as StackPanel;
-                                if (parent != null)
-                                {
-                                    parent.Children.Remove(infoBar);
-                                }
+                                await infoBar.Close(4);
                             }
                         });
                     }
