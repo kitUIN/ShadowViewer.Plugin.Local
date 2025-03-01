@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -215,7 +215,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 Name = child.Name,
                 Order = number,
                 ComicId = comicId,
-                PageCounts = child.Count,
+                PageCount = child.Count,
                 Size = child.Size,
                 CreateTime = DateTime.Now,
             }).ExecuteReturnSnowflakeIdAsync(token);

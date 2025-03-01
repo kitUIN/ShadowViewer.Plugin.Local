@@ -9,6 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:ShadowViewer.Core.Models"
     xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
+    xmlns:models1="using:ShadowViewer.Plugin.Local.Models"
     mc:Ignorable="d">
     <Page.Resources>
         <winuiConverters:FileSizeToFriendlyStringConverter x:Key="SizeConverter" />
@@ -516,7 +517,7 @@
                         Visibility="{x:Bind ViewModel.IsHaveEpisodes}">
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.Episodes, Mode=OneWay}">
                             <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="models:LocalEpisode">
+                                <DataTemplate x:DataType="models1:LocalEpisode">
                                     <Button
                                         Click="Episode_Click"
                                         CornerRadius="10"
@@ -531,7 +532,7 @@
                                                         Margin="0,2,0,0"
                                                         FontSize="14"
                                                         Symbol="DocumentOnePage24Regular" />
-                                                    <TextBlock FontSize="12" Text="{x:Bind PageCounts}" />
+                                                    <TextBlock FontSize="12" Text="{x:Bind PageCount}" />
                                                     <TextBlock FontSize="12" Text="P" />
                                                     <TextBlock FontSize="12" Text=")" />
                                                 </StackPanel>
@@ -544,7 +545,7 @@
                                                     FontSize="18"
                                                     Symbol="Archive24Regular" />
                                                 <TextBlock Text="{x:Bind Name}" />
-                                                <InfoBadge Value="{x:Bind PageCounts}" />
+                                                <InfoBadge Value="{x:Bind PageCount}" />
                                             </StackPanel>
                                         </StackPanel>
                                     </Button>

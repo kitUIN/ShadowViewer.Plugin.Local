@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,7 +12,7 @@ using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 
 using SqlSugar;
-using LocalEpisode = ShadowViewer.Core.Models.LocalEpisode;
+using LocalEpisode = ShadowViewer.Plugin.Local.Models.LocalEpisode;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
