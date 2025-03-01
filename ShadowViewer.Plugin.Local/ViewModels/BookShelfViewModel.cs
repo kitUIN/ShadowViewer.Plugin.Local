@@ -172,12 +172,10 @@ public partial class BookShelfViewModel: ObservableObject
     [RelayCommand]
     private async Task AddComicFromZip(Page page)
     {
-        var files = await FileHelper.SelectMultipleFileAsync(page, "AddComicsFromZip", PickerViewMode.List, ".zip",
-            ".rar", ".7z");
+        var files = await FileHelper.SelectMultipleFileAsync(page, 
+            "AddComicsFromZip", PickerViewMode.List, ".zip", ".rar", ".7z");
         if (!files.Any()) return;
         var token = CancellationToken.None;
-        // var passwords = new string[files.Count];
-        // caller.ImportComic(files, passwords, 0);
         foreach (var file in files)
         {
             var bar = new ProgressBar()
@@ -206,8 +204,8 @@ public partial class BookShelfViewModel: ObservableObject
                     Spacing = 2,
                     Children =
                     {
-                        zipThumb,
                         bar,
+                        zipThumb,
                     }
                 }
             };
@@ -219,12 +217,19 @@ public partial class BookShelfViewModel: ObservableObject
                 LocalPlugin.Meta.Id, -1, token,
                 new Progress<MemoryStream>(async void (thumbStream) =>
                 {
-                    await page.DispatcherQueue.EnqueueAsync(async () =>
+                    try
                     {
-                        var bitmapImage = new BitmapImage();
-                        await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
-                        zipThumb.Source = bitmapImage;
-                    });
+                        await page.DispatcherQueue.EnqueueAsync(async () =>
+                        {
+                            var bitmapImage = new BitmapImage();
+                            await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
+                            zipThumb.Source = bitmapImage;
+                        });
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error("上报缩略图报错: {e}", e);
+                    }
                 }),
                 new Progress<double>(async void (v) =>
                 {
@@ -248,7 +253,7 @@ public partial class BookShelfViewModel: ObservableObject
                     }
                     catch (Exception e)
                     {
-                        throw;
+                        Logger.Error("上报进度报错: {e}", e);
                     }
                 }));
         }
