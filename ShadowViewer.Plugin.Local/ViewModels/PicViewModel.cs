@@ -5,6 +5,7 @@ using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Serilog;
 using ShadowViewer.Core.Args;
+using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Responders;
 using ShadowViewer.Core.Services;
 using ShadowViewer.Models;
@@ -26,14 +27,11 @@ public partial class PicViewModel : ObservableObject
     [ObservableProperty] private bool isMenu;
     public string Affiliation { get; set; }
     private ISqlSugarClient Db { get; }
-    private ResponderService ResponderService { get; }
     private IPicViewResponder? PicViewResponder { get; set; }
-    public PicViewModel(ILogger logger, ISqlSugarClient sqlSugarClient,
-        ResponderService responderService)
+    public PicViewModel(ILogger logger, ISqlSugarClient sqlSugarClient)
     {
         Logger = logger;
         Db = sqlSugarClient;
-        ResponderService = responderService;
     }
 
     /// <summary>
@@ -47,7 +45,7 @@ public partial class PicViewModel : ObservableObject
         Images.Clear();
         Episodes.Clear();
         EpisodeCounts.Clear();
-        PicViewResponder = ResponderService.GetEnabledResponder<IPicViewResponder>(Affiliation);
+        PicViewResponder = ResponderHelper.GetEnabledResponder<IPicViewResponder>(Affiliation);
         PicViewResponder?.PicturesLoadStarting(this, arg);
     }
 

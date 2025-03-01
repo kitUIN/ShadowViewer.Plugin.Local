@@ -1,4 +1,4 @@
-﻿using DryIoc;
+using DryIoc;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -510,8 +510,8 @@ public sealed partial class BookShelfPage : Page
                 DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
                 {
                     Id = comic.Id,
-                    Time = DateTime.Now,
-                    Icon = comic.Thumb,
+                    LastReadDateTime = DateTime.Now,
+                    Thumb = comic.Thumb,
                     Title = comic.Name,
                 }).ExecuteCommand();
                 Frame.Navigate(typeof(PicPage), new PicViewArg("Local", comic),

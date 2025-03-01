@@ -45,7 +45,7 @@ public partial class LocalComic : ObservableObject
     /// </summary>
     [ObservableProperty]
     [property: SugarColumn(ColumnDataType = "Nvarchar(255)", ColumnDescription = "漫画名称", IsNullable = false)]
-    private string? name;
+    private string name;
 
     /// <summary>
     /// 漫画缩略图
