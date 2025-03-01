@@ -29,18 +29,18 @@
                 RightTapped="ContentGridView_RightTapped"
                 Tag="{x:Bind}">
                 <Grid
-                    Width="130"
-                    Height="180"
+                    Width="150"
+                    Height="200"
                     Padding="6">
                     <Grid VerticalAlignment="Top">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="130"></RowDefinition>
+                            <RowDefinition Height="160"></RowDefinition>
                             <RowDefinition Height="*"></RowDefinition>
                         </Grid.RowDefinitions>
                         <Image Grid.Row="0"
                             x:Name="connectedElement"
                             Width="120"
-                            Height="130"
+                            Height="160"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Bottom"
                             Source="{x:Bind Thumb}" />
@@ -87,7 +87,7 @@
                         VerticalAlignment="Top"
                         ColumnSpacing="10">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="130"></ColumnDefinition>
+                            <ColumnDefinition Width="120"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <Image Grid.Column="0"
@@ -302,7 +302,8 @@
                                         <ToolTip Content="{i18N:Locale Key=ImportFromFolder}" />
                                     </ToolTipService.ToolTip>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Click="ShadowCommandAddFromZip_Click"
+                                <MenuFlyoutItem CommandParameter="{x:Bind RootPage}" 
+                                                Command="{x:Bind ViewModel.AddComicFromZipCommand}"
                                                 Text="{i18N:Locale Key=ImportFromZip}">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xF012;" />

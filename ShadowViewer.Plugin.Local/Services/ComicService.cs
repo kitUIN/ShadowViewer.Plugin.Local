@@ -13,6 +13,7 @@ using ShadowViewer.Core.Extensions;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Core.Services;
+using ShadowViewer.Plugin.Local.Cache;
 using ShadowViewer.Plugin.Local.Models;
 using SharpCompress.Archives;
 using SharpCompress.Common;
@@ -30,6 +31,7 @@ namespace ShadowViewer.Plugin.Local.Services
         [Autowired] private ILogger Logger { get; }
 
         [Autowired] private ICallableService Caller { get; }
+        [Autowired] private INotifyService NotifyService { get; }
         [Autowired] private ISqlSugarClient Db { get; }
 
         public async Task ImportComicFromFolderAsync(string folder,
@@ -118,7 +120,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 }
 
                 var bytes = ms.ToArray();
-                CacheImg.CreateImage(CoreSettings.TempPath, bytes, comicId.ToString());
+                CacheImg.CreateImage(CoreSettings.TempPath, bytes, comicId);
                 thumbProgress?.Report(new MemoryStream(bytes));
             }
 
@@ -136,6 +138,7 @@ namespace ShadowViewer.Plugin.Local.Services
             }
 
             var node = await SaveComic(token, path, comicId);
+            progress?.Report(100D);
             var stop = DateTime.Now;
             cacheZip.ComicId = comicId;
             cacheZip.CachePath = path;

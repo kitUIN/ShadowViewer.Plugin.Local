@@ -4,7 +4,6 @@ using Serilog;
 using ShadowPluginLoader.MetaAttributes;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Plugin.Local.ViewModels;
-using ShadowViewer.ViewModels;
 using SqlSugar;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Models;
@@ -13,6 +12,7 @@ using ShadowViewer.Core.Services;
 using ShadowViewer.Core;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Plugin.Local.Services;
+using ShadowViewer.Plugin.Local.Cache;
 
 namespace ShadowViewer.Plugin.Local;
 /// <summary>
@@ -33,6 +33,7 @@ public partial class LocalPlugin : AShadowViewerPlugin
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
         db.CodeFirst.InitTables<LocalReadingRecord>();
+        db.CodeFirst.InitTables<CacheImg>();
         db.CodeFirst.InitTables<LocalAuthor, LocalComic, LocalComicAuthorMapping>();
     }
 

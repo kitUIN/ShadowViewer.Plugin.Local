@@ -1,4 +1,4 @@
-using DryIoc;
+﻿using DryIoc;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -11,11 +11,11 @@ using ShadowViewer.Core.Cache;
 using ShadowViewer.Core.Converters;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.ViewModels;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
@@ -33,6 +33,7 @@ using ShadowViewer.Core.Enums;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Services;
 using System.Threading;
+using ShadowViewer.Plugin.Local.ViewModels;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -89,29 +90,14 @@ public sealed partial class BookShelfPage : Page
         // if (folder != null) caller.ImportComic(new List<IStorageItem> { folder }, new string[1], 0);
         if (folder != null)
         {
-            var token = new CancellationToken();
+            var token = CancellationToken.None;
+
             await DiFactory.Services.Resolve<ComicService>()
                 .ImportComicFromFolderAsync(folder.Path, LocalPlugin.Meta.Id, -1, token);
         }
     }
 
-    /// <summary>
-    /// 悬浮菜单-从压缩包导入漫画
-    /// </summary>
-    private async void ShadowCommandAddFromZip_Click(object sender, RoutedEventArgs e)
-    {
-        var files = await FileHelper.SelectMultipleFileAsync(this, "AddComicsFromZip", PickerViewMode.List, ".zip",
-            ".rar", ".7z");
-        if (files.Any())
-        {
-            var token = new CancellationToken();
-            // var passwords = new string[files.Count];
-            // caller.ImportComic(files, passwords, 0);
-            await DiFactory.Services.Resolve<ComicService>().ImportComicFromZipAsync(files[0].Path,
-                CoreSettings.ComicsPath, LocalPlugin.Meta.Id, -1, token);
-        }
-    }
-
+    
     /// <summary>
     /// 右键菜单-创建文件夹
     /// </summary>
