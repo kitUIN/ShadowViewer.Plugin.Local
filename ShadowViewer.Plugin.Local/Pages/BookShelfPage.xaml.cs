@@ -152,7 +152,8 @@ public sealed partial class BookShelfPage : Page
     private void ShadowCommandStatus_Click(object sender, RoutedEventArgs e)
     {
         HomeCommandBarFlyout.Hide();
-        Frame.Navigate(typeof(BookShelfSettingsPage), ContentGridView.SelectedItems[0] as LocalComic);
+        var comic = ContentGridView.SelectedItems[0] as LocalComic;
+        Frame.Navigate(typeof(AttributesPage), comic?.Id);
     }
 
     /// <summary>

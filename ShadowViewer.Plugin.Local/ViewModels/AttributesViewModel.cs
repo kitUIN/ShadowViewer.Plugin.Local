@@ -5,12 +5,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.Helpers;
 using Microsoft.UI.Xaml.Media;
 using Serilog;
+using ShadowPluginLoader.MetaAttributes;
 using ShadowViewer.Core;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
-
 using SqlSugar;
 using LocalEpisode = ShadowViewer.Plugin.Local.Models.LocalEpisode;
 
@@ -31,34 +31,31 @@ public partial class AttributesViewModel : ObservableObject
     /// <summary>
     /// 标签
     /// </summary>
-    public ObservableCollection<LocalTag> Tags = new();
+    public ObservableCollection<LocalTag> Tags = [];
 
     /// <summary>
     /// 话
     /// </summary>
-    public ObservableCollection<LocalEpisode> Episodes = new();
+    public ObservableCollection<LocalEpisode> Episodes = [];
 
     /// <summary>
     /// 是否有话
     /// </summary>
     public bool IsHaveEpisodes => Episodes.Count != 0;
 
-    private readonly PluginLoader pluginService;
-    private ISqlSugarClient Db { get; }
-    private ILogger Logger { get; }
+    [Autowired] private PluginLoader PluginService { get; }
+    [Autowired] private ISqlSugarClient Db { get; }
+    [Autowired] private ILogger Logger { get; }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="comicId"></param>
     public void Init(long comicId)
     {
-        CurrentComic = Db.Queryable<LocalComic>().First(x => x.Id == comicId);
+        CurrentComic = Db.Queryable<LocalComic>().Includes(x => x.ReadingRecord).First(x => x.Id == comicId);
         ReLoadTags();
         ReLoadEps();
-    }
-
-    public AttributesViewModel(PluginLoader pluginService, ISqlSugarClient sqlSugarClient, ILogger logger)
-    {
-        this.pluginService = pluginService;
-        Db = sqlSugarClient;
-        Logger = logger;
     }
 
     /// <summary>
@@ -77,7 +74,7 @@ public partial class AttributesViewModel : ObservableObject
     public void ReLoadTags()
     {
         Tags.Clear();
-        if (pluginService.GetPlugin(CurrentComic.Affiliation) is { } p && p.AffiliationTag is { } shadow)
+        if (PluginService.GetPlugin(CurrentComic.Affiliation) is { } p && p.AffiliationTag is { } shadow)
         {
             shadow.IsEnable = false;
             shadow.Icon = "\uE23F";

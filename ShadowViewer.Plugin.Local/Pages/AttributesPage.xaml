@@ -223,7 +223,7 @@
                                                 MaxWidth="{x:Bind ViewModel.TextBlockMaxWidth, Mode=OneWay}"
                                                 FontSize="{StaticResource AttributesFontSize}"
                                                 IsTextSelectionEnabled="True"
-                                                Text="{x:Bind ViewModel.CurrentComic.ReadingRecord.Percent, Mode=OneWay}"
+                                                Text="{x:Bind ViewModel.CurrentComic.ReadingRecord.Percent, Mode=OneWay, Converter={StaticResource StringFormatConverter}, ConverterParameter='{}{0:0.##}%'}"
                                                 TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
                                         <!--#endregion-->
@@ -314,7 +314,7 @@
                                                     FontSize="{StaticResource AttributesFontSize}"
                                                     IsTextSelectionEnabled="True"
                                                     MaxLines="1"
-                                                    Text="{x:Bind ViewModel.CurrentComic.UpdatedDateTime, Mode=OneWay}"
+                                                    Text="{x:Bind ViewModel.CurrentComic.ReadingRecord.UpdatedDateTime, Mode=OneWay}"
                                                     TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                             <!--#endregion-->
@@ -526,15 +526,11 @@
                                         <ToolTipService.ToolTip>
                                             <ToolTip>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock x:Uid="Xaml/TextBlock/ClickToRead" FontSize="12" />
-                                                    <TextBlock FontSize="12" Text="(" />
                                                     <icons:FluentRegularIcon
-                                                        Margin="0,2,0,0"
                                                         FontSize="14"
                                                         Symbol="DocumentOnePage24Regular" />
                                                     <TextBlock FontSize="12" Text="{x:Bind PageCount}" />
                                                     <TextBlock FontSize="12" Text="P" />
-                                                    <TextBlock FontSize="12" Text=")" />
                                                 </StackPanel>
                                             </ToolTip>
                                         </ToolTipService.ToolTip>
