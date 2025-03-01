@@ -15,12 +15,6 @@
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
         CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
-        <!-- <ScrollViewer -->
-        <!--     Tapped="ScrollViewer_Tapped" -->
-        <!--     VerticalScrollBarVisibility="Hidden" -->
-        <!--     ViewChanged="ScrollViewer_ViewChanged"> -->
-        <!--      -->
-        <!-- </ScrollViewer> -->
         <ListView
             x:Name="PicViewer"
             HorizontalAlignment="Center"
@@ -42,9 +36,6 @@
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
-            <!-- <ListV.Layout> -->
-            <!--     <StackLayout Orientation="Vertical" Spacing="0" /> -->
-            <!-- </ListV.Layout> -->
         </ListView>
         <Grid Grid.Column="0" VerticalAlignment="Bottom">
             <Grid.ColumnDefinitions>
@@ -61,14 +52,25 @@
                 HorizontalAlignment="Center"
                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                 CornerRadius="5">
-                <StackPanel Orientation="Horizontal" Spacing="10">
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="30"></ColumnDefinition>
+                        <ColumnDefinition Width="300"></ColumnDefinition>
+                        <ColumnDefinition Width="30"></ColumnDefinition>
+                        <ColumnDefinition Width="48"></ColumnDefinition>
+                        <ColumnDefinition Width="48"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
                     <ComboBox
                         VerticalAlignment="Center"
                         DisplayMemberPath="Title"
                         ItemsSource="{x:Bind ViewModel.Episodes}"
                         SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" />
-                    <TextBlock VerticalAlignment="Center" Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
+                    <TextBlock TextAlignment="Right"
+                        Grid.Column="1"
+                        VerticalAlignment="Center" Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
                     <Slider
+                        Grid.Column="2"
                         x:Name="PageSlider"
                         Width="300"
                         VerticalAlignment="Center"
@@ -79,14 +81,17 @@
                         Loaded="PageSlider_OnLoaded"
                         ValueChanged="PageSlider_ValueChanged"
                         Value="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}" />
-                    <TextBlock VerticalAlignment="Center" Text="{x:Bind ViewModel.Images.Count, Mode=OneWay}" />
-                    <AppBarButton Width="48" Height="48">
+                    <TextBlock 
+                        Grid.Column="3" VerticalAlignment="Center" Text="{x:Bind ViewModel.Images.Count, Mode=OneWay}" />
+                    <AppBarButton 
+                        Grid.Column="4" Width="48" Height="48">
                         <FontIcon Glyph="&#xE724;" />
                     </AppBarButton>
-                    <AppBarButton Width="48" Height="48">
+                    <AppBarButton 
+                        Grid.Column="5" Width="48" Height="48">
                         <FontIcon Glyph="&#xE736;" />
                     </AppBarButton>
-                </StackPanel>
+                </Grid>
             </Border>
         </Grid>
     </Grid>

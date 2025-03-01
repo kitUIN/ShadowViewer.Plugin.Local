@@ -27,9 +27,14 @@ public sealed partial class PicPage : Page
     /// ViewModel
     /// </summary>
     public PicViewModel ViewModel { get; } = DiFactory.Services.Resolve<PicViewModel>();
+    /// <summary>
+    /// 进度条是否被点击(拖动)
+    /// </summary>
+    private bool isPageSliderPressed;
 
-    private bool isPageSliderPressed = false;
-
+    /// <summary>
+    /// 
+    /// </summary>
     public PicPage()
     {
         this.InitializeComponent();
@@ -101,7 +106,11 @@ public sealed partial class PicPage : Page
         };
         ViewModel.Init(arg);
     }
-
+    /// <summary>
+    /// 按键检测
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     private void ScrollViewer_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (e.Key == VirtualKey.PageDown && sender is ScrollViewer scrollViewer)
@@ -109,7 +118,11 @@ public sealed partial class PicPage : Page
             scrollViewer.ChangeView(null, scrollViewer.VerticalOffset + scrollViewer.ViewportHeight, null);
         }
     }
-
+    /// <summary>
+    /// 点击菜单检测
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     private void ScrollViewer_Tapped(object sender, TappedRoutedEventArgs e)
     {
         Menu.Visibility = (Menu.Visibility != Visibility.Visible).ToVisibility();
