@@ -74,7 +74,6 @@ namespace ShadowViewer.Plugin.Local.Services
             IProgress<double>? progress = null,
             ReaderOptions? readerOptions = null)
         {
-            var hasCache = false;
             var comicId = SnowFlakeSingle.Instance.NextId();
             Logger.Information("进入{Zip}解压流程", zip);
             var path = Path.Combine(destinationDirectory, comicId.ToString());
@@ -95,6 +94,7 @@ namespace ShadowViewer.Plugin.Local.Services
                         .Where(x => x.Id == comicId)
                         .ExecuteCommandAsync(token);
                     Logger.Information("{Zip}文件存在缓存记录,直接载入漫画{cid}", zip, cacheZip.ComicId);
+                    progress?.Report(100D);
                     return;
                 }
             }
@@ -135,11 +135,6 @@ namespace ShadowViewer.Plugin.Local.Services
                 thumbProgress?.Report(new MemoryStream(bytes));
             }
 
-            if (hasCache)
-            {
-                progress?.Report(100D);
-                return;
-            }
             Logger.Information("开始解压:{Zip}", zip);
 
             var i = 0;

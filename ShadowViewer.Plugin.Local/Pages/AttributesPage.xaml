@@ -8,86 +8,15 @@
     xmlns:icons="using:FluentIcon.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:ShadowViewer.Core.Models"
+    x:Name="ThisPage"
     xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
     xmlns:models1="using:ShadowViewer.Plugin.Local.Models"
+    xmlns:interfaces="using:ShadowViewer.Core.Models.Interfaces"
     mc:Ignorable="d">
     <Page.Resources>
         <winuiConverters:FileSizeToFriendlyStringConverter x:Key="SizeConverter" />
         <x:Double x:Key="AttributesFontSize">16</x:Double>
         <x:Double x:Key="AttributesTitleWidth">70</x:Double>
-        <!--#region 标签设置弹出-->
-        <Flyout x:Name="TagSelectFlyout">
-            <StackPanel Orientation="Vertical" Spacing="10">
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock VerticalAlignment="Center" Text="{i18N:Locale Key=TagName}" />
-                    <TextBox
-                        x:Name="TagName"
-                        MaxWidth="450"
-                        KeyDown="TagName_KeyDown" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock Text="{i18N:Locale Key=BackgroundColor}" />
-                    <controls:ColorPickerButton x:Name="BackgroundColorPicker" SelectedColor="Gold">
-                        <controls:ColorPickerButton.ColorPickerStyle>
-                            <Style TargetType="controls:ColorPicker">
-                                <Setter Property="ColorSpectrumShape" Value="Box" />
-                                <Setter Property="IsAlphaEnabled" Value="False" />
-                                <Setter Property="IsHexInputVisible" Value="True" />
-                            </Style>
-                        </controls:ColorPickerButton.ColorPickerStyle>
-                    </controls:ColorPickerButton>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock Text="{i18N:Locale Key=ForegroundColor}" />
-                    <controls:ColorPickerButton x:Name="ForegroundColorPicker" SelectedColor="Black">
-                        <controls:ColorPickerButton.ColorPickerStyle>
-                            <Style TargetType="controls:ColorPicker">
-                                <Setter Property="ColorSpectrumShape" Value="Box" />
-                                <Setter Property="IsAlphaEnabled" Value="False" />
-                                <Setter Property="IsHexInputVisible" Value="True" />
-                            </Style>
-                        </controls:ColorPickerButton.ColorPickerStyle>
-                    </controls:ColorPickerButton>
-                </StackPanel>
-                <StackPanel
-                    HorizontalAlignment="Right"
-                    Orientation="Horizontal"
-                    Spacing="5">
-                    <Button
-                        x:Name="RemoveTagButton"
-                        HorizontalAlignment="Center"
-                        Click="RemoveTagButton_Click"
-                        CornerRadius="10"
-                        ToolTipService.ToolTip="{i18N:Locale Key=Delete}"
-                        Visibility="Collapsed">
-                        <StackPanel Orientation="Horizontal">
-                            <icons:FluentFilledIcon
-                                Margin="0,1,5,0"
-                                VerticalAlignment="Center"
-                                FontSize="18"
-                                Symbol="TagDismiss24Filled" />
-                            <TextBlock Text="{i18N:Locale Key=Delete}" />
-                        </StackPanel>
-                    </Button>
-                    <Button
-                        HorizontalAlignment="Center"
-                        Click="Yes_Click"
-                        CornerRadius="10">
-                        <ToolTipService.ToolTip>
-                            <ToolTip x:Name="YesToolTip" />
-                        </ToolTipService.ToolTip>
-                        <StackPanel Orientation="Horizontal">
-                            <icons:FluentFilledIcon
-                                x:Name="YesIcon"
-                                Margin="0,1,5,0"
-                                FontSize="18" />
-                            <TextBlock x:Name="YesText" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
-            </StackPanel>
-        </Flyout>
-        <!--#endregion-->
     </Page.Resources>
     <Grid
         x:Name="Root"
@@ -355,7 +284,8 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Id, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentRegularIcon FontSize="15" Symbol="Copy24Regular" />
+                                                                <icons:FluentRegularIcon FontSize="15"
+                                                                    Symbol="Copy24Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -386,7 +316,8 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Thumb, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentRegularIcon FontSize="15" Symbol="Copy24Regular" />
+                                                                <icons:FluentRegularIcon FontSize="15"
+                                                                    Symbol="Copy24Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -417,7 +348,8 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Link, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentRegularIcon FontSize="15" Symbol="Copy24Regular" />
+                                                                <icons:FluentRegularIcon FontSize="15"
+                                                                    Symbol="Copy24Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -448,7 +380,8 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Link, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentRegularIcon FontSize="15" Symbol="Copy24Regular" />
+                                                                <icons:FluentRegularIcon FontSize="15"
+                                                                    Symbol="Copy24Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -474,33 +407,46 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="10">
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tags, Mode=OneWay}">
-                            <!-- <ItemsRepeater.ItemTemplate> -->
-                            <!--     <DataTemplate x:DataType="models:ShadowTag"> -->
-                            <!--         <Button -->
-                            <!--             Background="{x:Bind Background}" -->
-                            <!--             Click="Tag_Click" -->
-                            <!--             CornerRadius="10" -->
-                            <!--             Foreground="{x:Bind Foreground}" -->
-                            <!--             Style="{ThemeResource NoOverButton}" -->
-                            <!--             Tag="{x:Bind}"> -->
-                            <!--             <ToolTipService.ToolTip> -->
-                            <!--                 <ToolTip Content="{x:Bind ToolTip}" /> -->
-                            <!--             </ToolTipService.ToolTip> -->
-                            <!--             <StackPanel Orientation="Horizontal"> -->
-                            <!--                 <icons:FluentRegularIcon -->
-                            <!--                     Margin="0,1,5,0" -->
-                            <!--                     FontSize="18" -->
-                            <!--                     Glyph="{x:Bind Icon}" /> -->
-                            <!--                 <TextBlock Text="{x:Bind Name}" /> -->
-                            <!--             </StackPanel> -->
-                            <!--         </Button> -->
-                            <!--     </DataTemplate> -->
-                            <!-- </ItemsRepeater.ItemTemplate> -->
-                            <ItemsRepeater.Layout>
-                                <controls:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
-                            </ItemsRepeater.Layout>
-                        </ItemsRepeater>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+
+                            <ItemsRepeater Grid.Column="0" ItemsSource="{x:Bind ViewModel.Tags, Mode=OneWay}">
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="interfaces:IShadowTag">
+                                        <Button Height="34"
+                                                Background="{x:Bind Background}"
+                                                CornerRadius="10"
+                                                Foreground="{x:Bind Foreground}"
+                                                Style="{ThemeResource NoOverButton}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <icons:FluentRegularIcon
+                                                    Margin="0,1,5,0"
+                                                    FontSize="18"
+                                                    Visibility="{x:Bind Icon, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}"
+                                                    Glyph="{x:Bind Icon}" />
+                                                <TextBlock VerticalAlignment="Center" Text="{x:Bind Name}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                                <ItemsRepeater.Layout>
+                                    <controls:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
+                                </ItemsRepeater.Layout>
+                            </ItemsRepeater>
+                            <HyperlinkButton Grid.Column="1" Height="34" Width="34"  VerticalAlignment="Center"
+                                             Padding="3" Command="{x:Bind ViewModel.TagClickCommand}"
+
+                                             ToolTipService.ToolTip="{i18N:Locale Key=AddTag}">
+                                <icons:FluentRegularIcon
+                                    HorizontalAlignment="Center"
+                                    FontSize="18"
+                                    Glyph="&#xE008;" />
+                            </HyperlinkButton>
+                        </Grid>
+
                     </Border>
                     <!--#endregion-->
 
@@ -556,5 +502,72 @@
                 </StackPanel>
             </Grid>
         </ScrollViewer>
+        <TeachingTip Title="{i18N:Locale Key=AddTag}"
+                     PreferredPlacement="Center" IsLightDismissEnabled="False"
+                     ActionButtonContent="{i18N:Locale Key=Confirm}"
+                     IsOpen="{x:Bind ViewModel.NewUiTagVisible,Mode=TwoWay}"
+                     ActionButtonCommand="{x:Bind ViewModel.AddNewTagCommand}"
+                     CloseButtonContent="{i18N:Locale Key=Cancel}">
+            <Grid RowSpacing="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{i18N:Locale Key=TagName}" />
+                    <AutoSuggestBox Grid.Column="1" x:Name="TagName"
+                                    Text="{x:Bind ViewModel.NewUiTag.Name,Mode=TwoWay}" />
+                </Grid>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10">
+                    <TextBlock VerticalAlignment="Center" Text="{i18N:Locale Key=BackgroundColor}" />
+                    <controls:ColorPickerButton x:Name="BackgroundColorPicker"
+                                                SelectedColor="{x:Bind ViewModel.NewUiTag.BackgroundColor,Mode=TwoWay}">
+                        <controls:ColorPickerButton.ColorPickerStyle>
+                            <Style TargetType="controls:ColorPicker">
+                                <Setter Property="ColorSpectrumShape" Value="Box" />
+                                <Setter Property="IsAlphaEnabled" Value="False" />
+                                <Setter Property="IsHexInputVisible" Value="True" />
+                            </Style>
+                        </controls:ColorPickerButton.ColorPickerStyle>
+                    </controls:ColorPickerButton>
+                </StackPanel>
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                    <TextBlock VerticalAlignment="Center" Text="{i18N:Locale Key=ForegroundColor}" />
+                    <controls:ColorPickerButton x:Name="ForegroundColorPicker"
+                                                SelectedColor="{x:Bind ViewModel.NewUiTag.ForegroundColor,Mode=TwoWay}">
+                        <controls:ColorPickerButton.ColorPickerStyle>
+                            <Style TargetType="controls:ColorPicker">
+                                <Setter Property="ColorSpectrumShape" Value="Box" />
+                                <Setter Property="IsAlphaEnabled" Value="False" />
+                                <Setter Property="IsHexInputVisible" Value="True" />
+                            </Style>
+                        </controls:ColorPickerButton.ColorPickerStyle>
+                    </controls:ColorPickerButton>
+                </StackPanel>
+                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="10">
+                    <TextBlock VerticalAlignment="Center" Text="{i18N:Locale Key=Preview}" />
+                    <Button Height="34"
+                            Background="{x:Bind ViewModel.NewUiTag.Background,Mode=OneWay}"
+                            CornerRadius="10"
+                            Foreground="{x:Bind ViewModel.NewUiTag.Foreground,Mode=OneWay}"
+                            Style="{ThemeResource NoOverButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <icons:FluentRegularIcon
+                                Margin="0,1,5,0"
+                                FontSize="18"
+                                Glyph="{x:Bind ViewModel.NewUiTag.Icon}"
+                                Visibility="{x:Bind ViewModel.NewUiTag.Icon, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}" />
+                            <TextBlock VerticalAlignment="Center" Text="{x:Bind ViewModel.NewUiTag.Name,Mode=OneWay}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </TeachingTip>
     </Grid>
 </Page>

@@ -44,7 +44,7 @@ public partial class LocalPlugin : AShadowViewerPlugin
     /// <summary>
     /// <inheritdoc/>
     /// </summary>
-    public override ShadowTag AffiliationTag { get; } = new("Local", "#ffd657", "#000000", null, "Local");
+    public override ShadowTag AffiliationTag { get; } = new("Local", "#ffd657", "#000000", "\uF66D", "Local");
 
     /// <summary>
     /// <inheritdoc/>

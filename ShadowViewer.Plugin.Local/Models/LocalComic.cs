@@ -83,7 +83,7 @@ public partial class LocalComic : ObservableObject
     /// 分类
     /// </summary>
     [ObservableProperty] [property: SugarColumn(ColumnDescription = "分类", IsNullable = false)]
-    private string? affiliation;
+    private string affiliation;
 
 
     /// <summary>

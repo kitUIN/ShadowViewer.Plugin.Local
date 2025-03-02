@@ -9,13 +9,13 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using ShadowViewer.Plugin.Local.I18n;
-using AttributesViewModel = ShadowViewer.Plugin.Local.ViewModels.AttributesViewModel;
 using FluentIcon.WinUI;
 using ShadowPluginLoader.WinUI;
 using Windows.Storage.Pickers;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Models;
+using ShadowViewer.Plugin.Local.ViewModels;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -24,18 +24,34 @@ namespace ShadowViewer.Plugin.Local.Pages;
 /// </summary>
 public sealed partial class AttributesPage : Page
 {
-    private AttributesViewModel ViewModel { get; } = DiFactory.Services.Resolve<AttributesViewModel>();
-    private string TagId { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
+    public AttributesViewModel ViewModel { get; } = DiFactory.Services.Resolve<AttributesViewModel>();
 
+    /// <summary>
+    /// 
+    /// </summary>
     public AttributesPage()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// 导航进入页面
+    /// </summary>
+    /// <param name="e"></param>
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
-        if (e.Parameter is LocalComic comic) ViewModel.Init(comic.Id);
-        else if (e.Parameter is long id) ViewModel.Init(id);
+        switch (e.Parameter)
+        {
+            case LocalComic comic:
+                ViewModel.Init(comic.Id);
+                break;
+            case long id:
+                ViewModel.Init(id);
+                break;
+        }
     }
 
     /// <summary>
@@ -43,7 +59,8 @@ public sealed partial class AttributesPage : Page
     /// </summary>
     private async void Image_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        var file = await FileHelper.SelectFileAsync(XamlRoot, "ShadowViewer_PicImageTapped", PickerViewMode.Thumbnail, FileHelper.Pngs); ;
+        var file = await FileHelper.SelectFileAsync(XamlRoot, "ShadowViewer_PicImageTapped", PickerViewMode.Thumbnail,
+            FileHelper.Pngs);
         // if (file != null) ViewModel.CurrentComic.Img = file.DecodePath();
     }
 
@@ -87,53 +104,14 @@ public sealed partial class AttributesPage : Page
         // await dialog.ShowAsync();
     }
 
-    /// <summary>
-    /// 点击标签
-    /// </summary>
-    private void Tag_Click(object sender, RoutedEventArgs e)
-    {
-        var button = sender as Button;
-        var tag = (ShadowTag)button.Tag;
-        if (ViewModel.IsLastTag(tag))
-        {
-            TagName.Text = "";
-            YesIcon.Symbol = FluentFilledIconSymbol.Tag24Filled;
-            YesText.Text = ResourcesHelper.GetString(ResourceKey.AddNew);
-            RemoveTagButton.Visibility = Visibility.Collapsed;
-        }
-        else
-        {
-            BackgroundColorPicker.SelectedColor = ((SolidColorBrush)button.Background).Color;
-            ForegroundColorPicker.SelectedColor = ((SolidColorBrush)button.Foreground).Color;
-            TagName.Text = ((TextBlock)((StackPanel)button.Content).Children[1]).Text;
-            YesIcon.Symbol = FluentFilledIconSymbol.TagReset24Filled;
-            YesText.Text = ResourcesHelper.GetString(ResourceKey.Update);
-            RemoveTagButton.Visibility = Visibility.Visible;
-        }
-
-        YesToolTip.Content = YesText.Text;
-        // if (tag.IsEnable)
-        // {
-        //     TagId = tag.Id;
-        //     TagSelectFlyout.ShowAt(sender as FrameworkElement);
-        // }
-    }
-
-    private void Yes_Click(object sender, RoutedEventArgs e)
-    {
-        // if (string.IsNullOrEmpty(TagName.Text)) return;
-        // ViewModel.AddNewTag(new ShadowTag(TagName.Text, background: BackgroundColorPicker.SelectedColor,
-        //     foreground: ForegroundColorPicker.SelectedColor) { Id = TagId });
-        // TagSelectFlyout.Hide();
-    }
 
     /// <summary>
     /// 浮出-删除
     /// </summary>
     private void RemoveTagButton_Click(object sender, RoutedEventArgs e)
     {
-        ViewModel.RemoveTag(TagId);
-        TagSelectFlyout.Hide();
+        // ViewModel.RemoveTag(TagId);
+        // AddTagTeachingTip.Hide();
     }
 
     /// <summary>
@@ -152,10 +130,6 @@ public sealed partial class AttributesPage : Page
     {
     }
 
-    private void TagName_KeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        if (e.Key == VirtualKey.Enter) Yes_Click(null, null);
-    }
 
     private void IDButton_Click(object sender, RoutedEventArgs e)
     {

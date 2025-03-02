@@ -2,13 +2,16 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.WinUI.Helpers;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Serilog;
 using ShadowPluginLoader.MetaAttributes;
 using ShadowViewer.Core;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Models;
+using ShadowViewer.Core.Models.Interfaces;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 using SqlSugar;
@@ -27,6 +30,16 @@ public partial class AttributesViewModel : ObservableObject
     /// 当前漫画
     /// </summary>
     public LocalComic CurrentComic { get; set; }
+
+    /// <summary>
+    /// 新增tag
+    /// </summary>
+    public NewUiTag NewUiTag { get; } = new();
+
+    /// <summary>
+    /// 新增tagUI显示
+    /// </summary>
+    [ObservableProperty] private bool newUiTagVisible = false;
 
     /// <summary>
     /// 标签
@@ -53,7 +66,11 @@ public partial class AttributesViewModel : ObservableObject
     /// <param name="comicId"></param>
     public void Init(long comicId)
     {
-        CurrentComic = Db.Queryable<LocalComic>().Includes(x => x.ReadingRecord).First(x => x.Id == comicId);
+        CurrentComic = Db.Queryable<LocalComic>()
+            .Includes(x => x.ReadingRecord)
+            .Includes(x => x.Authors)
+            .Includes(x => x.Tags)
+            .First(x => x.Id == comicId);
         ReLoadTags();
         ReLoadEps();
     }
@@ -73,40 +90,52 @@ public partial class AttributesViewModel : ObservableObject
     /// </summary>
     public void ReLoadTags()
     {
-        // Tags.Clear();
-        // if (PluginService.GetPlugin(CurrentComic.Affiliation) is { } p && p.AffiliationTag is { } shadow)
-        // {
-        //     shadow.IsEnable = false;
-        //     shadow.Icon = "\uE23F";
-        //     shadow.ToolTip = ResourcesHelper.GetString(ResourceKey.Affiliation) + ": " + shadow.Name;
-        //     Tags.Add(shadow);
-        // }
+        Tags.Clear();
+        var affiliationTag = Db.Queryable<ShadowTag>()
+            .Where(x => x.TagType == 0 && x.PluginId == CurrentComic.Affiliation).First();
+        if (affiliationTag != null)
+        {
+            Tags.Add(affiliationTag);
+        }
+
+        foreach (var item in CurrentComic.Tags)
+        {
+            // item.Icon = "\uEEDB";
+            Tags.Add(item);
+        }
         //
-        // if (CurrentComic.Tags != null)
-        //     foreach (var item in CurrentComic.Tags)
-        //     {
-        //         item.Icon = "\uEEDB";
-        //         item.ToolTip = ResourcesHelper.GetString(ResourceKey.Tag) + ": " + item.Name;
-        //         Tags.Add(item);
-        //     }
-        //
-        // Tags.Add(new ShadowTag
-        // {
-        //     Icon = "\uE008",
-        //     // Background = (SolidColorBrush)Application.Current.LocalResources["SystemControlBackgroundBaseMediumLowBrush"],
-        //     Foreground = new SolidColorBrush((ThemeHelper.IsDarkTheme() ? "#FFFFFFFF" : "#FF000000").ToColor()),
-        //     IsEnable = true,
-        //     Name = ResourcesHelper.GetString(ResourceKey.AddTag),
-        //     ToolTip = ResourcesHelper.GetString(ResourceKey.AddTag)
-        // });
+        // Tags.Add(new ShadowTag(I18N.AddTag, "#FFFFFFFF",
+        //     (ThemeHelper.IsDarkTheme() ? "#FFFFFFFF" : "#FF000000"),
+        //     "\uE008", "", true));
+    }
+
+    /// <summary>
+    /// 点击-标签
+    /// </summary>
+    [RelayCommand]
+    private void TagClick()
+    {
+        NewUiTag.Clean();
+        NewUiTagVisible = true;
     }
 
     /// <summary>
     /// 添加-标签
     /// </summary>
-    public void AddNewTag(ShadowTag tag)
+    [RelayCommand]
+    private void AddNewTag()
     {
-        // if (Db.Queryable<ShadowTag>().First(x => x.Id == tag.Id) is ShadowTag localTag)
+        if (Db.Queryable<ShadowTag>().Where(x => x.Name == NewUiTag.Name).Any()) return;
+        var tag = new ShadowTag(NewUiTag.Name, NewUiTag.BackgroundColor.ToHex(),
+            NewUiTag.ForegroundColor.ToHex(),
+            null, CurrentComic.Affiliation, tagType: 1);
+        CurrentComic.Tags.Add(tag);
+        Db.InsertNav(CurrentComic)
+            .Include(it => it.Tags, new InsertNavOptions()
+                { OneToManyIfExistsNoInsert = true }) //配置存在不插入
+            .ExecuteCommand();
+        Tags.Insert(Math.Max(Tags.Count - 1, 0), tag);
+        NewUiTagVisible = false;
         // {
         //     tag.ComicId = localTag.ComicId;
         //     tag.Icon = "\uEEDB";
