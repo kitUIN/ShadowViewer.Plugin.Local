@@ -132,8 +132,9 @@ public partial class LocalComic : ObservableObject
     /// <summary>
     /// 标签
     /// </summary>
-    [Navigate(NavigateType.OneToMany, nameof(LocalTag.ComicId))]
-    public List<LocalTag> Tags { get; set; }
+    [Navigate(typeof(LocalComicTagMapping), nameof(LocalComicTagMapping.ComicId),
+        nameof(LocalComicTagMapping.TagId))]
+    public List<ShadowTag> Tags { get; set; }
 
 
     /// <summary>

@@ -31,7 +31,7 @@ public partial class AttributesViewModel : ObservableObject
     /// <summary>
     /// 标签
     /// </summary>
-    public ObservableCollection<LocalTag> Tags = [];
+    public ObservableCollection<ShadowTag> Tags = [];
 
     /// <summary>
     /// 话
@@ -73,56 +73,56 @@ public partial class AttributesViewModel : ObservableObject
     /// </summary>
     public void ReLoadTags()
     {
-        Tags.Clear();
-        if (PluginService.GetPlugin(CurrentComic.Affiliation) is { } p && p.AffiliationTag is { } shadow)
-        {
-            shadow.IsEnable = false;
-            shadow.Icon = "\uE23F";
-            shadow.ToolTip = ResourcesHelper.GetString(ResourceKey.Affiliation) + ": " + shadow.Name;
-            Tags.Add(shadow);
-        }
-
-        if (CurrentComic.Tags != null)
-            foreach (var item in CurrentComic.Tags)
-            {
-                item.Icon = "\uEEDB";
-                item.ToolTip = ResourcesHelper.GetString(ResourceKey.Tag) + ": " + item.Name;
-                Tags.Add(item);
-            }
-
-        Tags.Add(new LocalTag
-        {
-            Icon = "\uE008",
-            // Background = (SolidColorBrush)Application.Current.LocalResources["SystemControlBackgroundBaseMediumLowBrush"],
-            Foreground = new SolidColorBrush((ThemeHelper.IsDarkTheme() ? "#FFFFFFFF" : "#FF000000").ToColor()),
-            IsEnable = true,
-            Name = ResourcesHelper.GetString(ResourceKey.AddTag),
-            ToolTip = ResourcesHelper.GetString(ResourceKey.AddTag)
-        });
+        // Tags.Clear();
+        // if (PluginService.GetPlugin(CurrentComic.Affiliation) is { } p && p.AffiliationTag is { } shadow)
+        // {
+        //     shadow.IsEnable = false;
+        //     shadow.Icon = "\uE23F";
+        //     shadow.ToolTip = ResourcesHelper.GetString(ResourceKey.Affiliation) + ": " + shadow.Name;
+        //     Tags.Add(shadow);
+        // }
+        //
+        // if (CurrentComic.Tags != null)
+        //     foreach (var item in CurrentComic.Tags)
+        //     {
+        //         item.Icon = "\uEEDB";
+        //         item.ToolTip = ResourcesHelper.GetString(ResourceKey.Tag) + ": " + item.Name;
+        //         Tags.Add(item);
+        //     }
+        //
+        // Tags.Add(new ShadowTag
+        // {
+        //     Icon = "\uE008",
+        //     // Background = (SolidColorBrush)Application.Current.LocalResources["SystemControlBackgroundBaseMediumLowBrush"],
+        //     Foreground = new SolidColorBrush((ThemeHelper.IsDarkTheme() ? "#FFFFFFFF" : "#FF000000").ToColor()),
+        //     IsEnable = true,
+        //     Name = ResourcesHelper.GetString(ResourceKey.AddTag),
+        //     ToolTip = ResourcesHelper.GetString(ResourceKey.AddTag)
+        // });
     }
 
     /// <summary>
     /// 添加-标签
     /// </summary>
-    public void AddNewTag(LocalTag tag)
+    public void AddNewTag(ShadowTag tag)
     {
-        if (Db.Queryable<LocalTag>().First(x => x.Id == tag.Id) is LocalTag localTag)
-        {
-            tag.ComicId = localTag.ComicId;
-            tag.Icon = "\uEEDB";
-            tag.ToolTip = ResourcesHelper.GetString(ResourceKey.Tag) + ": " + localTag.Name;
-            Db.Updateable(tag).ExecuteCommand();
-            if (Tags.FirstOrDefault(x => x.Id == tag.Id) is LocalTag lo) Tags[Tags.IndexOf(lo)] = tag;
-        }
-        else
-        {
-            tag.Id = LocalTag.RandomId();
-            tag.ComicId = CurrentComic.Id;
-            tag.Icon = "\uEEDB";
-            tag.ToolTip = ResourcesHelper.GetString(ResourceKey.Tag) + ": " + tag.Name;
-            Db.Insertable(tag).ExecuteCommand();
-            Tags.Insert(Math.Max(0, Tags.Count - 1), tag);
-        }
+        // if (Db.Queryable<ShadowTag>().First(x => x.Id == tag.Id) is ShadowTag localTag)
+        // {
+        //     tag.ComicId = localTag.ComicId;
+        //     tag.Icon = "\uEEDB";
+        //     tag.ToolTip = ResourcesHelper.GetString(ResourceKey.Tag) + ": " + localTag.Name;
+        //     Db.Updateable(tag).ExecuteCommand();
+        //     if (Tags.FirstOrDefault(x => x.Id == tag.Id) is ShadowTag lo) Tags[Tags.IndexOf(lo)] = tag;
+        // }
+        // else
+        // {
+        //     tag.Id = ShadowTag.RandomId();
+        //     tag.ComicId = CurrentComic.Id;
+        //     tag.Icon = "\uEEDB";
+        //     tag.ToolTip = ResourcesHelper.GetString(ResourceKey.Tag) + ": " + tag.Name;
+        //     Db.Insertable(tag).ExecuteCommand();
+        //     Tags.Insert(Math.Max(0, Tags.Count - 1), tag);
+        // }
     }
 
     /// <summary>
@@ -130,17 +130,17 @@ public partial class AttributesViewModel : ObservableObject
     /// </summary>
     public void RemoveTag(string id)
     {
-        if (Tags.FirstOrDefault(x => x.Id == id) is LocalTag tag)
-        {
-            Tags.Remove(tag);
-            Db.Deleteable(tag).ExecuteCommand();
-        }
+        // if (Tags.FirstOrDefault(x => x.Id == id) is ShadowTag tag)
+        // {
+        //     Tags.Remove(tag);
+        //     Db.Deleteable(tag).ExecuteCommand();
+        // }
     }
 
     /// <summary>
     /// 是否是最后一个标签
     /// </summary>
-    public bool IsLastTag(LocalTag tag)
+    public bool IsLastTag(ShadowTag tag)
     {
         return Tags.IndexOf(tag) == Tags.Count - 1;
     }

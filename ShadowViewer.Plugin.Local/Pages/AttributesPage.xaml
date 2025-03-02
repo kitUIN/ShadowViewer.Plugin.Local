@@ -475,28 +475,28 @@
                         BorderThickness="1"
                         CornerRadius="10">
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tags, Mode=OneWay}">
-                            <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="models:LocalTag">
-                                    <Button
-                                        Background="{x:Bind Background}"
-                                        Click="Tag_Click"
-                                        CornerRadius="10"
-                                        Foreground="{x:Bind Foreground}"
-                                        Style="{ThemeResource NoOverButton}"
-                                        Tag="{x:Bind}">
-                                        <ToolTipService.ToolTip>
-                                            <ToolTip Content="{x:Bind ToolTip}" />
-                                        </ToolTipService.ToolTip>
-                                        <StackPanel Orientation="Horizontal">
-                                            <icons:FluentRegularIcon
-                                                Margin="0,1,5,0"
-                                                FontSize="18"
-                                                Glyph="{x:Bind Icon}" />
-                                            <TextBlock Text="{x:Bind Name}" />
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsRepeater.ItemTemplate>
+                            <!-- <ItemsRepeater.ItemTemplate> -->
+                            <!--     <DataTemplate x:DataType="models:ShadowTag"> -->
+                            <!--         <Button -->
+                            <!--             Background="{x:Bind Background}" -->
+                            <!--             Click="Tag_Click" -->
+                            <!--             CornerRadius="10" -->
+                            <!--             Foreground="{x:Bind Foreground}" -->
+                            <!--             Style="{ThemeResource NoOverButton}" -->
+                            <!--             Tag="{x:Bind}"> -->
+                            <!--             <ToolTipService.ToolTip> -->
+                            <!--                 <ToolTip Content="{x:Bind ToolTip}" /> -->
+                            <!--             </ToolTipService.ToolTip> -->
+                            <!--             <StackPanel Orientation="Horizontal"> -->
+                            <!--                 <icons:FluentRegularIcon -->
+                            <!--                     Margin="0,1,5,0" -->
+                            <!--                     FontSize="18" -->
+                            <!--                     Glyph="{x:Bind Icon}" /> -->
+                            <!--                 <TextBlock Text="{x:Bind Name}" /> -->
+                            <!--             </StackPanel> -->
+                            <!--         </Button> -->
+                            <!--     </DataTemplate> -->
+                            <!-- </ItemsRepeater.ItemTemplate> -->
                             <ItemsRepeater.Layout>
                                 <controls:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
                             </ItemsRepeater.Layout>

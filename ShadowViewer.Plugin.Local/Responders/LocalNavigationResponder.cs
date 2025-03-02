@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
-using ShadowViewer.Core;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Core.Models.Interfaces;
 using ShadowViewer.Core.Services;
@@ -9,21 +8,21 @@ using ShadowViewer.Models;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Core.Responders;
-
-using SqlSugar;
+using ShadowPluginLoader.MetaAttributes;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
-public class LocalNavigationResponder(
-    ICallableService callableService,
-    ISqlSugarClient sqlSugarClient,
-    CompressService compressServices,
-    PluginLoader pluginService,
-    string id
-    ) : AbstractNavigationResponder(
-    id, callableService, sqlSugarClient, compressServices, pluginService
-    )
+/// <summary>
+/// 本地阅读器导航响应器
+/// </summary>
+public partial class LocalNavigationResponder : AbstractNavigationResponder
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
+    protected ICallableService Caller { get; }
+
     /// <summary>
     /// <inheritdoc/>
     /// </summary>
@@ -32,7 +31,7 @@ public class LocalNavigationResponder(
         {
             new ShadowNavigationItem(
                 pluginId: LocalPlugin.Meta.Id,
-                id:  "BookShelf",
+                id: "BookShelf",
                 icon: new SymbolIcon(Symbol.Home),
                 content: I18N.BookShelf)
         };
@@ -48,6 +47,10 @@ public class LocalNavigationResponder(
             _ => null
         };
     }
+
+    /// <summary>
+    /// <inheritdoc/>
+    /// </summary>
     public override void Navigate(Uri uri, string[] urls)
     {
         if (urls.Length == 0) return;

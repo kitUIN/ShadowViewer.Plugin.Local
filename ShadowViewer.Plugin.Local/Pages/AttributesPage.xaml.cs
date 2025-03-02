@@ -20,7 +20,7 @@ using ShadowViewer.Core.Models;
 namespace ShadowViewer.Plugin.Local.Pages;
 
 /// <summary>
-/// Âş»­ÊôĞÔÒ³
+/// æ¼«ç”»å±æ€§é¡µ
 /// </summary>
 public sealed partial class AttributesPage : Page
 {
@@ -39,7 +39,7 @@ public sealed partial class AttributesPage : Page
     }
 
     /// <summary>
-    /// µã»÷Í¼Æ¬
+    /// ç‚¹å‡»å›¾ç‰‡
     /// </summary>
     private async void Image_Tapped(object sender, TappedRoutedEventArgs e)
     {
@@ -48,7 +48,7 @@ public sealed partial class AttributesPage : Page
     }
 
     /// <summary>
-    /// ĞŞ¸Ä×÷Õß
+    /// ä¿®æ”¹ä½œè€…
     /// </summary>
     private async void AuthorButton_Click(object sender, RoutedEventArgs e)
     {
@@ -62,7 +62,7 @@ public sealed partial class AttributesPage : Page
     }
 
     /// <summary>
-    /// ĞŞ¸ÄÂş»­Ãû³Æ
+    /// ä¿®æ”¹æ¼«ç”»åç§°
     /// </summary>
     private async void FileNameButton_Click(object sender, RoutedEventArgs e)
     {
@@ -75,7 +75,7 @@ public sealed partial class AttributesPage : Page
     }
 
     /// <summary>
-    /// ĞŞ¸Äºº»¯×é
+    /// ä¿®æ”¹æ±‰åŒ–ç»„
     /// </summary>
     private async void GrouprButton_Click(object sender, RoutedEventArgs e)
     {
@@ -88,12 +88,12 @@ public sealed partial class AttributesPage : Page
     }
 
     /// <summary>
-    /// µã»÷±êÇ©
+    /// ç‚¹å‡»æ ‡ç­¾
     /// </summary>
     private void Tag_Click(object sender, RoutedEventArgs e)
     {
         var button = sender as Button;
-        var tag = (LocalTag)button.Tag;
+        var tag = (ShadowTag)button.Tag;
         if (ViewModel.IsLastTag(tag))
         {
             TagName.Text = "";
@@ -112,23 +112,23 @@ public sealed partial class AttributesPage : Page
         }
 
         YesToolTip.Content = YesText.Text;
-        if (tag.IsEnable)
-        {
-            TagId = tag.Id;
-            TagSelectFlyout.ShowAt(sender as FrameworkElement);
-        }
+        // if (tag.IsEnable)
+        // {
+        //     TagId = tag.Id;
+        //     TagSelectFlyout.ShowAt(sender as FrameworkElement);
+        // }
     }
 
     private void Yes_Click(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(TagName.Text)) return;
-        ViewModel.AddNewTag(new LocalTag(TagName.Text, background: BackgroundColorPicker.SelectedColor,
-            foreground: ForegroundColorPicker.SelectedColor) { Id = TagId });
-        TagSelectFlyout.Hide();
+        // if (string.IsNullOrEmpty(TagName.Text)) return;
+        // ViewModel.AddNewTag(new ShadowTag(TagName.Text, background: BackgroundColorPicker.SelectedColor,
+        //     foreground: ForegroundColorPicker.SelectedColor) { Id = TagId });
+        // TagSelectFlyout.Hide();
     }
 
     /// <summary>
-    /// ¸¡³ö-É¾³ı
+    /// æµ®å‡º-åˆ é™¤
     /// </summary>
     private void RemoveTagButton_Click(object sender, RoutedEventArgs e)
     {
@@ -137,14 +137,14 @@ public sealed partial class AttributesPage : Page
     }
 
     /// <summary>
-    /// ¿Ø¼ş³õÊ¼»¯
+    /// æ§ä»¶åˆå§‹åŒ–
     /// </summary>
     private void TopBorder_Loaded(object sender, RoutedEventArgs e)
     {
     }
 
     /// <summary>
-    /// Ìø×ªµ½¿´Âş»­
+    /// è·³è½¬åˆ°çœ‹æ¼«ç”»
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
@@ -163,7 +163,7 @@ public sealed partial class AttributesPage : Page
     }
 
     /// <summary>
-    /// ´óĞ¡ÊÊÓ¦¼ÆËã
+    /// å¤§å°é€‚åº”è®¡ç®—
     /// </summary>
     private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
     {

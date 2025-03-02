@@ -15,6 +15,7 @@ using ShadowViewer.Plugin.Local.Services;
 using ShadowViewer.Plugin.Local.Cache;
 
 namespace ShadowViewer.Plugin.Local;
+
 /// <summary>
 /// 
 /// </summary>
@@ -35,14 +36,15 @@ public partial class LocalPlugin : AShadowViewerPlugin
         db.CodeFirst.InitTables<LocalEpisode>();
         db.CodeFirst.InitTables<LocalPicture>();
         db.CodeFirst.InitTables<CacheImg>();
-        db.CodeFirst.InitTables<LocalAuthor, LocalComic, LocalReadingRecord, LocalComicAuthorMapping>();
+        db.CodeFirst
+            .InitTables<LocalAuthor, LocalComic, LocalReadingRecord, LocalComicAuthorMapping, LocalComicTagMapping>();
     }
 
 
     /// <summary>
     /// <inheritdoc/>
     /// </summary>
-    public override LocalTag AffiliationTag { get; } = new LocalTag("Local", "#000000", "#ffd657");
+    public override ShadowTag AffiliationTag { get; } = new("Local", "#ffd657", "#000000", null, "Local");
 
     /// <summary>
     /// <inheritdoc/>
