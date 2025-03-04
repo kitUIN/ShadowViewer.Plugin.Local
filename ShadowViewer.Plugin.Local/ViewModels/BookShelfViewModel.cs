@@ -20,6 +20,7 @@ using ShadowViewer.Controls.Extensions;
 using ShadowViewer.Core.Enums;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Services;
+using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Services;
 using SqlSugar;
@@ -191,47 +192,57 @@ public partial class BookShelfViewModel: ObservableObject
             };
             NotifyService.NotifyTip(
                 this, infoBar, 0, TipPopupPosition.Right);
-
-            await ComicService.ImportComicFromZipAsync(file.Path,
-                CoreSettings.ComicsPath,
-                LocalPlugin.Meta.Id, ParentId, token,
-                new Progress<MemoryStream>(async void (thumbStream) =>
+            var decompress = false;
+            while (!decompress)
+            {
+                try
                 {
-                    try
-                    {
-                        await page.DispatcherQueue.EnqueueAsync(async () =>
+                    decompress = await ComicService.ImportComicFromZipAsync(file.Path,
+                        CoreSettings.ComicsPath,
+                        LocalPlugin.Meta.Id, ParentId, token,
+                        new Progress<MemoryStream>(async void (thumbStream) =>
                         {
-                            var bitmapImage = new BitmapImage();
-                            await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
-                            zipThumb.Source = bitmapImage;
-                            zipThumb.Visibility = Visibility.Visible;
-                        });
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error("上报缩略图报错: {e}", e);
-                    }
-                }),
-                new Progress<double>(async void (v) =>
-                {
-                    try
-                    {
-                        await page.DispatcherQueue.EnqueueAsync(async () =>
-                        {
-                            bar.Value = v;
-                            if (Math.Abs(v - 100) == 0)
+                            try
                             {
-                                infoBar.Severity = InfoBarSeverity.Success;
-                                infoBar.Title = I18n.I18N.ImportComicSuccess;
-                                await infoBar.Close(4);
+                                await page.DispatcherQueue.EnqueueAsync(async () =>
+                                {
+                                    var bitmapImage = new BitmapImage();
+                                    await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
+                                    zipThumb.Source = bitmapImage;
+                                    zipThumb.Visibility = Visibility.Visible;
+                                });
                             }
-                        });
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error("上报进度报错: {e}", e);
-                    }
-                }));
+                            catch (Exception e)
+                            {
+                                Logger.Error("上报缩略图报错: {e}", e);
+                            }
+                        }),
+                        new Progress<double>(async void (v) =>
+                        {
+                            try
+                            {
+                                await page.DispatcherQueue.EnqueueAsync(async () =>
+                                {
+                                    bar.Value = v;
+                                    if (Math.Abs(v - 100) == 0)
+                                    {
+                                        infoBar.Severity = InfoBarSeverity.Success;
+                                        infoBar.Title = I18N.ImportComicSuccess;
+                                        await infoBar.Close(4);
+                                    }
+                                });
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.Error("上报进度报错: {e}", e);
+                            }
+                        }));
+                }
+                catch (CryptographicException e)
+                {
+                    // TODO: 输入压缩包密码
+                }
+            }
         }
 
         RefreshLocalComic();
