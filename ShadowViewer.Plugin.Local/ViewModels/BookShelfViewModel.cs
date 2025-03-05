@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -25,49 +26,56 @@ using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Services;
 using SqlSugar;
 using SharpCompress.Common;
+using SharpCompress.Readers;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
 /// <summary>
 /// 
 /// </summary>
-public partial class BookShelfViewModel: ObservableObject
+public partial class BookShelfViewModel : ObservableObject
 {
     /// <summary>
     /// 该文件夹内是否为空
     /// </summary>
-    [ObservableProperty]
-    private bool isEmpty = true;
+    [ObservableProperty] private bool isEmpty = true;
+
     /// <summary>
     /// 文件夹内总数量
     /// </summary>
-    [ObservableProperty]
-    private int folderTotalCounts;
+    [ObservableProperty] private int folderTotalCounts;
+
     /// <summary>
     /// 当前文件夹名称
     /// </summary>
     public string CurrentName { get; private set; }
+
     /// <summary>
     /// 当前文件夹ID
     /// </summary>
     public long ParentId { get; private set; } = -1;
+
     /// <summary>
     /// 原始地址
     /// </summary>
     public Uri OriginPath { get; private set; }
+
     /// <summary>
     /// 排序-<see cref="ShadowSorts"/>
     /// </summary>
     public ShadowSorts Sorts { get; set; } = ShadowSorts.RZ;
+
     /// <summary>
     /// 该文件夹下的漫画
     /// </summary>
     public ObservableCollection<LocalComic> LocalComics { get; } = [];
+
     private ISqlSugarClient Db { get; }
     private INotifyService NotifyService { get; }
     private ComicService ComicService { get; }
-    private ILogger Logger { get; } 
+    private ILogger Logger { get; }
     private readonly ICallableService caller;
+
     public BookShelfViewModel(ICallableService callableService,
         ISqlSugarClient sqlSugarClient, INotifyService notifyService, ComicService comicService,
         ILogger logger)
@@ -79,10 +87,12 @@ public partial class BookShelfViewModel: ObservableObject
         caller.RefreshBookEvent += Caller_RefreshBookEvent;
         Logger = logger;
     }
+
     private void Caller_RefreshBookEvent(object sender, EventArgs e)
     {
         RefreshLocalComic();
     }
+
     public void Init(Uri parameter)
     {
         LocalComics.CollectionChanged += LocalComics_CollectionChanged;
@@ -97,9 +107,9 @@ public partial class BookShelfViewModel: ObservableObject
             }
             catch (FormatException)
             {
-                    
             }
         }
+
         Logger.Information("导航到{Path},Path={P}", OriginPath, ParentId);
         RefreshLocalComic();
         CurrentName = ParentId == -1 ? "本地" : Db.Queryable<LocalComic>().First(x => x.Id == ParentId).Name;
@@ -110,6 +120,7 @@ public partial class BookShelfViewModel: ObservableObject
         IsEmpty = LocalComics.Count == 0;
         FolderTotalCounts = LocalComics.Count;
     }
+
     /// <summary>
     /// 刷新
     /// </summary>
@@ -117,7 +128,7 @@ public partial class BookShelfViewModel: ObservableObject
     {
         LocalComics.Clear();
         var comics = Db.Queryable<LocalComic>()
-            .Includes(x=>x.ReadingRecord)
+            .Includes(x => x.ReadingRecord)
             .Where(x => x.ParentId == ParentId)
             .ToList();
         switch (Sorts)
@@ -141,18 +152,21 @@ public partial class BookShelfViewModel: ObservableObject
             default:
                 throw new ArgumentOutOfRangeException();
         }
+
         foreach (var item in comics)
         {
             LocalComics.Add(item);
         }
     }
+
     /// <summary>
     /// 悬浮菜单-从压缩包导入漫画
     /// </summary>
     [RelayCommand]
     private async Task AddComicFromZip(Page page)
     {
-        var files = await FileHelper.SelectMultipleFileAsync(page, 
+        //TODO: 优化卡UI线程
+        var files = await FileHelper.SelectMultipleFileAsync(page,
             "AddComicsFromZip", PickerViewMode.List, ".zip", ".rar", ".7z");
         if (!files.Any()) return;
         var token = CancellationToken.None;
@@ -192,57 +206,77 @@ public partial class BookShelfViewModel: ObservableObject
             };
             NotifyService.NotifyTip(
                 this, infoBar, 0, TipPopupPosition.Right);
-            var decompress = false;
-            while (!decompress)
+            var op = new ReaderOptions();
+            var passed = false;
+            while (!passed) // 检查压缩包密码
             {
-                try
-                {
-                    decompress = await ComicService.ImportComicFromZipAsync(file.Path,
-                        CoreSettings.ComicsPath,
-                        LocalPlugin.Meta.Id, ParentId, token,
-                        new Progress<MemoryStream>(async void (thumbStream) =>
-                        {
-                            try
-                            {
-                                await page.DispatcherQueue.EnqueueAsync(async () =>
-                                {
-                                    var bitmapImage = new BitmapImage();
-                                    await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
-                                    zipThumb.Source = bitmapImage;
-                                    zipThumb.Visibility = Visibility.Visible;
-                                });
-                            }
-                            catch (Exception e)
-                            {
-                                Logger.Error("上报缩略图报错: {e}", e);
-                            }
-                        }),
-                        new Progress<double>(async void (v) =>
-                        {
-                            try
-                            {
-                                await page.DispatcherQueue.EnqueueAsync(async () =>
-                                {
-                                    bar.Value = v;
-                                    if (Math.Abs(v - 100) == 0)
-                                    {
-                                        infoBar.Severity = InfoBarSeverity.Success;
-                                        infoBar.Title = I18N.ImportComicSuccess;
-                                        await infoBar.Close(4);
-                                    }
-                                });
-                            }
-                            catch (Exception e)
-                            {
-                                Logger.Error("上报进度报错: {e}", e);
-                            }
-                        }));
-                }
-                catch (CryptographicException e)
-                {
-                    // TODO: 输入压缩包密码
-                }
+                passed = ComicService.CheckPassword(file.Path, ref op);
+                if (passed) break;
+                infoBar.Severity = InfoBarSeverity.Warning;
+                infoBar.Title = I18N.NeedPassword + ": " + System.IO.Path.GetFileNameWithoutExtension(file.Path);
+                var dialog = XamlHelper.CreateOneTextBoxDialog(page.XamlRoot,
+                    Path.GetFileName(file.Path) + Core.I18n.I18N.PasswordError,
+                    "", Core.I18n.I18N.ZipPasswordPlaceholder, "",
+                    (_, _, text) =>
+                    {
+                        // ReSharper disable once AccessToModifiedClosure
+                        op.Password = text;
+                    });
+                var res = await dialog.ShowAsync();
+                if (res == ContentDialogResult.None) break;
             }
+
+            if (!passed) // 如果取消输入密码
+            {
+                await infoBar.Close();
+                continue;
+            }
+
+            if (infoBar.Severity == InfoBarSeverity.Warning)
+            {
+                infoBar.Severity = InfoBarSeverity.Informational;
+                infoBar.Title = I18N.ImportComic + ": " + System.IO.Path.GetFileNameWithoutExtension(file.Path);
+            }
+            await ComicService.ImportComicFromZipAsync(file.Path,
+                CoreSettings.ComicsPath,
+                LocalPlugin.Meta.Id, ParentId, token,
+                new Progress<MemoryStream>(async void (thumbStream) =>
+                {
+                    try
+                    {
+                        await page.DispatcherQueue.EnqueueAsync(async () =>
+                        {
+                            var bitmapImage = new BitmapImage();
+                            await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
+                            zipThumb.Source = bitmapImage;
+                            zipThumb.Visibility = Visibility.Visible;
+                        });
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error("上报缩略图报错: {e}", e);
+                    }
+                }),
+                new Progress<double>(async void (v) =>
+                {
+                    try
+                    {
+                        await page.DispatcherQueue.EnqueueAsync(async () =>
+                        {
+                            bar.Value = v;
+                            if (Math.Abs(v - 100) == 0)
+                            {
+                                infoBar.Severity = InfoBarSeverity.Success;
+                                infoBar.Title = I18N.ImportComicSuccess;
+                                await infoBar.Close(4);
+                            }
+                        });
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error("上报进度报错: {e}", e);
+                    }
+                }), op);
         }
 
         RefreshLocalComic();

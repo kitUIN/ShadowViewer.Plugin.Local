@@ -363,4 +363,7 @@
   <data name="Preview" xml:space="preserve">
     <value>预览</value>
   </data>
+  <data name="NeedPassword" xml:space="preserve">
+    <value>需要密码</value>
+  </data>
 </root>
