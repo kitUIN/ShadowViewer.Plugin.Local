@@ -73,11 +73,18 @@ namespace ShadowViewer.Plugin.Local.Services
                 return false;
             }
         }
-
+        /// <summary>
+        /// 从文件夹导入漫画
+        /// </summary>
+        /// <param name="folder"></param>
+        /// <param name="affiliation"></param>
+        /// <param name="parentId"></param>
+        /// <param name="thumbProgress"></param>
+        /// <param name="progress"></param>
+        /// <returns></returns>
         public async Task ImportComicFromFolderAsync(string folder,
             string affiliation,
             long parentId,
-            CancellationToken token,
             IProgress<MemoryStream>? thumbProgress = null,
             IProgress<double>? progress = null)
         {
@@ -88,7 +95,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 Affiliation = affiliation,
                 ParentId = parentId,
                 IsFolder = false
-            }).ExecuteReturnSnowflakeIdAsync(token);
+            }).ExecuteReturnSnowflakeIdAsync();
             await SaveComic(folder, comicId);
         }
 

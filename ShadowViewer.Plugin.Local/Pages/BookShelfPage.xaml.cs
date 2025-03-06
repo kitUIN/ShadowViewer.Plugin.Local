@@ -81,36 +81,6 @@ public sealed partial class BookShelfPage : Page
     }
 
     /// <summary>
-    /// 悬浮菜单-从文件夹导入漫画
-    /// </summary>
-    /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="RoutedEventArgs"/> instance containing the event data.</param>
-    private async void ShadowCommandAddFromFolder_Click(object sender, RoutedEventArgs e)
-    {
-        var folder = await FileHelper.SelectFolderAsync(this, "AddNewComic");
-        // if (folder != null) caller.ImportComic(new List<IStorageItem> { folder }, new string[1], 0);
-        if (folder != null)
-        {
-            var token = CancellationToken.None;
-
-            await DiFactory.Services.Resolve<ComicService>()
-                .ImportComicFromFolderAsync(folder.Path, LocalPlugin.Meta.Id, -1, token);
-        }
-    }
-
-    
-    /// <summary>
-    /// 右键菜单-创建文件夹
-    /// </summary>
-    /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="RoutedEventArgs"/> instance containing the event data.</param>
-    private async void ShadowCommandAddNewFolder_Click(object sender, RoutedEventArgs e)
-    {
-        HomeCommandBarFlyout.Hide();
-        await CreateFolderDialog(XamlRoot, ViewModel.ParentId).ShowAsync();
-    }
-
-    /// <summary>
     /// 右键菜单-重命名
     /// </summary>
     /// <param name="sender">The source of the event.</param>
@@ -156,13 +126,7 @@ public sealed partial class BookShelfPage : Page
         Frame.Navigate(typeof(AttributesPage), comic?.Id);
     }
 
-    /// <summary>
-    /// 菜单-刷新
-    /// </summary>
-    private void ShadowCommandRefresh_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.RefreshLocalComic();
-    }
+ 
 
     /// <summary>
     /// 触控/鼠标-漫画项右键<br />

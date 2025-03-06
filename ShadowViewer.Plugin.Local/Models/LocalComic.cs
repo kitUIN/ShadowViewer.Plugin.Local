@@ -6,6 +6,7 @@ using Serilog;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Plugin.Local.I18n;
+using ShadowViewer.Plugin.Local.Models.Interfaces;
 using SqlSugar;
 
 namespace ShadowViewer.Plugin.Local.Models;
@@ -18,6 +19,7 @@ namespace ShadowViewer.Plugin.Local.Models;
 [SugarIndex("index_local_comic_createdDateTime", nameof(CreatedDateTime), OrderByType.Asc)]
 [SugarIndex("index_local_comic_updatedDateTime", nameof(UpdatedDateTime), OrderByType.Asc)]
 [SugarIndex("index_local_comic_name", nameof(Name), OrderByType.Asc)]
+[SugarIndex("index_local_comic_is_delete", nameof(IsDelete), OrderByType.Asc)]
 public partial class LocalComic : ObservableObject
 {
     #region Field
@@ -152,7 +154,7 @@ public partial class LocalComic : ObservableObject
     /// <param name="parentId">父级Id</param>
     public static void CreateFolder(string? name, long parentId = -1)
     {
-        if (string.IsNullOrEmpty(name)) name = ResourcesHelper.GetString(ResourceKey.NewFolder);
+        if (string.IsNullOrEmpty(name)) name = I18N.NewFolder;
         var i = 1;
         var db = DiFactory.Services.Resolve<ISqlSugarClient>();
         // ReSharper disable once AccessToModifiedClosure
@@ -161,14 +163,16 @@ public partial class LocalComic : ObservableObject
             name = $"{name}({i++})";
         }
 
-        db.Insertable(new LocalComic()
+        db.InsertNav(new LocalComic()
         {
+            Id = SnowFlakeSingle.Instance.NextId(),
             Name = name,
             Thumb = "ms-appx:///Assets/Default/folder.png",
             Affiliation = LocalPlugin.Meta.Id,
             ParentId = parentId,
-            IsFolder = true
-        }).ExecuteReturnSnowflakeId();
+            IsFolder = true,
+            ReadingRecord = new LocalReadingRecord()
+        }).Include(x => x.ReadingRecord).ExecuteCommandAsync();
     }
 
     #region 排序

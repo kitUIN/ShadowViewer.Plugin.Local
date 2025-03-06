@@ -9,6 +9,7 @@
     xmlns:icons="using:FluentIcon.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
+    xmlns:winUi="using:CommunityToolkit.WinUI"
     x:Name="RootPage"
     mc:Ignorable="d">
     <Page.Resources>
@@ -34,7 +35,7 @@
                 Tag="{x:Bind}">
                 <Grid
                     Padding="6">
-                    <Grid VerticalAlignment="Top" 
+                    <Grid VerticalAlignment="Top"
                           Width="150"
                           Height="200">
                         <Grid.RowDefinitions>
@@ -198,7 +199,8 @@
                 ToolTipService.ToolTip="{i18N:Locale Key=Rename}" />
             <AppBarButton
                 x:Name="ShadowCommandDelete"
-                Click="ShadowCommandDelete_Click"
+                Command="{x:Bind ViewModel.DeleteCommand}"
+                CommandParameter="{x:Bind RootPage}"
                 Icon="Delete"
                 Label="{i18N:Locale Key=Delete}"
                 ToolTipService.ToolTip="{i18N:Locale Key=Delete}" />
@@ -280,53 +282,39 @@
                     Background="Transparent"
                     DefaultLabelPosition="Right"
                     IsOpen="False">
-                    <AppBarButton Label="{i18N:Locale Key=Add}">
-                        <ToolTipService.ToolTip>
-                            <ToolTip Content="{i18N:Locale Key=Add}" />
-                        </ToolTipService.ToolTip>
-                        <AppBarButton.Icon>
-                            <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xECC8;" />
-                        </AppBarButton.Icon>
+                    <AppBarButton
+                        Icon="{winUi:FontIcon Glyph=&#xECC8;}"
+                        Label="{i18N:Locale Key=Add}"
+                        ToolTipService.ToolTip="{i18N:Locale Key=Add}">
                         <AppBarButton.Flyout>
                             <MenuFlyout Placement="Bottom">
                                 <MenuFlyoutItem
                                     x:Name="ShadowCommandAddNewFolder"
-                                    Click="ShadowCommandAddNewFolder_Click"
+                                    Command="{x:Bind ViewModel.CreateNewFolderCommand}"
+                                    CommandParameter="{x:Bind RootPage}"
                                     Icon="NewFolder"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=NewFolder}"
                                     Text="{i18N:Locale Key=NewFolder}">
-                                    <ToolTipService.ToolTip>
-                                        <ToolTip Content="{i18N:Locale Key=NewFolder}" />
-                                    </ToolTipService.ToolTip>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Click="ShadowCommandAddFromFolder_Click"
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.AddComicFromFolderCommand}"
+                                                CommandParameter="{x:Bind RootPage}"
+                                                ToolTipService.ToolTip="{i18N:Locale Key=ImportFromFolder}"
+                                                Icon="{winUi:FontIcon Glyph=&#xE82E;}"
                                                 Text="{i18N:Locale Key=ImportFromFolder}">
-                                    <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE82E;" />
-                                    </MenuFlyoutItem.Icon>
-                                    <ToolTipService.ToolTip>
-                                        <ToolTip Content="{i18N:Locale Key=ImportFromFolder}" />
-                                    </ToolTipService.ToolTip>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutItem CommandParameter="{x:Bind RootPage}"
                                                 Command="{x:Bind ViewModel.AddComicFromZipCommand}"
+                                                ToolTipService.ToolTip="{i18N:Locale Key=ImportFromZip}"
+                                                Icon="{winUi:FontIcon Glyph=&#xF012;}"
                                                 Text="{i18N:Locale Key=ImportFromZip}">
-                                    <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xF012;" />
-                                    </MenuFlyoutItem.Icon>
-                                    <ToolTipService.ToolTip>
-                                        <ToolTip Content="{i18N:Locale Key=ImportFromZip}" />
-                                    </ToolTipService.ToolTip>
                                 </MenuFlyoutItem>
                             </MenuFlyout>
                         </AppBarButton.Flyout>
                     </AppBarButton>
-                    <AppBarButton Click="ShadowCommandRefresh_Click" Label="{i18N:Locale Key=Refresh}">
-                        <ToolTipService.ToolTip>
-                            <ToolTip Content="{i18N:Locale Key=Refresh}" />
-                        </ToolTipService.ToolTip>
-                        <AppBarButton.Icon>
-                            <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xE72C;" />
-                        </AppBarButton.Icon>
+                    <AppBarButton Command="{x:Bind ViewModel.RefreshLocalComicCommand}"
+                                  ToolTipService.ToolTip="{i18N:Locale Key=Refresh}"
+                                  Icon="{winUi:FontIcon Glyph=&#xE72C;}"
+                                  Label="{i18N:Locale Key=Refresh}">
                     </AppBarButton>
                 </CommandBar>
                 <controls:Segmented
@@ -338,20 +326,12 @@
                     <controls:SegmentedItem
                         Width="60"
                         IsSelected="True"
+                        Icon="{winUi:FontIcon Glyph=&#xE163;}"
                         ToolTipService.ToolTip="{i18N:Locale Key=SimpleView}">
-                        <controls:SegmentedItem.Icon>
-                            <FontIcon Glyph="&#xE163;" />
-                        </controls:SegmentedItem.Icon>
                     </controls:SegmentedItem>
-                    <controls:SegmentedItem Width="60" ToolTipService.ToolTip="{i18N:Locale Key=DetailView}">
-                        <controls:SegmentedItem.Icon>
-                            <FontIcon Glyph="&#xE161;" />
-                        </controls:SegmentedItem.Icon>
-                    </controls:SegmentedItem>
-                    <controls:SegmentedItem Width="60">
-                        <controls:SegmentedItem.Icon>
-                            <FontIcon Glyph="&#xE161;" />
-                        </controls:SegmentedItem.Icon>
+                    <controls:SegmentedItem Width="60"
+                                            Icon="{winUi:FontIcon Glyph=&#xE161;}"
+                                            ToolTipService.ToolTip="{i18N:Locale Key=DetailView}">
                     </controls:SegmentedItem>
                 </controls:Segmented>
                 <CommandBar
@@ -432,22 +412,21 @@
                 VerticalScrollBarVisibility="Auto"
                 VerticalScrollMode="Enabled">
                 <RefreshContainer RefreshRequested="RefreshContainer_RefreshRequested">
-                    <GridView
-                        x:Name="ContentGridView"
-                        Padding="5"
-                        AllowDrop="False"
-                        CanDragItems="True"
-                        CanReorderItems="False"
-                        DragItemsStarting="ContentGridView_DragItemsStarting"
-                        FlowDirection="LeftToRight"
-                        IsDoubleTapEnabled="False"
-                        IsItemClickEnabled="True"
-                        ItemClick="ContentGridView_ItemClick"
-                        ItemTemplate="{StaticResource SimpleLocalComicItem}"
-                        ItemsSource="{x:Bind ViewModel.LocalComics}"
-                        KeyDown="GridViewOnKeyDown"
-                        SelectionChanged="ContentGridView_SelectionChanged"
-                        SelectionMode="Single" />
+                    <GridView  x:Name="ContentGridView"
+                              Padding="5"
+                              AllowDrop="False"
+                              CanDragItems="True"
+                              CanReorderItems="False"
+                              DragItemsStarting="ContentGridView_DragItemsStarting"
+                              FlowDirection="LeftToRight"
+                              IsDoubleTapEnabled="False"
+                              IsItemClickEnabled="True" 
+                              ItemClick="ContentGridView_ItemClick"
+                              ItemTemplate="{StaticResource SimpleLocalComicItem}"
+                              ItemsSource="{x:Bind ViewModel.LocalComics}"
+                              KeyDown="GridViewOnKeyDown"
+                              SelectionChanged="ContentGridView_SelectionChanged"
+                              SelectionMode="Single" />
                 </RefreshContainer>
             </ScrollViewer>
             <!--#endregion-->

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -29,8 +30,12 @@ using SharpCompress.Common;
 using SharpCompress.Readers;
 using Windows.Storage;
 using Azure;
+using Microsoft.IdentityModel.Tokens;
 using NetTaste;
 using Newtonsoft.Json.Linq;
+using ShadowViewer.Core.Cache;
+using ShadowViewer.Core.Extensions;
+using ShadowViewer.Plugin.Local.Enums;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -73,6 +78,11 @@ public partial class BookShelfViewModel : ObservableObject
     /// 该文件夹下的漫画
     /// </summary>
     public ObservableCollection<LocalComic> LocalComics { get; } = [];
+
+    /// <summary>
+    /// 被选中的
+    /// </summary>
+    public List<LocalComic> SelectedItems { get; set; } = [];
 
     private ISqlSugarClient Db { get; }
     private INotifyService NotifyService { get; }
@@ -125,9 +135,129 @@ public partial class BookShelfViewModel : ObservableObject
         FolderTotalCounts = LocalComics.Count;
     }
 
+
+    /// <summary>
+    /// 新建文件夹
+    /// </summary>
+    [RelayCommand]
+    private async Task CreateNewFolder(Page page)
+    {
+        var dialog = XamlHelper.CreateOneTextBoxDialog(page.XamlRoot, I18N.NewFolder,
+            I18N.NewFolderName, "", "",
+            (_, _, text) =>
+            {
+                LocalComic.CreateFolder(text, ParentId);
+                RefreshLocalComic();
+            });
+        await dialog.ShowAsync();
+    }
+
+
+    /// <summary>   
+    /// 删除二次确定框
+    /// </summary>
+    public async Task DeleteMessageDialog(Page page)
+    {
+        var deleteFiles = new CheckBox()
+        {
+            Content = I18N.DeleteComicFiles,
+            IsChecked = LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete,
+        };
+        deleteFiles.Checked += DeleteFilesChecked;
+        deleteFiles.Unchecked += DeleteFilesChecked;
+        var remember = new CheckBox()
+        {
+            Content = I18N.Remember,
+            IsChecked = LocalPlugin.Settings.LocalIsRememberDeleteFilesWithComicDelete,
+        };
+        remember.Checked += RememberChecked;
+        remember.Unchecked += RememberChecked;
+        var dialog = new ContentDialog
+        {
+            Title = I18N.IsDelete,
+            XamlRoot = page.XamlRoot,
+            Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
+            IsPrimaryButtonEnabled = true,
+            PrimaryButtonText = I18N.Confirm,
+            DefaultButton = ContentDialogButton.Close,
+            CloseButtonText = I18N.Cancel,
+            Content = new StackPanel()
+            {
+                Children = { deleteFiles, remember }
+            }
+        };
+        dialog.PrimaryButtonClick += (_, _) => DeleteComics();
+        dialog.Focus(FocusState.Programmatic);
+        await dialog.ShowAsync();
+        return;
+
+        void RememberChecked(object sender, RoutedEventArgs e)
+        {
+            LocalPlugin.Settings.LocalIsRememberDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ?? false;
+        }
+
+        void DeleteFilesChecked(object sender, RoutedEventArgs e)
+        {
+            LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ??
+                                                                     false;
+        }
+    }
+
+    /// <summary>
+    /// 删除
+    /// </summary>
+    [RelayCommand]
+    private async Task Delete(Page page)
+    {
+        if (SelectedItems.All(x => x.IsFolder))
+        {
+            DeleteComics();
+        }
+        else
+        {
+            if (LocalPlugin.Settings.LocalIsRememberDeleteFilesWithComicDelete)
+                DeleteComics();
+            else
+                await DeleteMessageDialog(page);
+        }
+    }
+
+    /// <summary>
+    /// 删除选中的漫画
+    /// </summary>
+    private void DeleteComics()
+    {
+        var db = DiFactory.Services.Resolve<ISqlSugarClient>();
+        foreach (var comic in SelectedItems)
+        {
+            if (LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder)
+            {
+                comic.Link?.DeleteDirectory();
+                db.Updateable<CacheZip>()
+                    .SetColumns(x => x.ComicId == null)
+                    .Where(x => x.ComicId == comic.Id)
+                    .ExecuteCommand();
+                db.Deleteable<LocalEpisode>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
+                db.Deleteable<LocalPicture>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
+                db.Deleteable<LocalComic>().Where(x => x.Id == comic.Id).ExecuteCommand();
+            }
+            else
+            {
+                db.Updateable<LocalComic>()
+                    .SetColumns(x => x.IsDelete == true)
+                    .Where(x => x.Id == comic.Id)
+                    .ExecuteCommand();
+            }
+
+            LocalComics.Remove(comic);
+        }
+    }
+
+
     /// <summary>
     /// 刷新
     /// </summary>
+    [RelayCommand]
     public void RefreshLocalComic()
     {
         LocalComics.Clear();
@@ -164,6 +294,22 @@ public partial class BookShelfViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 悬浮菜单-从文件夹导入漫画
+    /// </summary>
+    [RelayCommand]
+    private async Task AddComicFromFolder(Page page)
+    {
+        var folder = await FileHelper.SelectFolderAsync(page, "AddNewComic");
+        // if (folder != null) caller.ImportComic(new List<IStorageItem> { folder }, new string[1], 0);
+        if (folder == null) return;
+        var token = CancellationToken.None;
+
+        await Task.Run(() => DiFactory.Services.Resolve<ComicService>()
+            .ImportComicFromFolderAsync(folder.Path, LocalPlugin.Meta.Id, ParentId), token);
+        RefreshLocalComic();
+    }
+
+    /// <summary>
     /// 悬浮菜单-从压缩包导入漫画
     /// </summary>
     [RelayCommand]
@@ -177,8 +323,10 @@ public partial class BookShelfViewModel : ObservableObject
         {
             await ProcessFileAsync(file, page, token);
         }
+
         RefreshLocalComic();
     }
+
 
     /// <summary>
     /// 

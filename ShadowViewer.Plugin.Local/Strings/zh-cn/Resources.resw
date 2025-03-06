@@ -366,4 +366,7 @@
   <data name="NeedPassword" xml:space="preserve">
     <value>需要密码</value>
   </data>
+  <data name="NewFolderName" xml:space="preserve">
+    <value>新建文件夹名称</value>
+  </data>
 </root>
