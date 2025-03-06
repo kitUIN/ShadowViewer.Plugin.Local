@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using System;
 using SqlSugar;
@@ -51,7 +51,7 @@ namespace ShadowViewer.Plugin.Local.Models
         /// <inheritdoc cref="IReadingRecord.UpdatedDateTime" />
         /// </summary>
         [ObservableProperty]
-        [property: SugarColumn(UpdateServerTime = true, ColumnDescription = "更新时间")]
+        [property: SugarColumn(InsertServerTime = true, UpdateServerTime = true, ColumnDescription = "更新时间")]
         private DateTime updatedDateTime;
     }
 }

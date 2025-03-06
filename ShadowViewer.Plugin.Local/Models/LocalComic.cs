@@ -78,7 +78,7 @@ public partial class LocalComic : ObservableObject
     /// <summary>
     /// 更新时间
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(UpdateServerTime = true, ColumnDescription = "更新时间")]
+    [ObservableProperty] [property: SugarColumn(InsertServerTime = true, UpdateServerTime = true, ColumnDescription = "更新时间")]
     private DateTime updatedDateTime;
 
     /// <summary>
