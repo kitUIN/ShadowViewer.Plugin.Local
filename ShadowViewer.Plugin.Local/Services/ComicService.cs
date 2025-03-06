@@ -38,11 +38,11 @@ namespace ShadowViewer.Plugin.Local.Services
         /// <summary>
         /// 检测压缩包密码是否正确
         /// </summary>
-        public bool CheckPassword(string zip, ref ReaderOptions readerOptions)
+        public async Task<bool> CheckPassword(string zip, ReaderOptions readerOptions)
         {
             var md5 = EncryptingHelper.CreateMd5(zip);
             var sha1 = EncryptingHelper.CreateSha1(zip);
-            var cacheZip = Db.Queryable<CacheZip>().First(x => x.Sha1 == sha1 && x.Md5 == md5);
+            var cacheZip = await Db.Queryable<CacheZip>().FirstAsync(x => x.Sha1 == sha1 && x.Md5 == md5);
             if (cacheZip is { Password: not null } && cacheZip.Password != "")
             {
                 readerOptions.Password = cacheZip.Password;
@@ -51,25 +51,25 @@ namespace ShadowViewer.Plugin.Local.Services
 
             try
             {
-                using var fStream = File.OpenRead(zip);
-                using var stream = NonDisposingStream.Create(fStream);
+                await using var fStream = File.OpenRead(zip);
+                await using var stream = NonDisposingStream.Create(fStream);
                 using var archive = ArchiveFactory.Open(stream, readerOptions);
-                using var entryStream = archive.Entries.First(entry => !entry.IsDirectory).OpenEntryStream();
+                await using var entryStream = archive.Entries.First(entry => !entry.IsDirectory).OpenEntryStream();
                 // 密码正确添加压缩包密码存档
                 // 能正常打开一个entry就代表正确,所以这个循环只走了一次
-                Db.Storageable(
+                await Db.Storageable(
                     CacheZip.Create(md5, sha1, Path.GetFileNameWithoutExtension(zip),
-                        password: readerOptions.Password)).ExecuteCommand();
+                        password: readerOptions.Password)).ExecuteCommandAsync();
 
                 return true;
             }
             catch (CryptographicException)
             {
                 // 密码错误就删除压缩包密码存档
-                Db.Updateable<CacheZip>()
+                await Db.Updateable<CacheZip>()
                     .SetColumns(x => x.Password == null)
                     .Where(x => x.Sha1 == sha1 && x.Md5 == md5)
-                    .ExecuteCommand();
+                    .ExecuteCommandAsync();
                 return false;
             }
         }
@@ -89,7 +89,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 ParentId = parentId,
                 IsFolder = false
             }).ExecuteReturnSnowflakeIdAsync(token);
-            await SaveComic(token, folder, comicId);
+            await SaveComic(folder, comicId);
         }
 
         /// <summary>
@@ -100,7 +100,6 @@ namespace ShadowViewer.Plugin.Local.Services
         /// <param name="affiliation"></param>
         /// <param name="parentId"></param>
         /// <param name="thumbProgress"></param>
-        /// <param name="token"></param>
         /// <param name="progress"></param>
         /// <param name="readerOptions"></param>
         /// <returns></returns>
@@ -109,7 +108,6 @@ namespace ShadowViewer.Plugin.Local.Services
             string destinationDirectory,
             string affiliation,
             long parentId,
-            CancellationToken token,
             IProgress<MemoryStream>? thumbProgress = null,
             IProgress<double>? progress = null,
             ReaderOptions? readerOptions = null)
@@ -121,7 +119,7 @@ namespace ShadowViewer.Plugin.Local.Services
             var sha1 = EncryptingHelper.CreateSha1(zip);
             var start = DateTime.Now;
             var cacheZip = await Db.Queryable<CacheZip>()
-                .FirstAsync(x => x.Sha1 == sha1 && x.Md5 == md5, token);
+                .FirstAsync(x => x.Sha1 == sha1 && x.Md5 == md5);
             cacheZip ??= CacheZip.Create(md5, sha1, Path.GetFileNameWithoutExtension(zip));
             if (cacheZip.ComicId != null)
             {
@@ -132,7 +130,7 @@ namespace ShadowViewer.Plugin.Local.Services
                     var updateComicId = await Db.Updateable<LocalComic>()
                         .SetColumns(x => x.IsDelete == false)
                         .Where(x => x.Id == comicId)
-                        .ExecuteCommandAsync(token);
+                        .ExecuteCommandAsync();
                     Logger.Information("{Zip}文件存在缓存记录,直接载入漫画{cid}", zip, cacheZip.ComicId);
                     progress?.Report(100D);
                     return true;
@@ -154,20 +152,17 @@ namespace ShadowViewer.Plugin.Local.Services
                 .ExecuteCommandAsync();
             await using var fStream = File.OpenRead(zip);
             await using var stream = NonDisposingStream.Create(fStream);
-            if (token.IsCancellationRequested) throw new TaskCanceledException();
             using var archive = ArchiveFactory.Open(stream, readerOptions);
-            if (token.IsCancellationRequested) throw new TaskCanceledException();
             var total = archive.Entries.Where(
                     entry => !entry.IsDirectory && (entry.Key?.IsPic() ?? false))
                 .OrderBy(x => x.Key).ToList();
-            if (token.IsCancellationRequested) throw new TaskCanceledException();
             var totalCount = total.Count;
             var ms = new MemoryStream();
             if (total.FirstOrDefault() is { } img)
             {
                 await using (var entryStream = img.OpenEntryStream())
                 {
-                    await entryStream.CopyToAsync(ms, token);
+                    await entryStream.CopyToAsync(ms);
                 }
 
                 var bytes = ms.ToArray();
@@ -181,30 +176,29 @@ namespace ShadowViewer.Plugin.Local.Services
             path.CreateDirectory();
             foreach (var entry in total)
             {
-                if (token.IsCancellationRequested) throw new TaskCanceledException();
                 entry.WriteToDirectory(path, new ExtractionOptions() { ExtractFullPath = true, Overwrite = true });
                 i++;
                 var result = i / (double)totalCount;
                 progress?.Report(Math.Round(result * 100, 2) - 0.01D);
             }
 
-            var node = await SaveComic(token, path, comicId);
+            var node = await SaveComic(path, comicId);
             var episodeCount =
-                await Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comicId).CountAsync(token);
-            var count = await Db.Queryable<LocalPicture>().Where(x => x.ComicId == comicId).CountAsync(token);
+                await Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comicId).CountAsync();
+            var count = await Db.Queryable<LocalPicture>().Where(x => x.ComicId == comicId).CountAsync();
             await Db.Updateable<LocalComic>()
                 .SetColumns(it => it.Size == node.Size)
                 .SetColumns(it => it.EpisodeCount == episodeCount)
                 .SetColumns(it => it.Count == count)
                 .Where(x => x.Id == comicId)
-                .ExecuteCommandAsync(token);
+                .ExecuteCommandAsync();
             progress?.Report(100D);
             var stop = DateTime.Now;
             cacheZip.ComicId = comicId;
             cacheZip.CachePath = path;
             cacheZip.Name = Path.GetFileNameWithoutExtension(zip)
                 .Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries).Last();
-            await Db.Storageable(cacheZip).ExecuteCommandAsync(token);
+            await Db.Storageable(cacheZip).ExecuteCommandAsync();
             Logger.Information("解压成功:{Zip} 页数:{Pages} 耗时: {Time} s", zip, totalCount, (stop - start).TotalSeconds);
             return true;
         }
@@ -212,11 +206,10 @@ namespace ShadowViewer.Plugin.Local.Services
         /// <summary>
         /// 保存漫画
         /// </summary>
-        /// <param name="token"></param>
         /// <param name="path"></param>
         /// <param name="comicId"></param>
         /// <returns></returns>
-        private async Task<ShadowTreeNode> SaveComic(CancellationToken token, string path, long comicId)
+        private async Task<ShadowTreeNode> SaveComic(string path, long comicId)
         {
             var node = ShadowTreeNode.FromFolder(path);
             var number = 1;
@@ -227,7 +220,7 @@ namespace ShadowViewer.Plugin.Local.Services
             {
                 foreach (var child in comicNode.Children.Where(child => child.IsDirectory))
                 {
-                    pics.AddRange(await CreateEpisode(token, comicId, child, number, pics));
+                    pics.AddRange(await CreateEpisode(comicId, child, number, pics));
                     number++;
                 }
             }
@@ -236,15 +229,15 @@ namespace ShadowViewer.Plugin.Local.Services
                 var epNode = node.GetFilesByHeight(1).FirstOrDefault();
                 if (epNode != null)
                 {
-                    pics.AddRange(await CreateEpisode(token, comicId, epNode, number, pics));
+                    pics.AddRange(await CreateEpisode(comicId, epNode, number, pics));
                 }
             }
 
-            await Db.Insertable(pics).ExecuteReturnSnowflakeIdListAsync(token);
+            await Db.Insertable(pics).ExecuteReturnSnowflakeIdListAsync();
             return node;
         }
 
-        private async Task<IEnumerable<LocalPicture>> CreateEpisode(CancellationToken token, long comicId,
+        private async Task<IEnumerable<LocalPicture>> CreateEpisode(long comicId,
             ShadowTreeNode child, int number, List<LocalPicture> pics)
         {
             var epId = await Db.Insertable(new LocalEpisode
@@ -255,7 +248,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 PageCount = child.Count,
                 Size = child.Size,
                 CreateTime = DateTime.Now,
-            }).ExecuteReturnSnowflakeIdAsync(token);
+            }).ExecuteReturnSnowflakeIdAsync();
             return child.Children
                 .Where(c => !c.IsDirectory)
                 .Select(item =>

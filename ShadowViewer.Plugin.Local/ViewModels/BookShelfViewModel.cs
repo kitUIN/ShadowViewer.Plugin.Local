@@ -27,6 +27,10 @@ using ShadowViewer.Plugin.Local.Services;
 using SqlSugar;
 using SharpCompress.Common;
 using SharpCompress.Readers;
+using Windows.Storage;
+using Azure;
+using NetTaste;
+using Newtonsoft.Json.Linq;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -165,120 +169,168 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private async Task AddComicFromZip(Page page)
     {
-        //TODO: 优化卡UI线程
         var files = await FileHelper.SelectMultipleFileAsync(page,
             "AddComicsFromZip", PickerViewMode.List, ".zip", ".rar", ".7z");
         if (!files.Any()) return;
         var token = CancellationToken.None;
         foreach (var file in files)
         {
-            var bar = new ProgressBar()
+            await ProcessFileAsync(file, page, token);
+        }
+        RefreshLocalComic();
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="file"></param>
+    /// <param name="page"></param>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    private async Task ProcessFileAsync(IStorageItem file, Page page, CancellationToken token)
+    {
+        var progressRing = new ProgressRing()
+        {
+            Width = 20,
+            Height = 20,
+            Maximum = 100,
+            Value = 0,
+        };
+        var progressRingBackground = new ProgressRing()
+        {
+            Width = 20,
+            Height = 20,
+            Maximum = 100,
+            Value = 100,
+            IsIndeterminate = false,
+            Visibility = Visibility.Collapsed,
+            Opacity = 0.3,
+        };
+        var progressRingText = new TextBlock()
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            FontSize = 16,
+            Visibility = Visibility.Collapsed,
+            Text = "0.00%"
+        };
+        var zipThumb = new Image()
+        {
+            Width = 120,
+            Height = 160,
+            Visibility = Visibility.Collapsed
+        };
+        var progressStackPanel = new StackPanel()
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Spacing = 10,
+            Orientation = Orientation.Horizontal,
+            Children =
             {
-                Width = 120,
-                Maximum = 100,
-                Value = 0,
-            };
-            var zipThumb = new Image()
-            {
-                Width = 120,
-                Height = 160,
-                Visibility = Visibility.Collapsed
-            };
-            var infoBar = new InfoBar()
-            {
-                Title = I18n.I18N.ImportComic + ": " + System.IO.Path.GetFileNameWithoutExtension(file.Path),
-                Severity = InfoBarSeverity.Informational,
-                IsClosable = false,
-                IsIconVisible = true,
-                IsOpen = true,
-                FlowDirection = FlowDirection.LeftToRight,
-                Content = new StackPanel()
+                new Grid()
                 {
-                    Orientation = Orientation.Vertical,
-                    Margin = new Thickness(0, 0, 45, 40),
-                    Spacing = 2,
                     Children =
                     {
-                        bar,
-                        zipThumb,
+                        progressRingBackground,
+                        progressRing
                     }
+                },
+                progressRingText
+            }
+        };
+        var infoBar = new InfoBar()
+        {
+            Title = I18N.ImportComic + ": " + Path.GetFileNameWithoutExtension(file.Path),
+            Severity = InfoBarSeverity.Informational,
+            IsClosable = false,
+            IsIconVisible = true,
+            IsOpen = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            Content = new StackPanel()
+            {
+                Orientation = Orientation.Vertical,
+                Margin = new Thickness(0, 0, 45, 18),
+                Spacing = 10,
+                Children =
+                {
+                    zipThumb,
+                    progressStackPanel,
                 }
-            };
-            NotifyService.NotifyTip(
-                this, infoBar, 0, TipPopupPosition.Right);
-            var op = new ReaderOptions();
-            var passed = false;
-            while (!passed) // 检查压缩包密码
-            {
-                passed = ComicService.CheckPassword(file.Path, ref op);
-                if (passed) break;
-                infoBar.Severity = InfoBarSeverity.Warning;
-                infoBar.Title = I18N.NeedPassword + ": " + System.IO.Path.GetFileNameWithoutExtension(file.Path);
-                var dialog = XamlHelper.CreateOneTextBoxDialog(page.XamlRoot,
-                    Path.GetFileName(file.Path) + Core.I18n.I18N.PasswordError,
-                    "", Core.I18n.I18N.ZipPasswordPlaceholder, "",
-                    (_, _, text) =>
-                    {
-                        // ReSharper disable once AccessToModifiedClosure
-                        op.Password = text;
-                    });
-                var res = await dialog.ShowAsync();
-                if (res == ContentDialogResult.None) break;
             }
-
-            if (!passed) // 如果取消输入密码
-            {
-                await infoBar.Close();
-                continue;
-            }
-
-            if (infoBar.Severity == InfoBarSeverity.Warning)
-            {
-                infoBar.Severity = InfoBarSeverity.Informational;
-                infoBar.Title = I18N.ImportComic + ": " + System.IO.Path.GetFileNameWithoutExtension(file.Path);
-            }
-            await ComicService.ImportComicFromZipAsync(file.Path,
-                CoreSettings.ComicsPath,
-                LocalPlugin.Meta.Id, ParentId, token,
-                new Progress<MemoryStream>(async void (thumbStream) =>
-                {
-                    try
-                    {
-                        await page.DispatcherQueue.EnqueueAsync(async () =>
-                        {
-                            var bitmapImage = new BitmapImage();
-                            await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
-                            zipThumb.Source = bitmapImage;
-                            zipThumb.Visibility = Visibility.Visible;
-                        });
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error("上报缩略图报错: {e}", e);
-                    }
-                }),
-                new Progress<double>(async void (v) =>
-                {
-                    try
-                    {
-                        await page.DispatcherQueue.EnqueueAsync(async () =>
-                        {
-                            bar.Value = v;
-                            if (Math.Abs(v - 100) == 0)
-                            {
-                                infoBar.Severity = InfoBarSeverity.Success;
-                                infoBar.Title = I18N.ImportComicSuccess;
-                                await infoBar.Close(4);
-                            }
-                        });
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error("上报进度报错: {e}", e);
-                    }
-                }), op);
+        };
+        NotifyService.NotifyTip(
+            this, infoBar, 0, TipPopupPosition.Right);
+        var op = new ReaderOptions();
+        var passed = false;
+        while (!passed) // 检查压缩包密码
+        {
+            passed = await Task.Run(() => ComicService.CheckPassword(file.Path, op), token);
+            if (passed) break;
+            infoBar.Severity = InfoBarSeverity.Warning;
+            infoBar.Title = I18N.NeedPassword + ": " + Path.GetFileNameWithoutExtension(file.Path);
+            var dialog = XamlHelper.CreateOneTextBoxDialog(page.XamlRoot,
+                Path.GetFileName(file.Path) + Core.I18n.I18N.PasswordError,
+                "", Core.I18n.I18N.ZipPasswordPlaceholder, "",
+                (_, _, text) => op.Password = text);
+            var res = await dialog.ShowAsync();
+            if (res == ContentDialogResult.None) break;
         }
 
-        RefreshLocalComic();
+        if (!passed) // 如果取消输入密码
+        {
+            await infoBar.Close(0.5);
+            return;
+        }
+
+        if (infoBar.Severity == InfoBarSeverity.Warning)
+        {
+            infoBar.Severity = InfoBarSeverity.Informational;
+            infoBar.Title = I18N.ImportComic + ": " + Path.GetFileNameWithoutExtension(file.Path);
+        }
+
+        progressRing.IsIndeterminate = false;
+        progressRingBackground.Visibility = Visibility.Visible;
+        progressRingText.Visibility = Visibility.Visible;
+        await Task.Run(() => ComicService.ImportComicFromZipAsync(file.Path,
+            CoreSettings.ComicsPath,
+            LocalPlugin.Meta.Id, ParentId,
+            new Progress<MemoryStream>(async void (thumbStream) =>
+            {
+                try
+                {
+                    await page.DispatcherQueue.EnqueueAsync(async () =>
+                    {
+                        var bitmapImage = new BitmapImage();
+                        await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
+                        zipThumb.Source = bitmapImage;
+                        zipThumb.Visibility = Visibility.Visible;
+                    });
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("上报缩略图报错: {e}", e);
+                }
+            }),
+            new Progress<double>(async void (v) =>
+            {
+                try
+                {
+                    await page.DispatcherQueue.EnqueueAsync(async () =>
+                    {
+                        progressRing.Value = v;
+                        progressRingText.Text = $"{v:0.00}%";
+                        if (Math.Abs(v - 100) == 0)
+                        {
+                            progressStackPanel.Visibility = Visibility.Collapsed;
+                            infoBar.Severity = InfoBarSeverity.Success;
+                            infoBar.Title = I18N.ImportComicSuccess;
+                            await infoBar.Close();
+                        }
+                    });
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("上报进度报错: {e}", e);
+                }
+            }), op), token);
     }
 }
