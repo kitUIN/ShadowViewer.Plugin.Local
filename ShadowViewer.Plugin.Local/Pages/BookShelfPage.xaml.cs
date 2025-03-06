@@ -274,7 +274,7 @@ public sealed partial class BookShelfPage : Page
         SelectionPanel.Visibility = Visibility.Collapsed;
         ShelfInfo.Visibility = ConfigHelper.GetBoolean(LocalSettingKey.LocalIsBookShelfInfoBar).ToVisibility();
         StyleSegmented.SelectedIndex = ConfigHelper.GetBoolean(LocalSettingKey.LocalBookStyleDetail) ? 1 : 0;
-        ShadowCommandAddNewFolder.IsEnabled = ViewModel.CurrentId == -1;
+
     }
 
     /// <summary>   

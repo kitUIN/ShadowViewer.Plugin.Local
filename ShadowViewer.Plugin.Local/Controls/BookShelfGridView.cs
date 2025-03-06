@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
@@ -179,6 +179,7 @@ public class BookShelfGridView : GridView
         AddHandler(DoubleTappedEvent, new DoubleTappedEventHandler(OnItemDoubleTapped), true);
         AddHandler(RightTappedEvent, new RightTappedEventHandler(MenuRightTapped), true);
     }
+
     /// <summary>
     /// 
     /// </summary>
@@ -200,6 +201,7 @@ public class BookShelfGridView : GridView
             ItemTemplate = SimpleItemTemplate;
         }
     }
+
     /// <summary>
     /// 双击
     /// </summary>
@@ -207,26 +209,14 @@ public class BookShelfGridView : GridView
     /// <param name="e"></param>
     private void OnItemDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
-        var doubleTappedItem = FindItemUnderPointer(e.OriginalSource as DependencyObject);
-        if (doubleTappedItem != null && ItemDoubleTappedCommand != null &&
-            ItemDoubleTappedCommand.CanExecute(doubleTappedItem))
-        {
-            ItemDoubleTappedCommand.Execute(doubleTappedItem);
-        }
-    }
-
-    /// <summary>
-    /// 向上层查找到item
-    /// </summary>
-    private object? FindItemUnderPointer(DependencyObject? source)
-    {
-        while (source != null)
-        {
-            if (source is GridViewItem item) return ItemFromContainer(item);
-            source = VisualTreeHelper.GetParent(source);
-        }
-
-        return null;
+        if (ItemDoubleTappedCommand == null) return;
+        var doubleTappedItem = FindGridViewItemUnderPointer(e.OriginalSource as DependencyObject);
+        if (doubleTappedItem == null) return;
+        var item = ItemFromContainer(doubleTappedItem);
+        if (item is not LocalComic localComic) return;
+        var arg = new BookShelfNavigateArgs(localComic.IsFolder, localComic.Id, localComic.ParentId);
+        if (!ItemDoubleTappedCommand.CanExecute(arg)) return;
+        ItemDoubleTappedCommand.Execute(arg);
     }
 
     /// <summary>
@@ -263,7 +253,6 @@ public class BookShelfGridView : GridView
     /// </summary>
     private void MenuRightTapped(object sender, RightTappedRoutedEventArgs e)
     {
-        if (sender is not FrameworkElement element) return;
         var container = FindGridViewItemUnderPointer(e.OriginalSource as DependencyObject);
         if (container != null && container.IsSelected) return;
         foreach (var item in SelectedItems)

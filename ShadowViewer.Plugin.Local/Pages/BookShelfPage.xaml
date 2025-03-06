@@ -266,7 +266,7 @@
                         ToolTipService.ToolTip="{i18N:Locale Key=Add}">
                         <AppBarButton.Flyout>
                             <MenuFlyout Placement="Bottom">
-                                
+
                                 <MenuFlyoutItem
                                     x:Name="ShadowCommandAddNewFolder"
                                     Command="{x:Bind ViewModel.CreateNewFolderCommand}"
@@ -460,37 +460,28 @@
                 Grid.Row="2"
                 VerticalAlignment="Bottom">
                 <StackPanel
-                    Margin="6,0,0,2"
+                    Margin="16,0,0,2"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Bottom"
+                    Spacing="10"
                     Orientation="Horizontal">
-                    <StackPanel
-                        Margin="10,0,0,0"
-                        Orientation="Horizontal"
-                        Spacing="3">
-                        <TextBlock FontSize="{StaticResource InfoTextSize}"
-                                   Text="{x:Bind ViewModel.FolderTotalCounts, Mode=OneWay}" />
-                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=Object}" />
-                    </StackPanel>
+                    <TextBlock FontSize="{StaticResource InfoTextSize}">
+                        <Run Text="{x:Bind ViewModel.FolderTotalCounts, Mode=OneWay}"></Run>
+                        <Run Text="{i18N:Locale Key=Object}"></Run>
+                    </TextBlock>
                     <TextBlock
-                        Margin="10,0,0,0"
                         FontSize="{StaticResource InfoTextSize}"
                         Text="|" />
-                    <StackPanel
-                        Margin="10,0,0,0"
-                        Orientation="Horizontal"
-                        Spacing="3">
-                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=CurrentFolder}" />
-                        <TextBlock FontSize="{StaticResource InfoTextSize}"
-                                   Text="{x:Bind ViewModel.CurrentName, Mode=OneWay}" />
-                    </StackPanel>
+                    <TextBlock FontSize="{StaticResource InfoTextSize}">
+                        <Run Text="{i18N:Locale Key=CurrentFolder}"></Run>
+                        <Run Text=": "></Run>
+                        <Run Text="{x:Bind ViewModel.CurrentFolder.Name, Mode=OneWay}"></Run>
+                    </TextBlock>
                     <TextBlock
-                        Margin="10,0,0,0"
                         FontSize="{StaticResource InfoTextSize}"
                         Text="|" />
                     <StackPanel
                         x:Name="SelectionPanel"
-                        Margin="10,0,0,0"
                         Orientation="Horizontal"
                         Spacing="5">
                         <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=SelectionHeader}" />

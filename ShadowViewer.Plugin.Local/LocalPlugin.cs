@@ -39,14 +39,6 @@ public partial class LocalPlugin : AShadowViewerPlugin
         db.CodeFirst.InitTables<CacheImg>();
         db.CodeFirst
             .InitTables<LocalAuthor, LocalComic, LocalReadingRecord, LocalComicAuthorMapping, LocalComicTagMapping>();
-    }
-
-    /// <summary>
-    /// <inheritdoc cref="AbstractPlugin.Init" />
-    /// </summary>
-    protected new void Init()
-    {
-        base.Init();
         if (!Db.Queryable<LocalComic>().Any(x => x.Id == -1L))
         {
             LocalComic.CreateFolder("root", -2, -1);
