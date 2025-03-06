@@ -10,10 +10,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
     xmlns:winUi="using:CommunityToolkit.WinUI"
+    xmlns:local="using:ShadowViewer.Plugin.Local"
+    xmlns:controls1="using:ShadowViewer.Plugin.Local.Controls"
+    xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
     x:Name="RootPage"
     mc:Ignorable="d">
     <Page.Resources>
         <winuiConverters:FileSizeToFriendlyStringConverter x:Key="SizeConverter" />
+        <converters:IntEqConverter x:Key="IntEqOneConverter" />
         <x:Double x:Key="InfoTextSize">13</x:Double>
         <x:Double x:Key="InfoIconSize">17</x:Double>
         <x:Double x:Key="InfoButtonHeight">32</x:Double>
@@ -31,7 +35,6 @@
                 CornerRadius="4"
                 DragOver="GridViewItem_DragOverCustomized"
                 Drop="GridViewItem_Drop"
-                RightTapped="ContentGridView_RightTapped"
                 Tag="{x:Bind}">
                 <Grid
                     Padding="6">
@@ -82,7 +85,6 @@
                 CornerRadius="4"
                 DragOver="GridViewItem_DragOverCustomized"
                 Drop="GridViewItem_Drop"
-                RightTapped="ContentGridView_RightTapped"
                 Tag="{x:Bind}">
                 <Grid
                     Width="400"
@@ -186,40 +188,6 @@
         </DataTemplate>
         <!--#endregion-->
 
-        <!--#region 右键浮出栏-->
-        <CommandBarFlyout
-            x:Name="HomeCommandBarFlyout"
-            AlwaysExpanded="True"
-            Placement="Right">
-            <AppBarButton
-                x:Name="ShadowCommandRename"
-                Click="ShadowCommandRename_Click"
-                Icon="Rename"
-                Label="{i18N:Locale Key=Rename}"
-                ToolTipService.ToolTip="{i18N:Locale Key=Rename}" />
-            <AppBarButton
-                x:Name="ShadowCommandDelete"
-                Command="{x:Bind ViewModel.DeleteCommand}"
-                CommandParameter="{x:Bind RootPage}"
-                Icon="Delete"
-                Label="{i18N:Locale Key=Delete}"
-                ToolTipService.ToolTip="{i18N:Locale Key=Delete}" />
-            <CommandBarFlyout.SecondaryCommands>
-                <AppBarButton
-                    x:Name="ShadowCommandMove"
-                    Click="ShadowCommandMove_Click"
-                    Icon="MoveToFolder"
-                    Label="{i18N:Locale Key=MoveTo}"
-                    ToolTipService.ToolTip="{i18N:Locale Key=MoveTo}" />
-                <AppBarButton
-                    x:Name="ShadowCommandStatus"
-                    Click="ShadowCommandStatus_Click"
-                    Icon="Repair"
-                    Label="{i18N:Locale Key=Status}"
-                    ToolTipService.ToolTip="{i18N:Locale Key=Status}" />
-            </CommandBarFlyout.SecondaryCommands>
-        </CommandBarFlyout>
-        <!--#endregion-->
 
         <!--#region 路径树-->
         <TeachingTip
@@ -321,7 +289,6 @@
                     x:Name="StyleSegmented"
                     Grid.Column="1"
                     HorizontalAlignment="Center"
-                    SelectionChanged="Segmented_SelectionChanged"
                     SelectionMode="Single">
                     <controls:SegmentedItem
                         Width="60"
@@ -342,21 +309,12 @@
                     Background="Transparent"
                     DefaultLabelPosition="Right"
                     IsOpen="False">
-                    <AppBarButton Label="{i18N:Locale Key=Filter}">
-                        <ToolTipService.ToolTip>
-                            <ToolTip Content="{i18N:Locale Key=Filter}" />
-                        </ToolTipService.ToolTip>
-                        <AppBarButton.Icon>
-                            <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xE71C;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarButton x:Name="SortAppBarButton" Label="{i18N:Locale Key=Sort}">
-                        <ToolTipService.ToolTip>
-                            <ToolTip Content="{i18N:Locale Key=Sort}" />
-                        </ToolTipService.ToolTip>
-                        <AppBarButton.Icon>
-                            <FontIcon FontSize="{StaticResource InfoIconSize}" Glyph="&#xE8CB;" />
-                        </AppBarButton.Icon>
+                    <AppBarButton Label="{i18N:Locale Key=Filter}"
+                                  Icon="{winUi:FontIcon Glyph=&#xE71C;}"
+                                  ToolTipService.ToolTip="{i18N:Locale Key=Filter}" />
+                    <AppBarButton x:Name="SortAppBarButton" Label="{i18N:Locale Key=Sort}"
+                                  Icon="{winUi:FontIcon Glyph=&#xE8CB;}"
+                                  ToolTipService.ToolTip="{i18N:Locale Key=Sort}">
                         <AppBarButton.Flyout>
                             <MenuFlyout x:Name="SortFlyout" Placement="Bottom">
                                 <MenuFlyoutItem
@@ -412,21 +370,59 @@
                 VerticalScrollBarVisibility="Auto"
                 VerticalScrollMode="Enabled">
                 <RefreshContainer RefreshRequested="RefreshContainer_RefreshRequested">
-                    <GridView  x:Name="ContentGridView"
-                              Padding="5"
-                              AllowDrop="False"
-                              CanDragItems="True"
-                              CanReorderItems="False"
-                              DragItemsStarting="ContentGridView_DragItemsStarting"
-                              FlowDirection="LeftToRight"
-                              IsDoubleTapEnabled="False"
-                              IsItemClickEnabled="True" 
-                              ItemClick="ContentGridView_ItemClick"
-                              ItemTemplate="{StaticResource SimpleLocalComicItem}"
-                              ItemsSource="{x:Bind ViewModel.LocalComics}"
-                              KeyDown="GridViewOnKeyDown"
-                              SelectionChanged="ContentGridView_SelectionChanged"
-                              SelectionMode="Single" />
+                    <controls1:BookShelfGridView x:Name="ContentGridView"
+                                                 Padding="5"
+                                                 AllowDrop="False"
+                                                 IsDetail="{x:Bind StyleSegmented.SelectedIndex,Mode=OneWay,Converter={StaticResource IntEqOneConverter},ConverterParameter=1}"
+                                                 CanDragItems="True"
+                                                 CanReorderItems="False"
+                                                 SimpleItemTemplate="{StaticResource SimpleLocalComicItem}"
+                                                 DetailItemTemplate="{StaticResource DetailLocalComicItem}"
+                                                 ItemsSource="{x:Bind ViewModel.LocalComics}"
+                                                 KeyDown="GridViewOnKeyDown"
+                                                 SelectionChanged="ContentGridView_SelectionChanged"
+                                                 SelectionMode="Extended">
+                        <controls1:BookShelfGridView.ContextFlyout>
+                            <!--#region 右键浮出栏-->
+                            <CommandBarFlyout Placement="Right"
+                                              x:Name="HomeCommandBarFlyout"
+                                              AlwaysExpanded="True">
+                                <AppBarButton
+                                    x:Name="ShadowCommandRename"
+                                    Click="ShadowCommandRename_Click"
+                                    Icon="Rename"
+                                    Visibility="{x:Bind ContentGridView.IsSingle,Mode=OneWay}"
+                                    Label="{i18N:Locale Key=Rename}"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=Rename}" />
+                                <AppBarButton
+                                    x:Name="ShadowCommandStatus"
+                                    Click="ShadowCommandStatus_Click"
+                                    Icon="Repair"
+                                    Visibility="{x:Bind ContentGridView.IsMulti,Mode=OneWay,Converter={StaticResource BoolToVisibilityConverter},ConverterParameter=True}"
+                                    Label="{i18N:Locale Key=Status}"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=Status}" />
+                                <AppBarButton
+                                    x:Name="ShadowCommandDelete"
+                                    Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.DeleteCommand}"
+                                    CommandParameter="{x:Bind RootPage}"
+                                    Icon="Delete"
+                                    Label="{i18N:Locale Key=Delete}"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=Delete}" />
+                                <CommandBarFlyout.SecondaryCommands>
+                                    <AppBarButton
+                                        x:Name="ShadowCommandMove"
+                                        Click="ShadowCommandMove_Click"
+                                        Icon="MoveToFolder"
+                                        Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
+                                        Label="{i18N:Locale Key=MoveTo}"
+                                        ToolTipService.ToolTip="{i18N:Locale Key=MoveTo}" />
+
+                                </CommandBarFlyout.SecondaryCommands>
+                            </CommandBarFlyout>
+                            <!--#endregion-->
+                        </controls1:BookShelfGridView.ContextFlyout>
+                    </controls1:BookShelfGridView>
                 </RefreshContainer>
             </ScrollViewer>
             <!--#endregion-->

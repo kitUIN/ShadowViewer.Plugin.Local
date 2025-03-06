@@ -121,24 +121,12 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void ShadowCommandStatus_Click(object sender, RoutedEventArgs e)
     {
+        //TODO: 正确查看属性
         HomeCommandBarFlyout.Hide();
         var comic = ContentGridView.SelectedItems[0] as LocalComic;
         Frame.Navigate(typeof(AttributesPage), comic?.Id);
     }
 
- 
-
-    /// <summary>
-    /// 触控/鼠标-漫画项右键<br />
-    /// 选中/显示悬浮菜单
-    /// </summary>
-    private void ContentGridView_RightTapped(object sender, RightTappedRoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement { DataContext: not null } element) return;
-        var container = (GridViewItem)ContentGridView.ContainerFromItem(element.DataContext);
-        if (container != null && !container.IsSelected) container.IsSelected = true;
-        ShowMenu(element, e.GetPosition(element));
-    }
 
     /// <summary>
     /// 弹出框-重命名
@@ -257,7 +245,7 @@ public sealed partial class BookShelfPage : Page
     private void ContentGridView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
         HomeCommandBarFlyout.Hide();
-        foreach (LocalComic item in e.Items)
+        foreach (var item in e.Items)
         {
             var container = (GridViewItem)ContentGridView.ContainerFromItem(item);
             if (container != null && !container.IsSelected) container.IsSelected = true;
@@ -390,6 +378,7 @@ public sealed partial class BookShelfPage : Page
                     .Where(x => x.Id == comic.Id)
                     .ExecuteCommand();
             }
+
             ViewModel.LocalComics.Remove(comic);
         }
     }
@@ -437,20 +426,7 @@ public sealed partial class BookShelfPage : Page
         }
     }
 
-    /// <summary>
-    /// 简约与详细视图切换<br />
-    /// SelectedIndex:<br />
-    /// 0 - 简略<br />
-    /// 1 - 详细
-    /// </summary>
-    private void Segmented_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (ContentGridView is null || sender is not Segmented se) return;
-        LocalPlugin.Settings.LocalBookStyleDetail = se.SelectedIndex == 1;
-        ContentGridView.ItemTemplate =
-            Resources[(LocalPlugin.Settings.LocalBookStyleDetail ? "Detail" : "Simple") + "LocalComicItem"] as
-                DataTemplate;
-    }
+ 
 
     /// <summary>
     /// 触控-下拉刷新
