@@ -62,6 +62,9 @@ public partial class LocalNavigationResponder : AbstractNavigationResponder
             case "settings":
                 Caller.NavigateTo(typeof(BookShelfSettingsPage), parameter: new Uri("shadow://local/settings"));
                 break;
+            case "pictures":
+                Caller.NavigateTo(typeof(PicPage), parameter: new Uri("shadow://local/pictures"));
+                break;
             default:
                 Caller.NavigateTo(typeof(BookShelfPage), parameter: new Uri("shadow://local/bookshelf"));
                 break;

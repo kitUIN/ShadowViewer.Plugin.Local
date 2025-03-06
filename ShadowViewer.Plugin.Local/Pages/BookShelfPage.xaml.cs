@@ -43,9 +43,11 @@ namespace ShadowViewer.Plugin.Local.Pages;
 /// </summary>
 public sealed partial class BookShelfPage : Page
 {
-    public static ILogger Logger { get; } = Log.ForContext<BookShelfPage>();
-    public BookShelfViewModel ViewModel { get; set; }
-    private ICallableService caller = DiFactory.Services.Resolve<ICallableService>();
+    /// <summary>
+    /// ViewModel
+    /// </summary>
+    public BookShelfViewModel ViewModel { get; private set; } = null!;
+
 
     /// <summary>
     /// 书架页面
@@ -55,30 +57,17 @@ public sealed partial class BookShelfPage : Page
         InitializeComponent();
     }
 
+    /// <summary>
+    /// 进入页面
+    /// </summary>
+    /// <param name="e"></param>
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         ViewModel = DiFactory.Services.Resolve<BookShelfViewModel>();
-        ViewModel.Init(e.Parameter as Uri);
+        if(e.Parameter is Uri uri) ViewModel.NavigateTo(uri);
+
     }
 
-    /// <summary>
-    /// 显示悬浮菜单
-    /// </summary>
-    private void ShowMenu(UIElement sender, Point? position = null)
-    {
-        var isComicBook = ContentGridView.SelectedItems.Count > 0;
-        var isSingle = ContentGridView.SelectedItems.Count == 1;
-        var myOption = new FlyoutShowOptions()
-        {
-            ShowMode = FlyoutShowMode.Standard,
-            Position = position
-        };
-        ShadowCommandRename.IsEnabled = isComicBook & isSingle;
-        ShadowCommandDelete.IsEnabled = isComicBook;
-        ShadowCommandMove.IsEnabled = isComicBook;
-        ShadowCommandStatus.IsEnabled = isComicBook & isSingle;
-        HomeCommandBarFlyout.ShowAt(sender, myOption);
-    }
 
     /// <summary>
     /// 右键菜单-重命名
@@ -285,7 +274,7 @@ public sealed partial class BookShelfPage : Page
         SelectionPanel.Visibility = Visibility.Collapsed;
         ShelfInfo.Visibility = ConfigHelper.GetBoolean(LocalSettingKey.LocalIsBookShelfInfoBar).ToVisibility();
         StyleSegmented.SelectedIndex = ConfigHelper.GetBoolean(LocalSettingKey.LocalBookStyleDetail) ? 1 : 0;
-        ShadowCommandAddNewFolder.IsEnabled = ViewModel.ParentId == -1;
+        ShadowCommandAddNewFolder.IsEnabled = ViewModel.CurrentId == -1;
     }
 
     /// <summary>   
@@ -426,7 +415,6 @@ public sealed partial class BookShelfPage : Page
         }
     }
 
- 
 
     /// <summary>
     /// 触控-下拉刷新
@@ -437,27 +425,27 @@ public sealed partial class BookShelfPage : Page
         ViewModel.RefreshLocalComic();
     }
 
-    /// <summary>
-    /// 触控/鼠标-点击漫画项
-    /// </summary>
-    private void ContentGridView_ItemClick(object sender, ItemClickEventArgs e)
-    {
-        if (e.ClickedItem is LocalComic comic)
-        {
-            if (comic.IsFolder)
-                ViewModel.Init(new Uri(ViewModel.OriginPath, comic.Id.ToString()));
-            else
-            {
-                DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
-                {
-                    Id = comic.Id,
-                    LastReadDateTime = DateTime.Now,
-                    Thumb = comic.Thumb,
-                    Title = comic.Name,
-                }).ExecuteCommand();
-                Frame.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
-                    new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
-            }
-        }
-    }
+    // /// <summary>
+    // /// 触控/鼠标-点击漫画项
+    // /// </summary>
+    // private void ContentGridView_ItemClick(object sender, ItemClickEventArgs e)
+    // {
+    //     if (e.ClickedItem is LocalComic comic)
+    //     {
+    //         if (comic.IsFolder)
+    //             ViewModel.Init(new Uri(ViewModel.OriginPath, comic.Id.ToString()));
+    //         else
+    //         {
+    //             DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
+    //             {
+    //                 Id = comic.Id,
+    //                 LastReadDateTime = DateTime.Now,
+    //                 Thumb = comic.Thumb,
+    //                 Title = comic.Name,
+    //             }).ExecuteCommand();
+    //             Frame.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
+    //                 new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
+    //         }
+    //     }
+    // }
 }

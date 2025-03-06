@@ -52,7 +52,7 @@
                                Width="{StaticResource BookShelfThumbWidth}"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Bottom"
-                               Source="{x:Bind Thumb}" />
+                               Source="{x:Bind Thumb,Mode=OneWay}" />
                         <TextBlock
                             MaxWidth="100" Grid.Row="1"
                             HorizontalAlignment="Center"
@@ -60,15 +60,16 @@
                             FontSize="{StaticResource BookShelfComicTitleFontSize}"
                             MaxLines="1"
                             FontWeight="Bold"
-                            Text="{x:Bind Name}"
+                            Text="{x:Bind Name,Mode=OneWay}"
                             TextTrimming="CharacterEllipsis"
                             TextWrapping="Wrap"
-                            ToolTipService.ToolTip="{x:Bind Name}" />
+                            ToolTipService.ToolTip="{x:Bind Name,Mode=OneWay}" />
                         <TextBlock Grid.Row="2"
                                    HorizontalAlignment="Center"
                                    FontSize="13"
                                    Foreground="Gray"
-                                   Text="{x:Bind ReadingRecord.Percent, Converter={StaticResource StringFormatConverter}, ConverterParameter='{}{0:0.##}%'}" />
+                                   Visibility="{x:Bind IsFolder,Mode=OneWay,Converter={StaticResource BoolToVisibilityConverter},ConverterParameter=True}"
+                                   Text="{x:Bind ReadingRecord.Percent, Mode=OneWay, Converter={StaticResource StringFormatConverter}, ConverterParameter='{}{0:0.##}%'}" />
                     </Grid>
                 </Grid>
             </Border>
@@ -140,7 +141,8 @@
                                         HorizontalAlignment="Left"
                                         FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
-                                        Text="{x:Bind ReadingRecord.Percent, Mode=OneWay}" />
+                                        Visibility="{x:Bind IsFolder,Mode=OneWay,Converter={StaticResource BoolToVisibilityConverter},ConverterParameter=True}"
+                                        Text="{x:Bind ReadingRecord.Percent, Mode=OneWay,Converter={StaticResource StringFormatConverter}, ConverterParameter='{}{0:0.##}%'}" />
                                     <TextBlock
                                         Width="70"
                                         HorizontalAlignment="Left"
@@ -251,11 +253,20 @@
                     DefaultLabelPosition="Right"
                     IsOpen="False">
                     <AppBarButton
+                        x:Name="ShadowCommandBackFolder"
+                        Visibility="{x:Bind ViewModel.CanBackFolder,Mode=OneWay}"
+                        Command="{x:Bind ViewModel.BackFolderCommand}"
+                        Icon="{winUi:FontIcon Glyph=&#xE64C;}"
+                        ToolTipService.ToolTip="{i18N:Locale Key=BackFolder}"
+                        Label="{i18N:Locale Key=BackFolder}">
+                    </AppBarButton>
+                    <AppBarButton
                         Icon="{winUi:FontIcon Glyph=&#xECC8;}"
                         Label="{i18N:Locale Key=Add}"
                         ToolTipService.ToolTip="{i18N:Locale Key=Add}">
                         <AppBarButton.Flyout>
                             <MenuFlyout Placement="Bottom">
+                                
                                 <MenuFlyoutItem
                                     x:Name="ShadowCommandAddNewFolder"
                                     Command="{x:Bind ViewModel.CreateNewFolderCommand}"
@@ -372,6 +383,7 @@
                 <RefreshContainer RefreshRequested="RefreshContainer_RefreshRequested">
                     <controls1:BookShelfGridView x:Name="ContentGridView"
                                                  Padding="5"
+                                                 ItemDoubleTappedCommand="{x:Bind ViewModel.DoubleTappedItemCommand}"
                                                  AllowDrop="False"
                                                  IsDetail="{x:Bind StyleSegmented.SelectedIndex,Mode=OneWay,Converter={StaticResource IntEqOneConverter},ConverterParameter=1}"
                                                  CanDragItems="True"

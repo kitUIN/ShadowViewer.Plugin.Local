@@ -369,4 +369,7 @@
   <data name="NewFolderName" xml:space="preserve">
     <value>新建文件夹名称</value>
   </data>
+  <data name="BackFolder" xml:space="preserve">
+    <value>返回上级</value>
+  </data>
 </root>

@@ -207,6 +207,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 .Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries).Last();
             await Db.Storageable(cacheZip).ExecuteCommandAsync();
             Logger.Information("解压成功:{Zip} 页数:{Pages} 耗时: {Time} s", zip, totalCount, (stop - start).TotalSeconds);
+            //TODO 中断回滚
             return true;
         }
 

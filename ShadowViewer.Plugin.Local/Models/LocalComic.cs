@@ -78,7 +78,8 @@ public partial class LocalComic : ObservableObject
     /// <summary>
     /// 更新时间
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(InsertServerTime = true, UpdateServerTime = true, ColumnDescription = "更新时间")]
+    [ObservableProperty]
+    [property: SugarColumn(InsertServerTime = true, UpdateServerTime = true, ColumnDescription = "更新时间")]
     private DateTime updatedDateTime;
 
     /// <summary>
@@ -152,7 +153,8 @@ public partial class LocalComic : ObservableObject
     /// </summary>
     /// <param name="name">文件夹名称</param>
     /// <param name="parentId">父级Id</param>
-    public static void CreateFolder(string? name, long parentId = -1)
+    /// <param name="id"></param>
+    public static void CreateFolder(string? name, long parentId = -1, long? id = null)
     {
         if (string.IsNullOrEmpty(name)) name = I18N.NewFolder;
         var i = 1;
@@ -163,16 +165,17 @@ public partial class LocalComic : ObservableObject
             name = $"{name}({i++})";
         }
 
+        id ??= SnowFlakeSingle.Instance.NextId();
         db.InsertNav(new LocalComic()
         {
-            Id = SnowFlakeSingle.Instance.NextId(),
+            Id = (long)id,
             Name = name,
             Thumb = "ms-appx:///Assets/Default/folder.png",
             Affiliation = LocalPlugin.Meta.Id,
             ParentId = parentId,
             IsFolder = true,
             ReadingRecord = new LocalReadingRecord()
-        }).Include(x => x.ReadingRecord).ExecuteCommandAsync();
+        }).Include(x => x.ReadingRecord).ExecuteCommand();
     }
 
     #region 排序

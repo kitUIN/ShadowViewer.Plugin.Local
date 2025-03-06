@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -36,6 +36,8 @@ using Newtonsoft.Json.Linq;
 using ShadowViewer.Core.Cache;
 using ShadowViewer.Core.Extensions;
 using ShadowViewer.Plugin.Local.Enums;
+using System.Drawing.Drawing2D;
+using System.Security.Cryptography;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -55,6 +57,11 @@ public partial class BookShelfViewModel : ObservableObject
     [ObservableProperty] private int folderTotalCounts;
 
     /// <summary>
+    /// 返回上级
+    /// </summary>
+    public bool CanBackFolder => CurrentId != -1;
+
+    /// <summary>
     /// 当前文件夹名称
     /// </summary>
     public string CurrentName { get; private set; }
@@ -62,7 +69,13 @@ public partial class BookShelfViewModel : ObservableObject
     /// <summary>
     /// 当前文件夹ID
     /// </summary>
-    public long ParentId { get; private set; } = -1;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanBackFolder))]
+    private long currentId = -1;
+
+    /// <summary>
+    /// 上级Id
+    /// </summary>
+    private long ParentId { get; set; } = -1;
 
     /// <summary>
     /// 原始地址
@@ -90,6 +103,19 @@ public partial class BookShelfViewModel : ObservableObject
     private ILogger Logger { get; }
     private readonly ICallableService caller;
 
+    /// <summary>
+    /// 当前文件夹
+    /// </summary>
+    private string[] SplitUri { get; set; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="callableService"></param>
+    /// <param name="sqlSugarClient"></param>
+    /// <param name="notifyService"></param>
+    /// <param name="comicService"></param>
+    /// <param name="logger"></param>
     public BookShelfViewModel(ICallableService callableService,
         ISqlSugarClient sqlSugarClient, INotifyService notifyService, ComicService comicService,
         ILogger logger)
@@ -100,36 +126,47 @@ public partial class BookShelfViewModel : ObservableObject
         ComicService = comicService;
         caller.RefreshBookEvent += Caller_RefreshBookEvent;
         Logger = logger;
+        LocalComics.CollectionChanged += LocalComics_CollectionChanged;
     }
 
-    private void Caller_RefreshBookEvent(object sender, EventArgs e)
+    private void Caller_RefreshBookEvent(object? sender, EventArgs e)
     {
         RefreshLocalComic();
     }
 
-    public void Init(Uri parameter)
+    /// <summary>
+    /// 导航
+    /// </summary>
+    public void NavigateTo(Uri uri)
     {
-        LocalComics.CollectionChanged += LocalComics_CollectionChanged;
-        OriginPath = parameter;
-        var path = parameter.AbsolutePath.Split(['/',], StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
-        ParentId = -1;
-        if (path != "bookshelf")
+        var splitUri = uri.AbsolutePath.Split(['/',], StringSplitOptions.RemoveEmptyEntries);
+        var path = splitUri.LastOrDefault();
+        var toId = -1L;
+        try
         {
-            try
-            {
-                ParentId = long.Parse(path ?? "-1");
-            }
-            catch (FormatException)
-            {
-            }
+            toId = long.Parse(path ?? "-1"); // 无参数默认顶级
+        }
+        catch (FormatException)
+        {
         }
 
-        Logger.Information("导航到{Path},Path={P}", OriginPath, ParentId);
+        Logger.Information("导航到{Path},Path={P}", uri, toId);
+        var currentFolder = Db.Queryable<LocalComic>().First(x => x.Id == toId);
+        if (currentFolder == null)
+        {
+            // TODO: 跳转失败
+            throw new Exception();
+        }
+
+        CurrentId = toId;
+        ParentId = currentFolder.ParentId;
+        CurrentName = currentFolder.Name;
+        OriginPath = uri;
+        SplitUri = splitUri;
         RefreshLocalComic();
-        CurrentName = ParentId == -1 ? "本地" : Db.Queryable<LocalComic>().First(x => x.Id == ParentId).Name;
     }
 
-    private void LocalComics_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    private void LocalComics_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         IsEmpty = LocalComics.Count == 0;
         FolderTotalCounts = LocalComics.Count;
@@ -146,7 +183,7 @@ public partial class BookShelfViewModel : ObservableObject
             I18N.NewFolderName, "", "",
             (_, _, text) =>
             {
-                LocalComic.CreateFolder(text, ParentId);
+                LocalComic.CreateFolder(text, CurrentId);
                 RefreshLocalComic();
             });
         await dialog.ShowAsync();
@@ -263,7 +300,7 @@ public partial class BookShelfViewModel : ObservableObject
         LocalComics.Clear();
         var comics = Db.Queryable<LocalComic>()
             .Includes(x => x.ReadingRecord)
-            .Where(x => x.ParentId == ParentId)
+            .Where(x => x.ParentId == CurrentId)
             .ToList();
         switch (Sorts)
         {
@@ -305,8 +342,28 @@ public partial class BookShelfViewModel : ObservableObject
         var token = CancellationToken.None;
 
         await Task.Run(() => DiFactory.Services.Resolve<ComicService>()
-            .ImportComicFromFolderAsync(folder.Path, LocalPlugin.Meta.Id, ParentId), token);
+            .ImportComicFromFolderAsync(folder.Path, LocalPlugin.Meta.Id, CurrentId), token);
         RefreshLocalComic();
+    }
+
+    /// <summary>
+    /// 双击
+    /// </summary>
+    [RelayCommand]
+    private void DoubleTappedItem(LocalComic item)
+    {
+        if (item.IsFolder) NavigateTo(new Uri($"shadow://local/bookshelf/{item.Id}"));
+        // else NavigateTo(new Uri($"shadow://local/pictures/{item.Id}"));
+        // TODO 跳转到漫画y
+    }
+
+    /// <summary>
+    /// 返回上级
+    /// </summary>
+    [RelayCommand]
+    private void BackFolder()
+    {
+        if (CurrentId != -1) NavigateTo(new Uri($"shadow://local/bookshelf/{ParentId}"));
     }
 
     /// <summary>
@@ -321,7 +378,7 @@ public partial class BookShelfViewModel : ObservableObject
         var token = CancellationToken.None;
         foreach (var file in files)
         {
-            await ProcessFileAsync(file, page, token);
+            await DecompressComicAsync(file, page, token);
         }
 
         RefreshLocalComic();
@@ -329,13 +386,13 @@ public partial class BookShelfViewModel : ObservableObject
 
 
     /// <summary>
-    /// 
+    /// 解压漫画文件
     /// </summary>
     /// <param name="file"></param>
     /// <param name="page"></param>
     /// <param name="token"></param>
     /// <returns></returns>
-    private async Task ProcessFileAsync(IStorageItem file, Page page, CancellationToken token)
+    private async Task DecompressComicAsync(IStorageItem file, Page page, CancellationToken token)
     {
         var progressRing = new ProgressRing()
         {
@@ -440,7 +497,7 @@ public partial class BookShelfViewModel : ObservableObject
         progressRingText.Visibility = Visibility.Visible;
         await Task.Run(() => ComicService.ImportComicFromZipAsync(file.Path,
             CoreSettings.ComicsPath,
-            LocalPlugin.Meta.Id, ParentId,
+            LocalPlugin.Meta.Id, CurrentId,
             new Progress<MemoryStream>(async void (thumbStream) =>
             {
                 try
