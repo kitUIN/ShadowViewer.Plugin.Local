@@ -15,6 +15,7 @@
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:core="using:Microsoft.Xaml.Interactions.Core"
+    xmlns:utils="using:ShadowViewer.Core.Utils"
     x:Name="RootPage"
     mc:Ignorable="d">
     <Page.Resources>
@@ -33,13 +34,17 @@
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
-                CornerRadius="4"
-                DragOver="GridViewItem_DragOverCustomized"
+                CornerRadius="4" 
                 Tag="{x:Bind}">
                 <interactivity:Interaction.Behaviors>
                     <core:EventTriggerBehavior EventName="Drop">
                         <core:InvokeCommandAction Command="{Binding  ViewModel.ItemDropCommand, ElementName=RootPage}"
                                                   CommandParameter="{x:Bind}" />
+                    </core:EventTriggerBehavior>
+                    <core:EventTriggerBehavior EventName="DragOver">
+                        <utils:InvokeCommandWithArgsAction
+                            Command="{Binding  ViewModel.ItemDragOverCustomizedCommand, ElementName=RootPage}"
+                            CommandParameter="{x:Bind}" />
                     </core:EventTriggerBehavior>
                 </interactivity:Interaction.Behaviors>
 
@@ -91,7 +96,6 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="4"
-                DragOver="GridViewItem_DragOverCustomized"
                 Tag="{x:Bind}">
                 <interactivity:Interaction.Behaviors>
                     <core:EventTriggerBehavior EventName="Drop">
@@ -99,8 +103,9 @@
                                                   CommandParameter="{x:Bind}" />
                     </core:EventTriggerBehavior>
                     <core:EventTriggerBehavior EventName="DragOver">
-                        <core:InvokeCommandAction Command="{Binding  ViewModel.ItemDropCommand, ElementName=RootPage}"
-                                                  CommandParameter="{Binding}" />
+                        <utils:InvokeCommandWithArgsAction
+                            Command="{Binding  ViewModel.ItemDragOverCustomizedCommand, ElementName=RootPage}"
+                            CommandParameter="{x:Bind}" />
                     </core:EventTriggerBehavior>
                 </interactivity:Interaction.Behaviors>
                 <Grid
@@ -509,7 +514,7 @@
                         </TextBlock>
                         <TextBlock
                             Visibility="{x:Bind ContentGridView.HasFolder,Mode=OneWay,Converter={StaticResource BoolToVisibilityConverter},ConverterParameter=True}"
-                            Text="{x:Bind ViewModel.SelectedItemsSize, Mode=OneWay, ConverterParameter={StaticResource SizeConverter}}"
+                            Text="{x:Bind ViewModel.SelectedItemsSize, Mode=OneWay, Converter={StaticResource SizeConverter}}"
                             FontSize="{StaticResource InfoTextSize}" />
                     </StackPanel>
 

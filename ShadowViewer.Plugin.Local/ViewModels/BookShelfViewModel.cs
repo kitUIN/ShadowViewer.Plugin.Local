@@ -29,6 +29,7 @@ using Windows.Storage;
 using ShadowViewer.Core.Cache;
 using ShadowViewer.Core.Extensions;
 using Windows.ApplicationModel.DataTransfer;
+using ShadowViewer.Core.Utils;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -107,7 +108,7 @@ public partial class BookShelfViewModel : ObservableObject
         ComicService = comicService;
         caller.RefreshBookEvent += Caller_RefreshBookEvent;
         Logger = logger;
-        SelectedItems.CollectionChanged += (_, _) => { OnPropertyChanged(nameof(SelectedItemsSize)); };
+        SelectedItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(SelectedItemsSize));
     }
 
     private void Caller_RefreshBookEvent(object? sender, EventArgs e)
@@ -528,6 +529,8 @@ public partial class BookShelfViewModel : ObservableObject
             .ExecuteCommandAsync();
     }
 
+    #region 拖拽响应
+
     /// <summary>
     /// 
     /// </summary>
@@ -544,20 +547,18 @@ public partial class BookShelfViewModel : ObservableObject
     /// 拖动悬浮显示
     /// </summary>
     [RelayCommand]
-    private void ItemDragOverCustomized(LocalComic comic)
+    private void ItemDragOverCustomized(CommandWithArgs arg)
     {
-        if (sender is not FrameworkElement frame) return;
-        if (frame.Tag is LocalComic { IsFolder: true } comic)
-        {
+        if (arg.CommandParameter is not LocalComic { IsFolder: true } comic) return;
+        if (arg.Args is not DragEventArgs e) return;
+        e.AcceptedOperation = comic.IsFolder && !SelectedItems.Contains(comic)
+            ? DataPackageOperation.Move
+            : DataPackageOperation.None;
+        if(e.AcceptedOperation == DataPackageOperation.Move)
             e.DragUIOverride.Caption = I18N.MoveTo + comic.Name;
-            e.AcceptedOperation = comic.IsFolder ? DataPackageOperation.Move : DataPackageOperation.None;
-        }
-        else
-        {
-            return;
-        }
-
         e.DragUIOverride.IsGlyphVisible = true;
         e.DragUIOverride.IsCaptionVisible = true;
     }
+
+    #endregion
 }
