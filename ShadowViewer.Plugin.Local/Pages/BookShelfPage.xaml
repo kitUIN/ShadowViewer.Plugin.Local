@@ -13,10 +13,11 @@
     xmlns:local="using:ShadowViewer.Plugin.Local"
     xmlns:controls1="using:ShadowViewer.Plugin.Local.Controls"
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:core="using:Microsoft.Xaml.Interactions.Core"
     x:Name="RootPage"
     mc:Ignorable="d">
     <Page.Resources>
-        <winuiConverters:FileSizeToFriendlyStringConverter x:Key="SizeConverter" />
         <converters:IntEqConverter x:Key="IntEqOneConverter" />
         <x:Double x:Key="InfoTextSize">13</x:Double>
         <x:Double x:Key="InfoIconSize">17</x:Double>
@@ -34,8 +35,14 @@
                 BorderThickness="1"
                 CornerRadius="4"
                 DragOver="GridViewItem_DragOverCustomized"
-                Drop="GridViewItem_Drop"
                 Tag="{x:Bind}">
+                <interactivity:Interaction.Behaviors>
+                    <core:EventTriggerBehavior EventName="Drop">
+                        <core:InvokeCommandAction Command="{Binding  ViewModel.ItemDropCommand, ElementName=RootPage}"
+                                                  CommandParameter="{x:Bind}" />
+                    </core:EventTriggerBehavior>
+                </interactivity:Interaction.Behaviors>
+
                 <Grid
                     Padding="6">
                     <Grid VerticalAlignment="Top"
@@ -54,7 +61,7 @@
                                VerticalAlignment="Bottom"
                                Source="{x:Bind Thumb,Mode=OneWay}" />
                         <TextBlock
-                            MaxWidth="100" Grid.Row="1"
+                            MaxWidth="140" Grid.Row="1"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             FontSize="{StaticResource BookShelfComicTitleFontSize}"
@@ -85,8 +92,17 @@
                 BorderThickness="1"
                 CornerRadius="4"
                 DragOver="GridViewItem_DragOverCustomized"
-                Drop="GridViewItem_Drop"
                 Tag="{x:Bind}">
+                <interactivity:Interaction.Behaviors>
+                    <core:EventTriggerBehavior EventName="Drop">
+                        <core:InvokeCommandAction Command="{Binding  ViewModel.ItemDropCommand, ElementName=RootPage}"
+                                                  CommandParameter="{x:Bind}" />
+                    </core:EventTriggerBehavior>
+                    <core:EventTriggerBehavior EventName="DragOver">
+                        <core:InvokeCommandAction Command="{Binding  ViewModel.ItemDropCommand, ElementName=RootPage}"
+                                                  CommandParameter="{Binding}" />
+                    </core:EventTriggerBehavior>
+                </interactivity:Interaction.Behaviors>
                 <Grid
                     Width="400"
                     Height="180"
@@ -298,7 +314,7 @@
                 </CommandBar>
                 <controls:Segmented
                     x:Name="StyleSegmented"
-                    Grid.Column="1"
+                    Grid.Column="1" SelectedIndex="{x:Bind ViewModel.StyleIndex,Mode=TwoWay}"
                     HorizontalAlignment="Center"
                     SelectionMode="Single">
                     <controls:SegmentedItem
@@ -382,11 +398,12 @@
                 VerticalScrollMode="Enabled">
                 <RefreshContainer RefreshRequested="RefreshContainer_RefreshRequested">
                     <controls1:BookShelfGridView x:Name="ContentGridView"
+                                                 BindableSelectedItems="{x:Bind ViewModel.SelectedItems,Mode=TwoWay}"
                                                  Padding="5"
                                                  IsItemClickEnabled="False"
                                                  ItemDoubleTappedCommand="{x:Bind ViewModel.DoubleTappedItemCommand}"
                                                  AllowDrop="False"
-                                                 IsDetail="{x:Bind StyleSegmented.SelectedIndex, Mode=OneWay,Converter={StaticResource IntEqOneConverter},ConverterParameter=1}"
+                                                 IsDetail="{x:Bind ViewModel.StyleIndex, Mode=OneWay,Converter={StaticResource IntEqOneConverter},ConverterParameter=1}"
                                                  CanDragItems="True"
                                                  CanReorderItems="False"
                                                  SimpleItemTemplate="{StaticResource SimpleLocalComicItem}"
@@ -444,7 +461,7 @@
                 Grid.Row="1"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
+                Visibility="{x:Bind ViewModel.LocalComics.Count, Mode=OneWay,Converter={StaticResource CollectionToVisibilityConverter}}">
                 <TextBlock
                     MaxWidth="500"
                     FontSize="17"
@@ -456,7 +473,7 @@
 
             <!--#region 左下角信息栏-->
             <Grid
-                x:Name="ShelfInfo"
+                Visibility="{x:Bind ViewModel.ShelfInfo,Mode=OneWay}"
                 Grid.Row="2"
                 VerticalAlignment="Bottom">
                 <StackPanel
@@ -481,20 +498,19 @@
                         FontSize="{StaticResource InfoTextSize}"
                         Text="|" />
                     <StackPanel
+                        Visibility="{x:Bind ViewModel.SelectedItems.Count, Mode=OneWay,Converter={StaticResource CollectionToNVisibilityConverter}}"
                         x:Name="SelectionPanel"
                         Orientation="Horizontal"
-                        Spacing="5">
-                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=SelectionHeader}" />
-                        <TextBlock x:Name="SelectionValue" FontSize="{StaticResource InfoTextSize}" />
-                        <TextBlock FontSize="{StaticResource InfoTextSize}" Text="{i18N:Locale Key=Object}" />
+                        Spacing="10">
+                        <TextBlock FontSize="{StaticResource InfoTextSize}">
+                            <Run Text="{i18N:Locale Key=SelectionHeader}"></Run>
+                            <Run Text="{x:Bind ViewModel.SelectedItems.Count, Mode=OneWay}"></Run>
+                            <Run Text="{i18N:Locale Key=Object}"></Run>
+                        </TextBlock>
                         <TextBlock
-                            x:Name="SizeValue"
-                            Margin="5,0,0,0"
+                            Visibility="{x:Bind ContentGridView.HasFolder,Mode=OneWay,Converter={StaticResource BoolToVisibilityConverter},ConverterParameter=True}"
+                            Text="{x:Bind ViewModel.SelectedItemsSize, Mode=OneWay, ConverterParameter={StaticResource SizeConverter}}"
                             FontSize="{StaticResource InfoTextSize}" />
-                        <TextBlock
-                            Margin="10,0,0,0"
-                            FontSize="{StaticResource InfoTextSize}"
-                            Text="|" />
                     </StackPanel>
 
                 </StackPanel>
@@ -510,15 +526,9 @@
                 <StackPanel Orientation="Horizontal">
                     <HyperlinkButton Height="28">
                         <FontIcon FontSize="14" Glyph="&#xE897;" />
-                        <ToolTipService.ToolTip>
-                            <ToolTip x:Uid="Xaml/ToolTip/Help" />
-                        </ToolTipService.ToolTip>
                     </HyperlinkButton>
-                    <HyperlinkButton Height="28" Click="SettingsButton_Click">
+                    <HyperlinkButton Height="28">
                         <FontIcon FontSize="14" Glyph="&#xE713;" />
-                        <ToolTipService.ToolTip>
-                            <ToolTip x:Uid="Xaml/ToolTip/BookSettings" />
-                        </ToolTipService.ToolTip>
                     </HyperlinkButton>
                 </StackPanel>
             </Grid>

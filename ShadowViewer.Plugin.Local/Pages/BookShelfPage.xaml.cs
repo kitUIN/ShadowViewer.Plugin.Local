@@ -48,7 +48,6 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     public BookShelfViewModel ViewModel { get; private set; } = null!;
 
-
     /// <summary>
     /// 书架页面
     /// </summary>
@@ -68,7 +67,6 @@ public sealed partial class BookShelfPage : Page
     }
 
 
-
     /// <summary>
     /// 右键菜单-重命名
     /// </summary>
@@ -79,17 +77,6 @@ public sealed partial class BookShelfPage : Page
         HomeCommandBarFlyout.Hide();
         var comic = ContentGridView.SelectedItems[0] as LocalComic;
         await CreateRenameDialog(ResourcesHelper.GetString(ResourceKey.Rename), XamlRoot, comic).ShowAsync();
-    }
-
-    /// <summary>
-    /// 右键菜单-删除
-    /// </summary>
-    /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="RoutedEventArgs"/> instance containing the event data.</param>
-    private void ShadowCommandDelete_Click(object sender, RoutedEventArgs e)
-    {
-        HomeCommandBarFlyout.Hide();
-        Delete();
     }
 
     /// <summary>
@@ -190,18 +177,10 @@ public sealed partial class BookShelfPage : Page
     /// </summary>
     private void GridViewItem_Drop(object sender, DragEventArgs e)
     {
-        // if (sender is FrameworkElement frame && frame.Tag is LocalComic comic && comic.IsFolder)
-        // {
-        //     foreach (var item in ContentGridView.SelectedItems.Cast<LocalComic>().ToList())
-        //         if (!item.IsFolder)
-        //             item.Parent = comic.Id;
-        //     long size = 0;
-        //     var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-        //     db.Queryable<LocalComic>().Where(x => x.Parent == comic.Id).ToList().ForEach(x => size += x.Size);
-        //     comic.Size = size;
-        //     comic.Update();
-        //     ViewModel.RefreshLocalComic();
-        // }
+        if (sender is FrameworkElement { Tag: LocalComic { IsFolder: true } comic })
+        {
+            ViewModel.MoveTo(comic.Id, ViewModel.SelectedItems);
+        }
     }
 
     /// <summary>
@@ -211,45 +190,21 @@ public sealed partial class BookShelfPage : Page
     /// <param name="e">The <see cref="DragEventArgs"/> instance containing the event data.</param>
     private void GridViewItem_DragOverCustomized(object sender, DragEventArgs e)
     {
-        if (sender is FrameworkElement frame)
+        if (sender is not FrameworkElement frame) return;
+        if (frame.Tag is LocalComic { IsFolder: true } comic)
         {
-            if (frame.Tag is LocalComic comic && comic.IsFolder)
-            {
-                e.DragUIOverride.Caption = ResourcesHelper.GetString(ResourceKey.MoveTo) + comic.Name;
-                e.AcceptedOperation = comic.IsFolder ? DataPackageOperation.Move : DataPackageOperation.None;
-            }
-            else
-            {
-                return;
-            }
-
-            e.DragUIOverride.IsGlyphVisible = true;
-            e.DragUIOverride.IsCaptionVisible = true;
+            e.DragUIOverride.Caption = I18N.MoveTo + comic.Name;
+            e.AcceptedOperation = comic.IsFolder ? DataPackageOperation.Move : DataPackageOperation.None;
         }
-    }
-
-    /// <summary>
-    /// 拖动初始化
-    /// </summary>
-    private void ContentGridView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
-    {
-        HomeCommandBarFlyout.Hide();
-        foreach (var item in e.Items)
+        else
         {
-            var container = (GridViewItem)ContentGridView.ContainerFromItem(item);
-            if (container != null && !container.IsSelected) container.IsSelected = true;
+            return;
         }
+
+        e.DragUIOverride.IsGlyphVisible = true;
+        e.DragUIOverride.IsCaptionVisible = true;
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    private void SmokeGrid_RightTapped(object sender, RightTappedRoutedEventArgs e)
-    {
-        e.Handled = true;
-    }
 
     /// <summary>
     /// 修改排序
@@ -265,156 +220,19 @@ public sealed partial class BookShelfPage : Page
     }
 
     /// <summary>
-    /// 控件初始化
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    private void Controls_Loaded(object sender, RoutedEventArgs e)
-    {
-        SelectionPanel.Visibility = Visibility.Collapsed;
-        ShelfInfo.Visibility = ConfigHelper.GetBoolean(LocalSettingKey.LocalIsBookShelfInfoBar).ToVisibility();
-        StyleSegmented.SelectedIndex = ConfigHelper.GetBoolean(LocalSettingKey.LocalBookStyleDetail) ? 1 : 0;
-
-    }
-
-    /// <summary>   
-    /// 删除二次确定框
-    /// </summary>
-    public async void DeleteMessageDialog()
-    {
-        var dialog = XamlHelper.CreateContentDialog(XamlRoot);
-        var stackPanel = new StackPanel();
-        dialog.Title = ResourcesHelper.GetString(ResourceKey.IsDelete);
-        var deleteFiles = new CheckBox()
-        {
-            Content = ResourcesHelper.GetString(ResourceKey.DeleteComicFiles),
-            IsChecked = ConfigHelper.GetBoolean(LocalSettingKey.LocalIsDeleteFilesWithComicDelete),
-        };
-        deleteFiles.Checked += DeleteFilesChecked;
-        deleteFiles.Unchecked += DeleteFilesChecked;
-        var remember = new CheckBox()
-        {
-            Content = ResourcesHelper.GetString(ResourceKey.Remember),
-            IsChecked = ConfigHelper.GetBoolean(LocalSettingKey.LocalIsRememberDeleteFilesWithComicDelete),
-        };
-        remember.Checked += RememberChecked;
-        remember.Unchecked += RememberChecked;
-        stackPanel.Children.Add(deleteFiles);
-        stackPanel.Children.Add(remember);
-        dialog.IsPrimaryButtonEnabled = true;
-        dialog.PrimaryButtonText = ResourcesHelper.GetString(ResourceKey.Confirm);
-        dialog.DefaultButton = ContentDialogButton.Close;
-        dialog.CloseButtonText = ResourcesHelper.GetString(ResourceKey.Cancel);
-        dialog.Content = stackPanel;
-        dialog.PrimaryButtonClick += (ContentDialog s, ContentDialogButtonClickEventArgs e) => { DeleteComics(); };
-        dialog.Focus(FocusState.Programmatic);
-        await dialog.ShowAsync();
-        return;
-
-        void RememberChecked(object sender, RoutedEventArgs e)
-        {
-            LocalPlugin.Settings.LocalIsRememberDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ?? false;
-        }
-
-        void DeleteFilesChecked(object sender, RoutedEventArgs e)
-        {
-            LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ??
-                                                                     false;
-        }
-    }
-
-    /// <summary>
-    /// 删除
-    /// </summary>
-    private void Delete()
-    {
-        if (ContentGridView.SelectedItems.ToList().Cast<LocalComic>().All(x => x.IsFolder))
-        {
-            DeleteComics();
-        }
-        else
-        {
-            if (ConfigHelper.GetBoolean(LocalSettingKey.LocalIsRememberDeleteFilesWithComicDelete))
-                DeleteComics();
-            else
-                DeleteMessageDialog();
-        }
-    }
-
-    /// <summary>
-    /// 删除选中的漫画
-    /// </summary>
-    private void DeleteComics()
-    {
-        var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-        foreach (LocalComic comic in ContentGridView.SelectedItems)
-        {
-            if (LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder)
-            {
-                comic.Link?.DeleteDirectory();
-                db.Updateable<CacheZip>()
-                    .SetColumns(x => x.ComicId == null)
-                    .Where(x => x.ComicId == comic.Id)
-                    .ExecuteCommand();
-                db.Deleteable<LocalEpisode>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
-                db.Deleteable<LocalPicture>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
-                db.Deleteable<LocalComic>().Where(x => x.Id == comic.Id).ExecuteCommand();
-            }
-            else
-            {
-                db.Updateable<LocalComic>()
-                    .SetColumns(x => x.IsDelete == true)
-                    .Where(x => x.Id == comic.Id)
-                    .ExecuteCommand();
-            }
-
-            ViewModel.LocalComics.Remove(comic);
-        }
-    }
-
-    /// <summary>
     /// 检测按键
     /// </summary>
     private void GridViewOnKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        var view = sender as GridView;
-        if (e.Key == VirtualKey.A &&
-            WindowHelper.GetWindow(XamlRoot)
-                !.CoreWindow.GetKeyState(VirtualKey.Shift)
-                .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down))
-            foreach (var comic in (ObservableCollection<LocalComic>)view!.ItemsSource)
-                view.SelectedItems.Add(comic);
-        else if (e.Key == VirtualKey.Delete) Delete();
+        // var view = sender as GridView;
+        // if (e.Key == VirtualKey.A &&
+        //     WindowHelper.GetWindow(XamlRoot)
+        //         !.CoreWindow.GetKeyState(VirtualKey.Shift)
+        //         .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down))
+        //     foreach (var comic in (ObservableCollection<LocalComic>)view!.ItemsSource)
+        //         view.SelectedItems.Add(comic);
+        // else if (e.Key == VirtualKey.Delete) Delete();
     }
-
-    /// <summary>
-    /// 右键菜单-设置按钮
-    /// </summary>
-    private void SettingsButton_Click(object sender, RoutedEventArgs e)
-    {
-        HomeCommandBarFlyout.Hide();
-        Frame.Navigate(typeof(BookShelfSettingsPage), null,
-            new SlideNavigationTransitionInfo() { Effect = SlideNavigationTransitionEffect.FromRight });
-    }
-
-    /// <summary>
-    /// 选中响应更改信息栏
-    /// </summary>
-    private void ContentGridView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (ContentGridView.SelectedItems.Count > 0)
-        {
-            SelectionPanel.Visibility = Visibility.Visible;
-            var size = ContentGridView.SelectedItems.Cast<LocalComic>().ToList().Sum(item => item.Size);
-            SelectionValue.Text = ContentGridView.SelectedItems.Count.ToString();
-            SizeValue.Text = CommunityToolkit.Common.Converters.ToFileSizeString(size);
-        }
-        else
-        {
-            SelectionPanel.Visibility = Visibility.Collapsed;
-        }
-    }
-
 
     /// <summary>
     /// 触控-下拉刷新

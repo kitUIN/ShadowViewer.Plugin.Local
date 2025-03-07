@@ -12,6 +12,7 @@ using System.Windows.Input;
 using Windows.Foundation;
 using System.Threading.Tasks;
 using Serilog;
+using System.Collections.ObjectModel;
 
 namespace ShadowViewer.Plugin.Local.Controls;
 
@@ -171,6 +172,22 @@ public class BookShelfGridView : GridView
 
     #endregion
 
+    /// <summary>
+    /// 
+    /// </summary>
+    public ObservableCollection<LocalComic> BindableSelectedItems
+    {
+        get => (ObservableCollection<LocalComic>)GetValue(BindableSelectedItemsProperty);
+        set => SetValue(BindableSelectedItemsProperty, value);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public static readonly DependencyProperty BindableSelectedItemsProperty =
+        DependencyProperty.Register(nameof(BindableSelectedItems), typeof(ObservableCollection<LocalComic>),
+            typeof(BookShelfGridView), new PropertyMetadata(null, null));
+
 
     /// <summary>
     /// 
@@ -178,11 +195,34 @@ public class BookShelfGridView : GridView
     public BookShelfGridView() : base()
     {
         DragItemsStarting += BookShelfGridView_DragItemsStarting;
-        SelectionChanged += RightMenuSelectionChanged;
-        DoubleTapped += OnItemDoubleTapped;
-        // AddHandler(DoubleTappedEvent, new DoubleTappedEventHandler(OnItemDoubleTapped), true);
+        SelectionChanged += BindableGridView_SelectionChanged;
+        AddHandler(DoubleTappedEvent, new DoubleTappedEventHandler(OnItemDoubleTapped), true);
         AddHandler(RightTappedEvent, new RightTappedEventHandler(MenuRightTapped), true);
     }
+
+    /// <summary>
+    /// 选中响应
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private void BindableGridView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        foreach (var item in e.RemovedItems)
+        {
+            BindableSelectedItems.Remove((LocalComic)item);
+        }
+
+        foreach (var item in e.AddedItems)
+        {
+            BindableSelectedItems.Add((LocalComic)item);
+        }
+
+        AnySelect = SelectedItems.Count != 0;
+        IsSingle = SelectedItems.Count == 1;
+        IsMulti = SelectedItems.Count > 1;
+        HasFolder = AnySelect && SelectedItems.Cast<LocalComic>().Any(item => item.IsFolder);
+    }
+
 
     /// <summary>
     /// 
@@ -217,7 +257,7 @@ public class BookShelfGridView : GridView
         {
             // 这里有个bug会导致双击进入后直接崩溃
             // 目前猜测原因是有其他事件未完成,加个延迟等待
-            await Task.Delay(100); 
+            await Task.Delay(100);
             if (ItemDoubleTappedCommand == null) return;
             var doubleTappedItem = FindGridViewItemUnderPointer(e.OriginalSource as DependencyObject);
             if (doubleTappedItem == null) return;
@@ -274,14 +314,4 @@ public class BookShelfGridView : GridView
         }
     }
 
-    /// <summary>
-    /// 选中响应更改 右键菜单显示
-    /// </summary>
-    private void RightMenuSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        AnySelect = SelectedItems.Count != 0;
-        IsSingle = SelectedItems.Count == 1;
-        IsMulti = SelectedItems.Count > 1;
-        HasFolder = AnySelect && SelectedItems.Cast<LocalComic>().Any(item => item.IsFolder);
-    }
 }

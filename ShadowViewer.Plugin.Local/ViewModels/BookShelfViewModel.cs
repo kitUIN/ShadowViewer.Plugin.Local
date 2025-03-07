@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -26,19 +24,11 @@ using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Services;
 using SqlSugar;
-using SharpCompress.Common;
 using SharpCompress.Readers;
 using Windows.Storage;
-using Azure;
-using Microsoft.IdentityModel.Tokens;
-using NetTaste;
-using Newtonsoft.Json.Linq;
 using ShadowViewer.Core.Cache;
 using ShadowViewer.Core.Extensions;
-using ShadowViewer.Plugin.Local.Enums;
-using System.Drawing.Drawing2D;
-using System.Security.Cryptography;
-using Microsoft.UI.Dispatching;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -48,14 +38,14 @@ namespace ShadowViewer.Plugin.Local.ViewModels;
 public partial class BookShelfViewModel : ObservableObject
 {
     /// <summary>
-    /// 该文件夹内是否为空
+    /// 左下角信息栏是否显示
     /// </summary>
-    [ObservableProperty] private bool isEmpty = true;
+    [ObservableProperty] private bool shelfInfo = LocalPlugin.Settings.LocalIsBookShelfInfoBar;
 
     /// <summary>
-    /// 文件夹内总数量
+    /// 样式
     /// </summary>
-    [ObservableProperty] private int folderTotalCounts;
+    [ObservableProperty] private int styleIndex = LocalPlugin.Settings.LocalBookStyleDetail ? 1 : 0;
 
     /// <summary>
     /// 返回上级
@@ -65,7 +55,8 @@ public partial class BookShelfViewModel : ObservableObject
     /// <summary>
     /// 当前文件夹
     /// </summary>
-    [ObservableProperty][NotifyPropertyChangedFor(nameof(CanBackFolder))] private LocalComic currentFolder;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanBackFolder))]
+    private LocalComic currentFolder;
 
     /// <summary>
     /// 原始地址
@@ -85,7 +76,12 @@ public partial class BookShelfViewModel : ObservableObject
     /// <summary>
     /// 被选中的
     /// </summary>
-    public List<LocalComic> SelectedItems { get; set; } = [];
+    public ObservableCollection<LocalComic> SelectedItems { get; set; } = [];
+
+    /// <summary>
+    /// 选中项的大小
+    /// </summary>
+    public long SelectedItemsSize => SelectedItems.Sum(x => x.Size);
 
     private ISqlSugarClient Db { get; }
     private INotifyService NotifyService { get; }
@@ -111,11 +107,7 @@ public partial class BookShelfViewModel : ObservableObject
         ComicService = comicService;
         caller.RefreshBookEvent += Caller_RefreshBookEvent;
         Logger = logger;
-        LocalComics.CollectionChanged += (_, _) =>
-        {
-            IsEmpty = LocalComics.Count == 0;
-            FolderTotalCounts = LocalComics.Count;
-        };
+        SelectedItems.CollectionChanged += (_, _) => { OnPropertyChanged(nameof(SelectedItemsSize)); };
     }
 
     private void Caller_RefreshBookEvent(object? sender, EventArgs e)
@@ -305,14 +297,12 @@ public partial class BookShelfViewModel : ObservableObject
                     throw new ArgumentOutOfRangeException();
             }
         }
+
         LocalComics.Clear();
-        Logger.Information("开始刷新");
-        if (CurrentFolder.Id != -1) return;
         foreach (var item in comics)
         {
             LocalComics.Add(item);
         }
-        Logger.Information("完成刷新");
     }
 
     /// <summary>
@@ -337,7 +327,6 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private void DoubleTappedItem(LocalComic item)
     {
-        
         if (item.IsFolder) NavigateTo(new Uri($"shadow://local/bookshelf/{item.Id}"));
         // TODO 跳转到漫画y
     }
@@ -458,7 +447,7 @@ public partial class BookShelfViewModel : ObservableObject
             infoBar.Severity = InfoBarSeverity.Warning;
             infoBar.Title = I18N.NeedPassword + ": " + Path.GetFileNameWithoutExtension(file.Path);
             var dialog = XamlHelper.CreateOneTextBoxDialog(page.XamlRoot,
-                Path.GetFileName(file.Path) + Core.I18n.I18N.PasswordError,
+                Core.I18n.I18N.PasswordError,
                 "", Core.I18n.I18N.ZipPasswordPlaceholder, "",
                 (_, _, text) => op.Password = text);
             var res = await dialog.ShowAsync();
@@ -510,7 +499,6 @@ public partial class BookShelfViewModel : ObservableObject
                         progressRingText.Text = $"{v:0.00}%";
                         if (Math.Abs(v - 100) == 0)
                         {
-                            progressStackPanel.Visibility = Visibility.Collapsed;
                             infoBar.Severity = InfoBarSeverity.Success;
                             infoBar.Title = I18N.ImportComicSuccess;
                             await infoBar.Close();
@@ -522,5 +510,54 @@ public partial class BookShelfViewModel : ObservableObject
                     Logger.Error("上报进度报错: {e}", e);
                 }
             }), op), token);
+    }
+
+    /// <summary>
+    /// 文件移动
+    /// </summary>
+    /// <param name="newFolderId"></param>
+    /// <param name="comics"></param>
+    public async Task MoveTo(long newFolderId, IEnumerable<LocalComic> comics)
+    {
+        var ids = comics.Select(x => x.Id).ToList();
+        if (ids.Contains(newFolderId)) return;
+        await Db.Updateable<LocalComic>()
+            .SetColumns(x => x.ParentId == newFolderId)
+            .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
+            .Where(x => ids.Contains(x.Id))
+            .ExecuteCommandAsync();
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="comic"></param>
+    [RelayCommand]
+    private async Task ItemDrop(LocalComic comic)
+    {
+        if (!comic.IsFolder) return;
+        await MoveTo(comic.Id, SelectedItems);
+        RefreshLocalComic();
+    }
+
+    /// <summary>
+    /// 拖动悬浮显示
+    /// </summary>
+    [RelayCommand]
+    private void ItemDragOverCustomized(LocalComic comic)
+    {
+        if (sender is not FrameworkElement frame) return;
+        if (frame.Tag is LocalComic { IsFolder: true } comic)
+        {
+            e.DragUIOverride.Caption = I18N.MoveTo + comic.Name;
+            e.AcceptedOperation = comic.IsFolder ? DataPackageOperation.Move : DataPackageOperation.None;
+        }
+        else
+        {
+            return;
+        }
+
+        e.DragUIOverride.IsGlyphVisible = true;
+        e.DragUIOverride.IsCaptionVisible = true;
     }
 }
