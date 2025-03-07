@@ -106,14 +106,8 @@ public partial class BookShelfViewModel : ObservableObject
         caller = callableService;
         NotifyService = notifyService;
         ComicService = comicService;
-        caller.RefreshBookEvent += Caller_RefreshBookEvent;
         Logger = logger;
         SelectedItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(SelectedItemsSize));
-    }
-
-    private void Caller_RefreshBookEvent(object? sender, EventArgs e)
-    {
-        RefreshLocalComic();
     }
 
     /// <summary>

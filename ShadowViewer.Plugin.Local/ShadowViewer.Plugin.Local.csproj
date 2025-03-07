@@ -52,7 +52,7 @@
 		<ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Core.csproj" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Core" Version="2025.1.16.2" />
+		<PackageReference Include="ShadowViewer.Core" Version="2025.3.7.1" />
 	</ItemGroup>
     <ItemGroup>
       <AdditionalFiles Remove="D:\RiderProjects\ShadowViewer\ShadowViewer.Plugin.Local\ShadowViewer.Plugin.Local\plugin.json" />

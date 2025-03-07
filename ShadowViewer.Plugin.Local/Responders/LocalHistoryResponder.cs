@@ -14,6 +14,9 @@ using ShadowViewer.Core.Enums;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
+/// <summary>
+/// 
+/// </summary>
 public partial class LocalHistoryResponder : AbstractHistoryResponder
 {
     /// <summary>
@@ -39,7 +42,7 @@ public partial class LocalHistoryResponder : AbstractHistoryResponder
     /// </summary>
     public override void ClickHistoryHandler(IHistory history)
     {
-        Caller.NavigateTo(typeof(AttributesPage), history.Id);
+        NavigateService.Navigate(typeof(AttributesPage), history.Id);
         Db.Updateable<LocalHistory>()
             .SetColumns(x => x.LastReadDateTime == DateTime.Now)
             .Where(x => x.Id == history.Id)
@@ -58,7 +61,7 @@ public partial class LocalHistoryResponder : AbstractHistoryResponder
     /// 
     /// </summary>
     [Autowired]
-    protected ICallableService Caller { get; }
+    protected INavigateService NavigateService { get; }
 
     /// <summary>
     /// 

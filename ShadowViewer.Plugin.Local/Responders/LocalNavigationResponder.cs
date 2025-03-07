@@ -9,6 +9,7 @@ using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Core.Responders;
 using ShadowPluginLoader.MetaAttributes;
+using ShadowViewer.Core.Utils;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
@@ -20,8 +21,9 @@ public partial class LocalNavigationResponder : AbstractNavigationResponder
     /// <summary>
     /// 
     /// </summary>
-    [Autowired]
-    protected ICallableService Caller { get; }
+    public LocalNavigationResponder(string id) : base(id)
+    {
+    }
 
     /// <summary>
     /// <inheritdoc/>
@@ -43,7 +45,7 @@ public partial class LocalNavigationResponder : AbstractNavigationResponder
     {
         return item.Id switch
         {
-            "BookShelf" => new ShadowNavigation(typeof(BookShelfPage), parameter: new Uri("shadow://local/")),
+            "BookShelf" => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/")),
             _ => null
         };
     }
@@ -51,23 +53,15 @@ public partial class LocalNavigationResponder : AbstractNavigationResponder
     /// <summary>
     /// <inheritdoc/>
     /// </summary>
-    public override void Navigate(Uri uri, string[] urls)
+    public override ShadowNavigation? Navigate(Uri uri, string[] urls)
     {
-        if (urls.Length == 0) return;
-        switch (urls[0])
+        if (urls.Length == 0) return null;
+        return urls[0] switch
         {
-            case "bookshelf":
-                Caller.NavigateTo(typeof(BookShelfPage), parameter: new Uri("shadow://local/bookshelf"));
-                break;
-            case "settings":
-                Caller.NavigateTo(typeof(BookShelfSettingsPage), parameter: new Uri("shadow://local/settings"));
-                break;
-            case "pictures":
-                Caller.NavigateTo(typeof(PicPage), parameter: new Uri("shadow://local/pictures"));
-                break;
-            default:
-                Caller.NavigateTo(typeof(BookShelfPage), parameter: new Uri("shadow://local/bookshelf"));
-                break;
-        }
+            "bookshelf" => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/bookshelf")),
+            "settings" => new ShadowNavigation(typeof(BookShelfSettingsPage), new Uri("shadow://local/settings")),
+            "pictures" => new ShadowNavigation(typeof(PicPage), new Uri("shadow://local/pictures")),
+            _ => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/bookshelf"))
+        };
     }
 }
