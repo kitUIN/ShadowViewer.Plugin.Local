@@ -335,12 +335,11 @@ public partial class BookShelfViewModel : ObservableObject
     /// 双击
     /// </summary>
     [RelayCommand]
-    private void DoubleTappedItem(BookShelfNavigateArgs item)
+    private void DoubleTappedItem(LocalComic item)
     {
-        // BUG: 这里有个bug会导致双击进入后直接崩溃，目前未找到原因
+        
         if (item.IsFolder) NavigateTo(new Uri($"shadow://local/bookshelf/{item.Id}"));
         // TODO 跳转到漫画y
-        Logger.Information("{e}",CurrentFolder.Id);
     }
 
     /// <summary>

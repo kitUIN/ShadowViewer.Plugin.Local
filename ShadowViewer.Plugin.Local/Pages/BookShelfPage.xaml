@@ -383,16 +383,16 @@
                 <RefreshContainer RefreshRequested="RefreshContainer_RefreshRequested">
                     <controls1:BookShelfGridView x:Name="ContentGridView"
                                                  Padding="5"
+                                                 IsItemClickEnabled="False"
                                                  ItemDoubleTappedCommand="{x:Bind ViewModel.DoubleTappedItemCommand}"
                                                  AllowDrop="False"
-                                                 IsDetail="{x:Bind StyleSegmented.SelectedIndex,Mode=OneWay,Converter={StaticResource IntEqOneConverter},ConverterParameter=1}"
+                                                 IsDetail="{x:Bind StyleSegmented.SelectedIndex, Mode=OneWay,Converter={StaticResource IntEqOneConverter},ConverterParameter=1}"
                                                  CanDragItems="True"
                                                  CanReorderItems="False"
                                                  SimpleItemTemplate="{StaticResource SimpleLocalComicItem}"
                                                  DetailItemTemplate="{StaticResource DetailLocalComicItem}"
-                                                 ItemsSource="{x:Bind ViewModel.LocalComics}"
+                                                 ItemsSource="{x:Bind ViewModel.LocalComics, Mode=OneWay}"
                                                  KeyDown="GridViewOnKeyDown"
-                                                 SelectionChanged="ContentGridView_SelectionChanged"
                                                  SelectionMode="Extended">
                         <controls1:BookShelfGridView.ContextFlyout>
                             <!--#region 右键浮出栏-->
@@ -466,7 +466,7 @@
                     Spacing="10"
                     Orientation="Horizontal">
                     <TextBlock FontSize="{StaticResource InfoTextSize}">
-                        <Run Text="{x:Bind ViewModel.FolderTotalCounts, Mode=OneWay}"></Run>
+                        <Run Text="{x:Bind ViewModel.LocalComics.Count, Mode=OneWay}"></Run>
                         <Run Text="{i18N:Locale Key=Object}"></Run>
                     </TextBlock>
                     <TextBlock

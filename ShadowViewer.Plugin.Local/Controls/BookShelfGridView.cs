@@ -1,3 +1,4 @@
+using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -9,6 +10,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows.Input;
 using Windows.Foundation;
+using System.Threading.Tasks;
+using Serilog;
 
 namespace ShadowViewer.Plugin.Local.Controls;
 
@@ -176,7 +179,8 @@ public class BookShelfGridView : GridView
     {
         DragItemsStarting += BookShelfGridView_DragItemsStarting;
         SelectionChanged += RightMenuSelectionChanged;
-        AddHandler(DoubleTappedEvent, new DoubleTappedEventHandler(OnItemDoubleTapped), true);
+        DoubleTapped += OnItemDoubleTapped;
+        // AddHandler(DoubleTappedEvent, new DoubleTappedEventHandler(OnItemDoubleTapped), true);
         AddHandler(RightTappedEvent, new RightTappedEventHandler(MenuRightTapped), true);
     }
 
@@ -207,16 +211,24 @@ public class BookShelfGridView : GridView
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void OnItemDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    private async void OnItemDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
-        if (ItemDoubleTappedCommand == null) return;
-        var doubleTappedItem = FindGridViewItemUnderPointer(e.OriginalSource as DependencyObject);
-        if (doubleTappedItem == null) return;
-        var item = ItemFromContainer(doubleTappedItem);
-        if (item is not LocalComic localComic) return;
-        var arg = new BookShelfNavigateArgs(localComic.IsFolder, localComic.Id, localComic.ParentId);
-        if (!ItemDoubleTappedCommand.CanExecute(arg)) return;
-        ItemDoubleTappedCommand.Execute(arg);
+        try
+        {
+            // 这里有个bug会导致双击进入后直接崩溃
+            // 目前猜测原因是有其他事件未完成,加个延迟等待
+            await Task.Delay(100); 
+            if (ItemDoubleTappedCommand == null) return;
+            var doubleTappedItem = FindGridViewItemUnderPointer(e.OriginalSource as DependencyObject);
+            if (doubleTappedItem == null) return;
+            var item = ItemFromContainer(doubleTappedItem);
+            if (!ItemDoubleTappedCommand.CanExecute(item)) return;
+            ItemDoubleTappedCommand.Execute(item);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("OnItemDoubleTapped: {e}", ex);
+        }
     }
 
     /// <summary>

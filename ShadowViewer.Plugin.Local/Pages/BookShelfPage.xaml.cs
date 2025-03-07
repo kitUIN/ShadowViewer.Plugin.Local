@@ -64,9 +64,9 @@ public sealed partial class BookShelfPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         ViewModel = DiFactory.Services.Resolve<BookShelfViewModel>();
-        if(e.Parameter is Uri uri) ViewModel.NavigateTo(uri);
-
+        if (e.Parameter is Uri uri) ViewModel.NavigateTo(uri);
     }
+
 
 
     /// <summary>
