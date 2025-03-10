@@ -11,16 +11,31 @@ public partial class LocalUiPicture : ObservableObject, IUiPicture
     [ObservableProperty] private int index;
     [ObservableProperty] private ImageSource source;
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="image"></param>
     public LocalUiPicture(int index, BitmapImage image)
     {
         Index = index;
         Source = image;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="uri"></param>
     public LocalUiPicture(int index, Uri uri) : this(index, new BitmapImage() { UriSource = uri })
     {
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="uri"></param>
     public LocalUiPicture(int index, string uri) : this(index, new BitmapImage() { UriSource = new Uri(uri) })
     {
     }

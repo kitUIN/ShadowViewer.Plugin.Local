@@ -207,19 +207,6 @@ public sealed partial class BookShelfPage : Page
 
 
     /// <summary>
-    /// 修改排序
-    /// </summary>
-    private void MenuFlyoutItem_Click(object sender, RoutedEventArgs e)
-    {
-        var text = ((MenuFlyoutItem)sender).Text;
-        foreach (var item in SortFlyout.Items.Cast<MenuFlyoutItem>())
-            item.Icon = item.Text == text ? new FontIcon() { Glyph = "\uE7B3" } : null;
-        ViewModel.Sorts = EnumHelper.GetEnum<ShadowSorts>(((MenuFlyoutItem)sender).Tag.ToString());
-        ViewModel.RefreshLocalComic();
-        SortAppBarButton.Label = text;
-    }
-
-    /// <summary>
     /// 检测按键
     /// </summary>
     private void GridViewOnKeyDown(object sender, KeyRoutedEventArgs e)

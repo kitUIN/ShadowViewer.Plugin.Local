@@ -30,6 +30,7 @@ using ShadowViewer.Core.Cache;
 using ShadowViewer.Core.Extensions;
 using Windows.ApplicationModel.DataTransfer;
 using ShadowViewer.Core.Utils;
+using ShadowViewer.Plugin.Local.Enums;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -38,6 +39,18 @@ namespace ShadowViewer.Plugin.Local.ViewModels;
 /// </summary>
 public partial class BookShelfViewModel : ObservableObject
 {
+    /// <summary>
+    /// 排序-<see cref="LocalSort"/>
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SortDisplayName))]
+    private LocalSort sort = LocalSort.Rz;
+
+    /// <summary>
+    /// 排序显示
+    /// </summary>
+    public string SortDisplayName => I18n.ResourcesHelper.GetString(Sort.ToString());
+
     /// <summary>
     /// 左下角信息栏是否显示
     /// </summary>
@@ -64,10 +77,6 @@ public partial class BookShelfViewModel : ObservableObject
     /// </summary>
     public Uri OriginPath { get; private set; }
 
-    /// <summary>
-    /// 排序-<see cref="ShadowSorts"/>
-    /// </summary>
-    public ShadowSorts Sorts { get; set; } = ShadowSorts.RZ;
 
     /// <summary>
     /// 该文件夹下的漫画
@@ -270,23 +279,23 @@ public partial class BookShelfViewModel : ObservableObject
             .ToList();
         if (comics.Count > 0)
         {
-            switch (Sorts)
+            switch (Sort)
             {
-                case ShadowSorts.AZ:
+                case LocalSort.Az:
                     comics.Sort(LocalComic.AzSort); break;
-                case ShadowSorts.ZA:
+                case LocalSort.Za:
                     comics.Sort(LocalComic.ZaSort); break;
-                case ShadowSorts.CA:
+                case LocalSort.Ca:
                     comics.Sort(LocalComic.CaSort); break;
-                case ShadowSorts.CZ:
+                case LocalSort.Cz:
                     comics.Sort(LocalComic.CzSort); break;
-                case ShadowSorts.RA:
+                case LocalSort.Ra:
                     comics.Sort(LocalComic.RaSort); break;
-                case ShadowSorts.RZ:
+                case LocalSort.Rz:
                     comics.Sort(LocalComic.RzSort); break;
-                case ShadowSorts.PA:
+                case LocalSort.Pa:
                     comics.Sort(LocalComic.PaSort); break;
-                case ShadowSorts.PZ:
+                case LocalSort.Pz:
                     comics.Sort(LocalComic.PzSort); break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -548,7 +557,7 @@ public partial class BookShelfViewModel : ObservableObject
         e.AcceptedOperation = comic.IsFolder && !SelectedItems.Contains(comic)
             ? DataPackageOperation.Move
             : DataPackageOperation.None;
-        if(e.AcceptedOperation == DataPackageOperation.Move)
+        if (e.AcceptedOperation == DataPackageOperation.Move)
             e.DragUIOverride.Caption = I18N.MoveTo + comic.Name;
         e.DragUIOverride.IsGlyphVisible = true;
         e.DragUIOverride.IsCaptionVisible = true;

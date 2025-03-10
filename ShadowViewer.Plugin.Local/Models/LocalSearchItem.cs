@@ -4,15 +4,38 @@ using ShadowViewer.Plugin.Local.Enums;
 
 namespace ShadowViewer.Plugin.Local.Models;
 
+/// <summary>
+/// 
+/// </summary>
 public class LocalSearchItem : IShadowSearchItem
 {
+    /// <inheritdoc />
     public string Title { get; set; }
+
+    /// <inheritdoc />
     public string SubTitle { get; set; }
+
+    /// <inheritdoc />
     public string Id { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
     public string ComicId { get; set; }
+
+    /// <inheritdoc />
     public IconSource Icon { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
     public LocalSearchMode Mode { get; set; }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="title"></param>
+    /// <param name="id"></param>
+    /// <param name="comicId"></param>
+    /// <param name="mode"></param>
     public LocalSearchItem(string title, string id,string comicId, LocalSearchMode mode)
     {
         Title = title;

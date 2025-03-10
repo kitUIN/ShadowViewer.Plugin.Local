@@ -11,7 +11,6 @@ using SqlSugar;
 
 namespace ShadowViewer.Plugin.Local.Models;
 
-#pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
 /// <summary>
 /// 本地漫画
 /// </summary>
@@ -53,8 +52,8 @@ public partial class LocalComic : ObservableObject
     /// 漫画缩略图
     /// </summary>
     [ObservableProperty]
-    [property:
-        SugarColumn(ColumnDataType = "TEXT", DefaultValue = "mx-appx:///default.png", ColumnDescription = "漫画缩略图")]
+    [property: SugarColumn(ColumnDataType = "TEXT", DefaultValue = "mx-appx:///default.png",
+        ColumnDescription = "漫画缩略图")]
     private string thumb = "mx-appx:///default.png";
 
     /// <summary>
@@ -130,21 +129,21 @@ public partial class LocalComic : ObservableObject
     /// </summary>
     [Navigate(typeof(LocalComicAuthorMapping), nameof(LocalComicAuthorMapping.ComicId),
         nameof(LocalComicAuthorMapping.AuthorId))]
-    public List<LocalAuthor> Authors { get; set; }
+    public List<LocalAuthor> Authors { get; set; } = null!;
 
     /// <summary>
     /// 标签
     /// </summary>
     [Navigate(typeof(LocalComicTagMapping), nameof(LocalComicTagMapping.ComicId),
         nameof(LocalComicTagMapping.TagId))]
-    public List<ShadowTag> Tags { get; set; }
+    public List<ShadowTag> Tags { get; set; } = null!;
 
 
     /// <summary>
     /// 阅读记录
     /// </summary>
     [Navigate(NavigateType.OneToOne, nameof(Id))]
-    public LocalReadingRecord ReadingRecord { get; set; }
+    public LocalReadingRecord ReadingRecord { get; set; } = null!;
 
     #endregion
 
@@ -222,5 +221,3 @@ public partial class LocalComic : ObservableObject
 
     #endregion
 }
-
-#pragma warning restore CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
