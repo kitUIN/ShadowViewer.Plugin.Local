@@ -1,39 +1,11 @@
 using DryIoc;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
-using Serilog;
-using ShadowViewer.Core.Args;
-using ShadowViewer.Core.Cache;
-using ShadowViewer.Core.Converters;
-using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Models;
-using SqlSugar;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Foundation;
-using Windows.Storage;
-using Windows.System;
-using CommunityToolkit.WinUI.Controls;
 using ShadowPluginLoader.WinUI;
-using Windows.Storage.Pickers;
-using DryIoc.ImTools;
-using ShadowViewer.Core;
-using ShadowViewer.Core.Helpers;
-using ShadowViewer.Core.Services;
-using ShadowViewer.Core.Extensions;
-using ShadowViewer.Core.Enums;
-using ShadowViewer.Plugin.Local.I18n;
-using ShadowViewer.Plugin.Local.Services;
-using System.Threading;
-using ShadowViewer.Core.Models;
 using ShadowViewer.Plugin.Local.ViewModels;
 
 namespace ShadowViewer.Plugin.Local.Pages;
@@ -66,19 +38,7 @@ public sealed partial class BookShelfPage : Page
         if (e.Parameter is Uri uri) ViewModel.NavigateTo(uri);
     }
 
-
-    /// <summary>
-    /// 右键菜单-重命名
-    /// </summary>
-    /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="RoutedEventArgs"/> instance containing the event data.</param>
-    private async void ShadowCommandRename_Click(object sender, RoutedEventArgs e)
-    {
-        HomeCommandBarFlyout.Hide();
-        var comic = ContentGridView.SelectedItems[0] as LocalComic;
-        await CreateRenameDialog(ResourcesHelper.GetString(ResourceKey.Rename), XamlRoot, comic).ShowAsync();
-    }
-
+     
     /// <summary>
     /// 
     /// </summary>
@@ -91,51 +51,9 @@ public sealed partial class BookShelfPage : Page
         // };
         MoveTeachingTip.IsOpen = true;
     }
+ 
 
-    /// <summary>
-    /// 菜单-查看属性
-    /// </summary>
-    private void ShadowCommandStatus_Click(object sender, RoutedEventArgs e)
-    {
-        //TODO: 正确查看属性
-        HomeCommandBarFlyout.Hide();
-        var comic = ContentGridView.SelectedItems[0] as LocalComic;
-        Frame.Navigate(typeof(AttributesPage), comic?.Id);
-    }
-
-
-    /// <summary>
-    /// 弹出框-重命名
-    /// </summary>
-    private ContentDialog CreateRenameDialog(string title, XamlRoot xamlRoot, LocalComic comic)
-    {
-        var dialog = XamlHelper.CreateOneLineTextBoxDialog(title, xamlRoot, comic.Name);
-        dialog.PrimaryButtonClick += (s, e) =>
-        {
-            var name = ((TextBox)((StackPanel)((StackPanel)dialog.Content).Children[0]).Children[1]).Text;
-            comic.Name = name;
-            ViewModel.RefreshLocalComic();
-        };
-        return dialog;
-    }
-
-    /// <summary>
-    /// 弹出框-新建文件夹
-    /// </summary>
-    /// <returns></returns>
-    public ContentDialog CreateFolderDialog(XamlRoot xamlRoot, long parentId = -1)
-    {
-        var dialog = XamlHelper.CreateOneLineTextBoxDialog(I18N.NewFolder,
-            xamlRoot, "");
-        dialog.PrimaryButtonClick += (s, e) =>
-        {
-            var name = ((TextBox)((StackPanel)((StackPanel)s.Content).Children[0]).Children[1]).Text;
-            LocalComic.CreateFolder(name, parentId);
-            ViewModel.RefreshLocalComic();
-        };
-        return dialog;
-    }
-
+     
     /// <summary>
     /// 路径树-双击
     /// </summary>
@@ -170,39 +88,6 @@ public sealed partial class BookShelfPage : Page
         // path.SetSize(size);
         // MoveTeachingTip.IsOpen = false;
         // ViewModel.RefreshLocalComic();
-    }
-
-    /// <summary>
-    /// 拖动响应
-    /// </summary>
-    private void GridViewItem_Drop(object sender, DragEventArgs e)
-    {
-        if (sender is FrameworkElement { Tag: LocalComic { IsFolder: true } comic })
-        {
-            ViewModel.MoveTo(comic.Id, ViewModel.SelectedItems);
-        }
-    }
-
-    /// <summary>
-    /// 拖动悬浮显示
-    /// </summary>
-    /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="DragEventArgs"/> instance containing the event data.</param>
-    private void GridViewItem_DragOverCustomized(object sender, DragEventArgs e)
-    {
-        if (sender is not FrameworkElement frame) return;
-        if (frame.Tag is LocalComic { IsFolder: true } comic)
-        {
-            e.DragUIOverride.Caption = I18N.MoveTo + comic.Name;
-            e.AcceptedOperation = comic.IsFolder ? DataPackageOperation.Move : DataPackageOperation.None;
-        }
-        else
-        {
-            return;
-        }
-
-        e.DragUIOverride.IsGlyphVisible = true;
-        e.DragUIOverride.IsCaptionVisible = true;
     }
 
 

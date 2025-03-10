@@ -59,7 +59,7 @@ public sealed partial class AttributesPage : Page
     /// </summary>
     private async void Image_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        var file = await FileHelper.SelectFileAsync(XamlRoot, "ShadowViewer_PicImageTapped", PickerViewMode.Thumbnail,
+        var file = await FileHelper.SelectFileAsync("ShadowViewer_PicImageTapped", PickerViewMode.Thumbnail,
             FileHelper.Pngs);
         // if (file != null) ViewModel.CurrentComic.Img = file.DecodePath();
     }

@@ -31,6 +31,11 @@ using ShadowViewer.Core.Extensions;
 using Windows.ApplicationModel.DataTransfer;
 using ShadowViewer.Core.Utils;
 using ShadowViewer.Plugin.Local.Enums;
+using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.UI.Xaml.Media.Animation;
+using ShadowViewer.Core.Args;
+using ShadowViewer.Core.Controls;
+using ShadowViewer.Plugin.Local.Pages;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -42,8 +47,7 @@ public partial class BookShelfViewModel : ObservableObject
     /// <summary>
     /// 排序-<see cref="LocalSort"/>
     /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SortDisplayName))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(SortDisplayName))]
     private LocalSort sort = LocalSort.Rz;
 
     /// <summary>
@@ -97,6 +101,7 @@ public partial class BookShelfViewModel : ObservableObject
     private INotifyService NotifyService { get; }
     private ComicService ComicService { get; }
     private ILogger Logger { get; }
+    private INavigateService NavigateService { get; }
     private readonly ICallableService caller;
 
     /// <summary>
@@ -108,10 +113,12 @@ public partial class BookShelfViewModel : ObservableObject
     /// <param name="comicService"></param>
     /// <param name="logger"></param>
     public BookShelfViewModel(ICallableService callableService,
+        INavigateService navigateService,
         ISqlSugarClient sqlSugarClient, INotifyService notifyService, ComicService comicService,
         ILogger logger)
     {
         Db = sqlSugarClient;
+        NavigateService = navigateService;
         caller = callableService;
         NotifyService = notifyService;
         ComicService = comicService;
@@ -153,23 +160,53 @@ public partial class BookShelfViewModel : ObservableObject
     /// 新建文件夹
     /// </summary>
     [RelayCommand]
-    private async Task CreateNewFolder(Page page)
+    private async Task CreateNewFolder()
     {
-        var dialog = XamlHelper.CreateOneTextBoxDialog(page.XamlRoot, I18N.NewFolder,
+        var dialog = XamlHelper.CreateOneTextBoxDialog(null, I18N.NewFolder,
             I18N.NewFolderName, "", "",
             (_, _, text) =>
             {
                 LocalComic.CreateFolder(text, CurrentFolder!.Id);
                 RefreshLocalComic();
             });
-        await dialog.ShowAsync();
+
+        await DialogHelper.ShowDialog(dialog);
     }
 
-
+    /// <summary>
+    /// 弹出框-重命名
+    /// </summary>
+    [RelayCommand]
+    private async Task Rename()
+    {
+        if (SelectedItems.Count != 1) return;
+        var comic = SelectedItems[0];
+        var dialog = XamlHelper.CreateOneTextBoxDialog(null, 
+            I18N.Rename, comic.Name,
+            primaryAction: (_, _, name) =>
+            {
+                Db.Updateable<LocalComic>()
+                    .SetColumns(x => x.Name == name)
+                    .Where(x => x.Id == comic.Id)
+                    .ExecuteCommand();
+                RefreshLocalComic();
+            });
+        await DialogHelper.ShowDialog(dialog);
+    }
+    /// <summary>
+    /// 菜单-查看属性
+    /// </summary>
+    [RelayCommand]
+    private void Status()
+    {
+        if (SelectedItems.Count != 1) return;
+        var comic = SelectedItems[0];
+        NavigateService.Navigate(typeof(AttributesPage), comic?.Id);
+    }
     /// <summary>   
     /// 删除二次确定框
     /// </summary>
-    public async Task DeleteMessageDialog(Page page)
+    public async Task DeleteMessageDialog()
     {
         var deleteFiles = new CheckBox()
         {
@@ -188,7 +225,6 @@ public partial class BookShelfViewModel : ObservableObject
         var dialog = new ContentDialog
         {
             Title = I18N.IsDelete,
-            XamlRoot = page.XamlRoot,
             Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
             IsPrimaryButtonEnabled = true,
             PrimaryButtonText = I18N.Confirm,
@@ -201,7 +237,7 @@ public partial class BookShelfViewModel : ObservableObject
         };
         dialog.PrimaryButtonClick += (_, _) => DeleteComics();
         dialog.Focus(FocusState.Programmatic);
-        await dialog.ShowAsync();
+        await DialogHelper.ShowDialog(dialog);
         return;
 
         void RememberChecked(object sender, RoutedEventArgs e)
@@ -231,7 +267,7 @@ public partial class BookShelfViewModel : ObservableObject
             if (LocalPlugin.Settings.LocalIsRememberDeleteFilesWithComicDelete)
                 DeleteComics();
             else
-                await DeleteMessageDialog(page);
+                await DeleteMessageDialog();
         }
     }
 
@@ -315,7 +351,7 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private async Task AddComicFromFolder(Page page)
     {
-        var folder = await FileHelper.SelectFolderAsync(page, "AddNewComic");
+        var folder = await FileHelper.SelectFolderAsync("AddNewComic");
         // if (folder != null) caller.ImportComic(new List<IStorageItem> { folder }, new string[1], 0);
         if (folder == null) return;
         var token = CancellationToken.None;
@@ -332,7 +368,20 @@ public partial class BookShelfViewModel : ObservableObject
     private void DoubleTappedItem(LocalComic item)
     {
         if (item.IsFolder) NavigateTo(new Uri($"shadow://local/bookshelf/{item.Id}"));
-        // TODO 跳转到漫画y
+        else
+        {
+            if (SelectedItems.Count != 1) return;
+            var comic = SelectedItems[0];
+            DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
+            {
+                Id = comic.Id,
+                LastReadDateTime = DateTime.Now,
+                Thumb = comic.Thumb,
+                Title = comic.Name,
+            }).ExecuteCommand();
+            NavigateService.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
+                new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
+        }
     }
 
     /// <summary>
@@ -350,7 +399,7 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private async Task AddComicFromZip(Page page)
     {
-        var files = await FileHelper.SelectMultipleFileAsync(page,
+        var files = await FileHelper.SelectMultipleFileAsync(
             "AddComicsFromZip", PickerViewMode.List, ".zip", ".rar", ".7z");
         if (!files.Any()) return;
         var token = CancellationToken.None;
@@ -450,11 +499,11 @@ public partial class BookShelfViewModel : ObservableObject
             if (passed) break;
             infoBar.Severity = InfoBarSeverity.Warning;
             infoBar.Title = I18N.NeedPassword + ": " + Path.GetFileNameWithoutExtension(file.Path);
-            var dialog = XamlHelper.CreateOneTextBoxDialog(page.XamlRoot,
+            var dialog = XamlHelper.CreateOneTextBoxDialog(null,
                 Core.I18n.I18N.PasswordError,
                 "", Core.I18n.I18N.ZipPasswordPlaceholder, "",
                 (_, _, text) => op.Password = text);
-            var res = await dialog.ShowAsync();
+            var res = await DialogHelper.ShowDialog(dialog);
             if (res == ContentDialogResult.None) break;
         }
 

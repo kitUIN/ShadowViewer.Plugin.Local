@@ -1,15 +1,11 @@
 using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using ShadowViewer.Plugin.Local.Models;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows.Input;
-using Windows.Foundation;
 using System.Threading.Tasks;
 using Serilog;
 using System.Collections.ObjectModel;
@@ -192,7 +188,7 @@ public class BookShelfGridView : GridView
     /// <summary>
     /// 
     /// </summary>
-    public BookShelfGridView() : base()
+    public BookShelfGridView()
     {
         DragItemsStarting += BookShelfGridView_DragItemsStarting;
         SelectionChanged += BindableGridView_SelectionChanged;
@@ -306,7 +302,12 @@ public class BookShelfGridView : GridView
     private void MenuRightTapped(object sender, RightTappedRoutedEventArgs e)
     {
         var container = FindGridViewItemUnderPointer(e.OriginalSource as DependencyObject);
-        if (container != null && container.IsSelected) return;
+        if (container != null)
+        {
+            if (container.IsSelected) return;
+            container.IsSelected = true;
+            return;
+        }
         foreach (var item in SelectedItems)
         {
             var innerContainer = ContainerFromItem(item) as GridViewItem;

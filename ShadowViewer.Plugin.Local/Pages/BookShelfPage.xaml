@@ -8,9 +8,7 @@
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     xmlns:icons="using:FluentIcon.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
     xmlns:winUi="using:CommunityToolkit.WinUI"
-    xmlns:local="using:ShadowViewer.Plugin.Local"
     NavigationCacheMode="Required"
     xmlns:controls1="using:ShadowViewer.Plugin.Local.Controls"
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
@@ -19,7 +17,7 @@
     xmlns:utils="using:ShadowViewer.Core.Utils"
     xmlns:extensions="using:ShadowViewer.Core.Extensions"
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
-    xmlns:system="using:System"
+    xmlns:controls2="using:ShadowViewer.Core.Controls"
     x:Name="RootPage"
     mc:Ignorable="d">
     <Page.Resources>
@@ -294,20 +292,18 @@
                             <MenuFlyout Placement="Bottom">
                                 <MenuFlyoutItem
                                     Command="{x:Bind ViewModel.CreateNewFolderCommand}"
-                                    CommandParameter="{x:Bind RootPage}"
                                     Icon="NewFolder"
                                     ToolTipService.ToolTip="{i18N:Locale Key=NewFolder}"
                                     Text="{i18N:Locale Key=NewFolder}">
                                 </MenuFlyoutItem>
                                 <MenuFlyoutItem Command="{x:Bind ViewModel.AddComicFromFolderCommand}"
-                                                CommandParameter="{x:Bind RootPage}"
                                                 ToolTipService.ToolTip="{i18N:Locale Key=ImportFromFolder}"
                                                 Icon="{winUi:FontIcon Glyph=&#xE82E;}"
                                                 Text="{i18N:Locale Key=ImportFromFolder}">
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem CommandParameter="{x:Bind RootPage}"
-                                                Command="{x:Bind ViewModel.AddComicFromZipCommand}"
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.AddComicFromZipCommand}"
                                                 ToolTipService.ToolTip="{i18N:Locale Key=ImportFromZip}"
+                                                CommandParameter="{x:Bind RootPage}"
                                                 Icon="{winUi:FontIcon Glyph=&#xF012;}"
                                                 Text="{i18N:Locale Key=ImportFromZip}">
                                 </MenuFlyoutItem>
@@ -345,7 +341,7 @@
                     <AppBarButton Label="{i18N:Locale Key=Filter}"
                                   Icon="{winUi:FontIcon Glyph=&#xE71C;}"
                                   ToolTipService.ToolTip="{i18N:Locale Key=Filter}" />
-                    <AppBarButton x:Name="SortAppBarButton" Label="{x:Bind ViewModel.SortDisplayName ,Mode=OneWay}"
+                    <AppBarButton Label="{x:Bind ViewModel.SortDisplayName ,Mode=OneWay}"
                                   Icon="{winUi:FontIcon Glyph=&#xE8CB;}"
                                   ToolTipService.ToolTip="{i18N:Locale Key=Sort}">
                         <AppBarButton.Flyout>
@@ -388,42 +384,33 @@
                                                  SelectionMode="Extended">
                         <controls1:BookShelfGridView.ContextFlyout>
                             <!--#region 右键浮出栏-->
-                            <CommandBarFlyout Placement="Right"
-                                              x:Name="HomeCommandBarFlyout"
-                                              AlwaysExpanded="True">
-                                <AppBarButton
-                                    x:Name="ShadowCommandRename"
-                                    Click="ShadowCommandRename_Click"
+                            <MenuFlyout Placement="Right"
+                                        x:Name="HomeCommandBarFlyout">
+                                <MenuFlyoutItem
                                     Icon="Rename"
+                                    Command="{x:Bind ViewModel.RenameCommand}"
                                     Visibility="{x:Bind ContentGridView.IsSingle,Mode=OneWay}"
-                                    Label="{i18N:Locale Key=Rename}"
+                                    Text="{i18N:Locale Key=Rename}"
                                     ToolTipService.ToolTip="{i18N:Locale Key=Rename}" />
-                                <AppBarButton
-                                    x:Name="ShadowCommandStatus"
-                                    Click="ShadowCommandStatus_Click"
+                                <MenuFlyoutItem
+                                    Icon="MoveToFolder"
+                                    Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
+                                    Text="{i18N:Locale Key=MoveTo}"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=MoveTo}" />
+                                <MenuFlyoutItem
+                                    Command="{x:Bind ViewModel.StatusCommand}"
                                     Icon="Repair"
                                     Visibility="{x:Bind ContentGridView.IsMulti,Mode=OneWay,Converter={StaticResource BoolToVisibilityConverter},ConverterParameter=True}"
-                                    Label="{i18N:Locale Key=Status}"
+                                    Text="{i18N:Locale Key=Status}"
                                     ToolTipService.ToolTip="{i18N:Locale Key=Status}" />
-                                <AppBarButton
-                                    x:Name="ShadowCommandDelete"
+                                <MenuFlyoutItem  
                                     Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
                                     Command="{x:Bind ViewModel.DeleteCommand}"
-                                    CommandParameter="{x:Bind RootPage}"
                                     Icon="Delete"
-                                    Label="{i18N:Locale Key=Delete}"
-                                    ToolTipService.ToolTip="{i18N:Locale Key=Delete}" />
-                                <CommandBarFlyout.SecondaryCommands>
-                                    <AppBarButton
-                                        x:Name="ShadowCommandMove"
-                                        Click="ShadowCommandMove_Click"
-                                        Icon="MoveToFolder"
-                                        Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
-                                        Label="{i18N:Locale Key=MoveTo}"
-                                        ToolTipService.ToolTip="{i18N:Locale Key=MoveTo}" />
-
-                                </CommandBarFlyout.SecondaryCommands>
-                            </CommandBarFlyout>
+                                    Text="{i18N:Locale Key=Delete}"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=Delete}" >
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
                             <!--#endregion-->
                         </controls1:BookShelfGridView.ContextFlyout>
                     </controls1:BookShelfGridView>

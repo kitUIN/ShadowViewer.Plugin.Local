@@ -1,5 +1,4 @@
 ﻿using DryIoc;
-using Serilog;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Plugin.Local.Models;
@@ -12,14 +11,29 @@ namespace ShadowViewer.Plugin.Local.Cache
     /// </summary>
     public class CacheImg
     {
-        public CacheImg() { }
+        /// <summary>
+        /// Id
+        /// </summary>
+        [SugarColumn(IsPrimaryKey = true)]
+        public long Id { get; set; }
 
-        [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
-        public int Id { get; set; }
+        /// <summary>
+        /// MD5
+        /// </summary>
         [SugarColumn(ColumnDataType = "Nchar(32)", IsNullable = false)]
-        public string Md5 { get; set; }
-        [SugarColumn(ColumnDataType = "Ntext")]
-        public string Path { get; set; }
+        public string Md5 { get; set; } = null!;
+
+        /// <summary>
+        /// 文件夹
+        /// </summary>
+        [SugarColumn(ColumnDataType = "Text")]
+        public string Dir { get; set; } = null!;
+
+        /// <summary>
+        /// 路径
+        /// </summary>
+        public string Path => System.IO.Path.Combine(Dir, $"{Id}.png");
+
         /// <summary>
         /// 标签
         /// </summary>
@@ -36,37 +50,30 @@ namespace ShadowViewer.Plugin.Local.Cache
         {
             var db = DiFactory.Services.Resolve<ISqlSugarClient>();
             var md5 = EncryptingHelper.CreateMd5(bytes);
-            var path = System.IO.Path.Combine(dir, md5 + ".png");
+            var id = SnowFlakeSingle.Instance.NextId();
+            var path = System.IO.Path.Combine(dir, $"{id}.png");
             System.IO.File.WriteAllBytes(path, bytes);
             if (db.Queryable<CacheImg>().First(x => x.Md5 == md5) is { } cache)
             {
-                db.Insertable(new CacheImg
-                {
-                    Md5 = md5,
-                    ComicId = cache.ComicId,
-                    Path = cache.Path,
-                }).ExecuteReturnIdentity();
                 db.Updateable<LocalComic>()
                     .SetColumns(it => it.Thumb == cache.Path)
-                    .Where(x=>x.Id == comicId)
+                    .Where(x => x.Id == comicId)
                     .ExecuteCommand();
             }
             else
             {
                 db.Insertable(new CacheImg
                 {
+                    Id = id,
                     Md5 = md5,
-                    Path = path,
+                    Dir = dir,
                     ComicId = comicId,
-                }).ExecuteReturnIdentity();
+                }).ExecuteCommand();
                 db.Updateable<LocalComic>()
                     .SetColumns(it => it.Thumb == path)
                     .Where(x => x.Id == comicId)
                     .ExecuteCommand();
             }
         }
-
-        [SugarColumn(IsIgnore = true)]
-        public static ILogger Logger { get; } = Log.ForContext<CacheImg>();
     }
 }
