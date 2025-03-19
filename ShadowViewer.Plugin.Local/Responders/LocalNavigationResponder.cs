@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Core.Models.Interfaces;
-using ShadowViewer.Core.Services;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Core.Responders;
-using ShadowPluginLoader.MetaAttributes;
 using ShadowViewer.Core.Utils;
-using CommunityToolkit.WinUI.Animations;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
@@ -35,11 +32,7 @@ public partial class LocalNavigationResponder : AbstractNavigationResponder
                 pluginId: LocalPlugin.Meta.Id,
                 id: "BookShelf",
                 icon: new SymbolIcon(Symbol.Home),
-                content: I18N.BookShelf,
-                startAnimation: AnimationBuilder
-                    .Create()
-                    .RotationInDegrees(360,0,duration: TimeSpan.FromSeconds(1))
-                )
+                content: I18N.BookShelf)
         };
 
     /// <summary>
