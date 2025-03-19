@@ -27,8 +27,8 @@ public partial class LocalPlugin : AShadowViewerPlugin
     /// 
     /// </summary>
     public LocalPlugin(ICallableService caller, PluginEventService pluginEventService, ISqlSugarClient db,
-        CompressService compressService, ILogger logger, PluginLoader pluginService, INotifyService notifyService) :
-        base(caller, db, pluginEventService, compressService, logger, pluginService, notifyService)
+        ILogger logger, PluginLoader pluginService, INotifyService notifyService) :
+        base(caller, db, pluginService, notifyService, logger, pluginEventService)
     {
         DiFactory.Services.Register<ComicService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
