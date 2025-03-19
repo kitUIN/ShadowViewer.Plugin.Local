@@ -5,13 +5,13 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
-    xmlns:icons="using:FluentIcon.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:ShadowViewer.Core.Models"
     x:Name="ThisPage"
     xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
     xmlns:models1="using:ShadowViewer.Plugin.Local.Models"
     xmlns:interfaces="using:ShadowViewer.Core.Models.Interfaces"
+    xmlns:icons="using:FluentIcons.WinUI"
     mc:Ignorable="d">
     <Page.Resources>
         <x:Double x:Key="AttributesFontSize">16</x:Double>
@@ -79,7 +79,7 @@
                                                     VerticalAlignment="Bottom"
                                                     Click="FileNameButton_Click"
                                                     ToolTipService.ToolTip="{i18N:Locale Key=Revise}">
-                                                    <icons:FluentFilledIcon FontSize="15" Symbol="Edit24Filled" />
+                                                    <icons:FluentIcon FontSize="15" Icon="Edit" IconVariant="Filled" />
                                                 </HyperlinkButton>
                                             </StackPanel>
                                             <!--#endregion-->
@@ -102,7 +102,7 @@
                                                     VerticalAlignment="Bottom"
                                                     Click="AuthorButton_Click"
                                                     ToolTipService.ToolTip="{i18N:Locale Key=Revise}">
-                                                    <icons:FluentFilledIcon FontSize="15" Symbol="Edit24Filled" />
+                                                    <icons:FluentIcon FontSize="15" Icon="Edit" IconVariant="Filled" />
                                                 </HyperlinkButton>
                                             </StackPanel>
                                             <!--#endregion-->
@@ -125,7 +125,7 @@
                                                     VerticalAlignment="Bottom"
                                                     Click="GrouprButton_Click"
                                                     ToolTipService.ToolTip="{i18N:Locale Key=Revise}">
-                                                    <icons:FluentFilledIcon FontSize="15" Symbol="Edit24Filled" />
+                                                    <icons:FluentIcon IconVariant="Filled" FontSize="15" Icon="Edit" />
                                                 </HyperlinkButton>
                                             </StackPanel>
                                             <!--#endregion-->
@@ -283,8 +283,8 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Id, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentRegularIcon FontSize="15"
-                                                                    Symbol="Copy24Regular" />
+                                                                <icons:FluentIcon FontSize="15"
+                                                                    Icon="Copy" IconVariant="Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -315,8 +315,8 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Thumb, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentRegularIcon FontSize="15"
-                                                                    Symbol="Copy24Regular" />
+                                                                <icons:FluentIcon FontSize="15"
+                                                                    Icon="Copy" IconVariant="Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -347,8 +347,8 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Link, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentRegularIcon FontSize="15"
-                                                                    Symbol="Copy24Regular" />
+                                                                <icons:FluentIcon FontSize="15"
+                                                                    Icon="Copy" IconVariant="Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -379,8 +379,8 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Link, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentRegularIcon FontSize="15"
-                                                                    Symbol="Copy24Regular" />
+                                                                <icons:FluentIcon FontSize="15"
+                                                                    Icon="Copy" IconVariant="Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -388,7 +388,7 @@
                                                     </StackPanel>
                                                 </Flyout>
                                             </FlyoutBase.AttachedFlyout>
-                                            <icons:FluentFilledIcon Symbol="ErrorCircle24Filled" />
+                                            <icons:FluentIcon Icon="ErrorCircle" IconVariant="Filled" />
                                         </HyperlinkButton>
                                     </Grid>
                                 </Border>
@@ -421,9 +421,10 @@
                                                 Foreground="{x:Bind Foreground}"
                                                 Style="{ThemeResource NoOverButton}">
                                             <StackPanel Orientation="Horizontal">
-                                                <icons:FluentRegularIcon
+                                                <icons:FluentIcon
                                                     Margin="0,1,5,0"
                                                     FontSize="18"
+                                                    IconVariant="Regular"
                                                     Visibility="{x:Bind Icon, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}"
                                                     Glyph="{x:Bind Icon}" />
                                                 <TextBlock VerticalAlignment="Center" Text="{x:Bind Name}" />
@@ -435,14 +436,14 @@
                                     <controls:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
                                 </ItemsRepeater.Layout>
                             </ItemsRepeater>
-                            <HyperlinkButton Grid.Column="1" Height="34" Width="34"  VerticalAlignment="Center"
+                            <HyperlinkButton Grid.Column="1" Height="34" Width="34" VerticalAlignment="Center"
                                              Padding="3" Command="{x:Bind ViewModel.TagClickCommand}"
 
                                              ToolTipService.ToolTip="{i18N:Locale Key=AddTag}">
-                                <icons:FluentRegularIcon
+                                <icons:FluentIcon
                                     HorizontalAlignment="Center"
-                                    FontSize="18"
-                                    Glyph="&#xE008;" />
+                                    FontSize="18" 
+                                    Icon="AddSquareMultiple" />
                             </HyperlinkButton>
                         </Grid>
 
@@ -471,9 +472,9 @@
                                         <ToolTipService.ToolTip>
                                             <ToolTip>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <icons:FluentRegularIcon
+                                                    <icons:FluentIcon
                                                         FontSize="14"
-                                                        Symbol="DocumentOnePage24Regular" />
+                                                        Icon="DocumentOnePage" />
                                                     <TextBlock FontSize="12" Text="{x:Bind PageCount}" />
                                                     <TextBlock FontSize="12" Text="P" />
                                                 </StackPanel>
@@ -481,10 +482,10 @@
                                         </ToolTipService.ToolTip>
                                         <StackPanel Orientation="Horizontal" Spacing="3">
                                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <icons:FluentRegularIcon
+                                                <icons:FluentIcon
                                                     Margin="0,1,0,0"
                                                     FontSize="18"
-                                                    Symbol="Archive24Regular" />
+                                                    Icon="Archive" />
                                                 <TextBlock Text="{x:Bind Name}" />
                                                 <InfoBadge Value="{x:Bind PageCount}" />
                                             </StackPanel>
@@ -557,7 +558,7 @@
                             Foreground="{x:Bind ViewModel.NewUiTag.Foreground,Mode=OneWay}"
                             Style="{ThemeResource NoOverButton}">
                         <StackPanel Orientation="Horizontal">
-                            <icons:FluentRegularIcon
+                            <icons:FluentIcon
                                 Margin="0,1,5,0"
                                 FontSize="18"
                                 Glyph="{x:Bind ViewModel.NewUiTag.Icon}"

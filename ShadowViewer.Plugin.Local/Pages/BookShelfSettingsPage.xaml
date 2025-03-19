@@ -5,7 +5,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
-    xmlns:icons="using:FluentIcon.WinUI"
+    xmlns:icons="using:FluentIcons.WinUI"
     xmlns:local2="using:ShadowViewer.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:win="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -35,11 +35,11 @@
                 <controls:SettingsCard>
                     <controls:SettingsCard.Header>
                         <local2:ShadowSettingHeader Description="{i18N:Locale Key=IsBookShelfInfoBarDescription}" Header="{i18N:Locale Key=IsBookShelfInfoBar}">
-                            <icons:FluentRegularIcon
+                            <icons:FluentIcon
                                 Width="30"
                                 Height="30"
                                 FontSize="25"
-                                Symbol="CalendarInfo20Regular" />
+                                Icon="CalendarInfo" />
                         </local2:ShadowSettingHeader>
                     </controls:SettingsCard.Header>
                     <ToggleSwitch
@@ -52,11 +52,11 @@
                 <controls:SettingsCard>
                     <controls:SettingsCard.Header>
                         <local2:ShadowSettingHeader Description="{i18N:Locale Key=RememberDeleteWithFilesDescription}" Header="{i18N:Locale Key=RememberDeleteWithFiles}">
-                            <icons:FluentRegularIcon
+                            <icons:FluentIcon
                                 Width="30"
                                 Height="30"
                                 FontSize="25"
-                                Symbol="Checkbox220Regular" />
+                                Icon="Checkbox2" />
                         </local2:ShadowSettingHeader>
                     </controls:SettingsCard.Header>
                     <ToggleSwitch
@@ -67,11 +67,11 @@
                 <controls:SettingsCard>
                     <controls:SettingsCard.Header>
                         <local2:ShadowSettingHeader Description="{i18N:Locale Key=DeleteWithFilesDescription}" Header="{i18N:Locale Key=DeleteWithFiles}">
-                            <icons:FluentRegularIcon
+                            <icons:FluentIcon
                                 Width="30"
                                 Height="30"
                                 FontSize="25"
-                                Symbol="DeleteLines20Regular" />
+                                Icon="DeleteLines" />
                         </local2:ShadowSettingHeader>
                     </controls:SettingsCard.Header>
                     <ToggleSwitch IsOn="{x:Bind ViewModel.IsDeleteFilesWithComicDelete, Mode=TwoWay}" />
@@ -79,11 +79,11 @@
                 <controls:SettingsCard>
                     <controls:SettingsCard.Header>
                         <local2:ShadowSettingHeader Description="{i18N:Locale Key=IsImportAgainDescription}" Header="{i18N:Locale Key=IsImportAgain}">
-                            <icons:FluentRegularIcon
+                            <icons:FluentIcon
                                 Width="30"
                                 Height="30"
                                 FontSize="25"
-                                Symbol="CubeArrowCurveDown20Regular" />
+                                Icon="CubeArrowCurveDown" />
                         </local2:ShadowSettingHeader>
                     </controls:SettingsCard.Header>
                     <ToggleSwitch

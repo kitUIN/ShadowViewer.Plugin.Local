@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dv="using:ShadowViewer.Plugin.Local.Models"
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
-    xmlns:icons="using:FluentIcon.WinUI"
+    xmlns:icons="using:FluentIcons.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winUi="using:CommunityToolkit.WinUI"
     NavigationCacheMode="Required"
@@ -179,11 +179,11 @@
                                         TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <icons:FluentRegularIcon
+                                    <icons:FluentIcon
                                         Margin="0,2,0,0"
                                         FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
-                                        Symbol="Archive24Regular" />
+                                        Icon="Archive" />
                                     <TextBlock
                                         Margin="3,0,0,0"
                                         FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
@@ -193,11 +193,11 @@
                                         FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
                                         Text="E" />
-                                    <icons:FluentRegularIcon
+                                    <icons:FluentIcon
                                         Margin="5,2,0,0"
                                         FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
                                         Foreground="Gray"
-                                        Symbol="DocumentOnePage24Regular" />
+                                        Icon="DocumentOnePage" />
                                     <TextBlock
                                         Margin="1,0,0,0"
                                         FontSize="{StaticResource BookShelfComicSubInfoFontSize}"
