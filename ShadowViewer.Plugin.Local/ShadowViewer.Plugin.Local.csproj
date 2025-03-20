@@ -33,11 +33,15 @@
             <Id>Local</Id>
             <Name>本地阅读器</Name>
             <Version>$(Version)</Version>
-            <Logo>fluent://regular/\uF66D</Logo>
+            <Logo>fluent://regular/ResizeImage</Logo>
             <PluginLang>zh-CN</PluginLang>
             <WebUri>$(RepositoryUrl)</WebUri>
             <Description>$(Description)</Description>
             <Authors>$(Authors)</Authors>
+			<CanOpenFolder>false</CanOpenFolder>
+			<CanDelete>false</CanDelete>
+			<CanSwitch>false</CanSwitch>
+			<SettingsPage>ShadowViewer.Plugin.Local.Pages.BookShelfSettingsPage</SettingsPage> 
         </PluginMeta>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
     </PropertyGroup>
@@ -54,9 +58,6 @@
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
 		<PackageReference Include="ShadowViewer.Core" Version="2025.3.19.1" />
 	</ItemGroup>
-    <ItemGroup>
-      <AdditionalFiles Remove="D:\RiderProjects\ShadowViewer\ShadowViewer.Plugin.Local\ShadowViewer.Plugin.Local\plugin.json" />
-    </ItemGroup>
     <ItemGroup>
       <None Remove="Pages\UserPage.xaml" />
     </ItemGroup>

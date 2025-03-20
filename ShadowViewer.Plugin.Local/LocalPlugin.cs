@@ -21,23 +21,19 @@ namespace ShadowViewer.Plugin.Local;
 /// 
 /// </summary>
 [AutoPluginMeta]
+[CheckAutowired]
 public partial class LocalPlugin : AShadowViewerPlugin
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    public LocalPlugin(ICallableService caller, PluginEventService pluginEventService, ISqlSugarClient db,
-        ILogger logger, PluginLoader pluginService, INotifyService notifyService) :
-        base(caller, db, pluginService, notifyService, logger, pluginEventService)
+    partial void ConstructorInit()
     {
         DiFactory.Services.Register<ComicService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
-        db.CodeFirst.InitTables<LocalEpisode>();
-        db.CodeFirst.InitTables<LocalPicture>();
-        db.CodeFirst.InitTables<CacheImg>();
-        db.CodeFirst
+        Db.CodeFirst.InitTables<LocalEpisode>();
+        Db.CodeFirst.InitTables<LocalPicture>();
+        Db.CodeFirst.InitTables<CacheImg>();
+        Db.CodeFirst
             .InitTables<LocalAuthor, LocalComic, LocalReadingRecord, LocalComicAuthorMapping, LocalComicTagMapping>();
         if (!Db.Queryable<LocalComic>().Any(x => x.Id == -1L))
         {
@@ -49,27 +45,6 @@ public partial class LocalPlugin : AShadowViewerPlugin
     /// <inheritdoc/>
     /// </summary>
     public override ShadowTag AffiliationTag { get; } = new("Local", "#ffd657", "#000000", "\uF66D", "Local");
-
-    /// <summary>
-    /// <inheritdoc/>
-    /// </summary>
-    public override Type? SettingsPage => typeof(BookShelfSettingsPage);
-
-    /// <summary>
-    /// <inheritdoc/>
-    /// </summary>
-    public override bool CanSwitch => false;
-
-    /// <summary>
-    /// <inheritdoc/>
-    /// </summary>
-    public override bool CanDelete => false;
-
-    /// <summary>
-    /// <inheritdoc/>
-    /// </summary>
-    public override bool CanOpenFolder => false;
-
 
     /// <inheritdoc />
     public override PluginMetaData MetaData => Meta;

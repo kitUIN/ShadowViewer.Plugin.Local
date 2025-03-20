@@ -1,52 +1,121 @@
 {
-  "Namespace": "ShadowViewer.Core.Plugins",
-  "Type": "PluginMetaData",
+  "MetaDataType": "ShadowViewer.Core.Plugins.PluginMetaData",
   "Properties": {
     "Description": {
-      "Type": "string",
+      "Type": "System.String",
+      "Nullable": false,
+      "Required": true,
       "PropertyGroupName": "Description"
     },
     "Authors": {
-      "Type": "string",
+      "Type": "System.String",
+      "Nullable": false,
+      "Required": true,
       "PropertyGroupName": "Authors"
     },
     "WebUri": {
-      "Type": "string",
+      "Type": "System.String",
+      "Nullable": false,
+      "Required": true,
       "PropertyGroupName": "WebUri"
     },
     "Logo": {
-      "Type": "string",
+      "Type": "System.String",
+      "Nullable": false,
+      "Required": true,
       "PropertyGroupName": "Logo"
     },
+    "CanSwitch": {
+      "Type": "System.Boolean",
+      "Nullable": false,
+      "Required": false,
+      "PropertyGroupName": "CanSwitch"
+    },
+    "CanDelete": {
+      "Type": "System.Boolean",
+      "Nullable": false,
+      "Required": false,
+      "PropertyGroupName": "CanDelete"
+    },
+    "CanOpenFolder": {
+      "Type": "System.Boolean",
+      "Nullable": false,
+      "Required": false,
+      "PropertyGroupName": "CanOpenFolder"
+    },
+    "SettingsPage": {
+      "Type": "System.String",
+      "Nullable": true,
+      "Required": false,
+      "PropertyGroupName": "SettingsPage"
+    },
+    "AffiliationTag": {
+      "Type": "ShadowViewer.Core.Models.ShadowTag",
+      "Nullable": true,
+      "Required": false,
+      "PropertyGroupName": "AffiliationTag",
+      "Properties": {
+        "Name": {
+          "Type": "System.String",
+          "Nullable": false,
+          "Required": true,
+          "PropertyGroupName": "Name"
+        },
+        "BackgroundHex": {
+          "Type": "System.String",
+          "Nullable": false,
+          "Required": true,
+          "PropertyGroupName": "BackgroundHex"
+        },
+        "ForegroundHex": {
+          "Type": "System.String",
+          "Nullable": false,
+          "Required": true,
+          "PropertyGroupName": "ForegroundHex"
+        },
+        "Icon": {
+          "Type": "System.String",
+          "Nullable": true,
+          "Required": false,
+          "PropertyGroupName": "Icon"
+        },
+        "PluginId": {
+          "Type": "System.String",
+          "Nullable": false,
+          "Required": false,
+          "PropertyGroupName": "PluginId"
+        }
+      }
+    },
     "Id": {
-      "Type": "string",
+      "Type": "System.String",
+      "Nullable": false,
+      "Required": true,
       "PropertyGroupName": "Id"
     },
     "Name": {
-      "Type": "string",
+      "Type": "System.String",
+      "Nullable": false,
+      "Required": true,
       "PropertyGroupName": "Name"
     },
     "DllName": {
-      "Type": "string",
+      "Type": "System.String",
+      "Nullable": false,
+      "Required": false,
       "PropertyGroupName": "DllName"
     },
     "Version": {
-      "Type": "string",
+      "Type": "System.String",
+      "Nullable": false,
+      "Required": true,
       "PropertyGroupName": "Version"
     },
     "Dependencies": {
-      "Type": "string[]",
+      "Type": "System.String[]",
+      "Nullable": false,
+      "Required": true,
       "PropertyGroupName": "Dependencies"
     }
-  },
-  "Required": [
-    "Description",
-    "Authors",
-    "WebUri",
-    "Logo",
-    "Id",
-    "Name",
-    "Version",
-    "Dependencies"
-  ]
+  }
 }
