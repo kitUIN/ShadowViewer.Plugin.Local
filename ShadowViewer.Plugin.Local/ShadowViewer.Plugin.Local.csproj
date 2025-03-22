@@ -1,18 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net6.0-windows10.0.22621</TargetFramework>
+        <TargetFramework>net8.0-windows10.0.22621</TargetFramework>
         <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
         <RootNamespace>ShadowViewer.Plugin.Local</RootNamespace>
-        <RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+	    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
         <Nullable>enable</Nullable>
         <LangVersion>12</LangVersion>
-        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 
         <PackageId>ShadowViewer.Plugin.Local</PackageId>
 
 
         <!--插件版本号(nuget包版本号)-->
-        <Version>1.3.2</Version>
+        <Version>1.3.6</Version>
         <!--插件仓库地址(nuget包仓库地址)-->
         <RepositoryUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</RepositoryUrl>
         <!--插件介绍(nuget包介绍)-->
@@ -47,7 +46,7 @@
     </PropertyGroup>
     <ItemGroup>
         <!-- 包含生成的 .xbf 文件 -->
-        <None Include="bin\$(Configuration)\$(TargetFramework)\**\*.xbf" Pack="true" PackagePath="lib\$(TargetFramework)\" />
+        <None Include="bin\$(Configuration)\$(TargetFramework)\$(PackageId)\**\*.*" Pack="true" PackagePath="lib\$(TargetFramework)\$(PackageId)\" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240606-rc" />
@@ -56,7 +55,8 @@
 		<ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Core.csproj" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Core" Version="2025.3.19.1" />
+		<PackageReference Include="ShadowViewer.Core" Version="2025.03.22.16" />
+		<PackageReference Include="ShadowPluginLoader.Tool" Version="2.1.6" />
 	</ItemGroup>
     <ItemGroup>
       <None Remove="Pages\UserPage.xaml" />
@@ -66,4 +66,5 @@
         <Generator>MSBuild:Compile</Generator>
       </Page>
     </ItemGroup>
+
 </Project>

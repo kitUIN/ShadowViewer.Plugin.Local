@@ -6,7 +6,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     xmlns:icons="using:FluentIcons.WinUI"
-    xmlns:local2="using:ShadowViewer.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:win="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     mc:Ignorable="d">
@@ -31,61 +30,36 @@
                     <EntranceThemeTransition FromVerticalOffset="50" />
                     <RepositionThemeTransition IsStaggeringEnabled="False" />
                 </StackPanel.ChildrenTransitions>
-                <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="{i18N:Locale Key=ShowSetting}" />
-                <controls:SettingsCard>
-                    <controls:SettingsCard.Header>
-                        <local2:ShadowSettingHeader Description="{i18N:Locale Key=IsBookShelfInfoBarDescription}" Header="{i18N:Locale Key=IsBookShelfInfoBar}">
-                            <icons:FluentIcon
-                                Width="30"
-                                Height="30"
-                                FontSize="25"
-                                Icon="CalendarInfo" />
-                        </local2:ShadowSettingHeader>
-                    </controls:SettingsCard.Header>
+                <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                           Text="{i18N:Locale Key=ShowSetting}" />
+                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=CalendarInfo}"
+                                       Description="{i18N:Locale Key=IsBookShelfInfoBarDescription}"
+                                       Header="{i18N:Locale Key=IsBookShelfInfoBar}">
                     <ToggleSwitch
                         IsOn="{x:Bind ViewModel.IsBookShelfInfoBar, Mode=TwoWay}"
                         OffContent="{i18N:Locale Key=ShowOff}"
                         OnContent="{i18N:Locale Key=ShowOn}" />
                 </controls:SettingsCard>
 
-                <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="{i18N:Locale Key=OperationSetting}" />
-                <controls:SettingsCard>
-                    <controls:SettingsCard.Header>
-                        <local2:ShadowSettingHeader Description="{i18N:Locale Key=RememberDeleteWithFilesDescription}" Header="{i18N:Locale Key=RememberDeleteWithFiles}">
-                            <icons:FluentIcon
-                                Width="30"
-                                Height="30"
-                                FontSize="25"
-                                Icon="Checkbox2" />
-                        </local2:ShadowSettingHeader>
-                    </controls:SettingsCard.Header>
+                <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                           Text="{i18N:Locale Key=OperationSetting}" />
+                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=Checkbox2}"
+                                       Description="{i18N:Locale Key=RememberDeleteWithFilesDescription}"
+                                       Header="{i18N:Locale Key=RememberDeleteWithFiles}">
                     <ToggleSwitch
                         IsOn="{x:Bind ViewModel.IsRememberDeleteFilesWithComicDelete, Mode=TwoWay}"
                         OffContent="{i18N:Locale Key=NeedOff}"
                         OnContent="{i18N:Locale Key=NeedOn}" />
                 </controls:SettingsCard>
-                <controls:SettingsCard>
-                    <controls:SettingsCard.Header>
-                        <local2:ShadowSettingHeader Description="{i18N:Locale Key=DeleteWithFilesDescription}" Header="{i18N:Locale Key=DeleteWithFiles}">
-                            <icons:FluentIcon
-                                Width="30"
-                                Height="30"
-                                FontSize="25"
-                                Icon="DeleteLines" />
-                        </local2:ShadowSettingHeader>
-                    </controls:SettingsCard.Header>
+                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=DeleteLines}"
+                                       Description="{i18N:Locale Key=DeleteWithFilesDescription}"
+                                       Header="{i18N:Locale Key=DeleteWithFiles}">
+
                     <ToggleSwitch IsOn="{x:Bind ViewModel.IsDeleteFilesWithComicDelete, Mode=TwoWay}" />
                 </controls:SettingsCard>
-                <controls:SettingsCard>
-                    <controls:SettingsCard.Header>
-                        <local2:ShadowSettingHeader Description="{i18N:Locale Key=IsImportAgainDescription}" Header="{i18N:Locale Key=IsImportAgain}">
-                            <icons:FluentIcon
-                                Width="30"
-                                Height="30"
-                                FontSize="25"
-                                Icon="CubeArrowCurveDown" />
-                        </local2:ShadowSettingHeader>
-                    </controls:SettingsCard.Header>
+                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=CubeArrowCurveDown}"
+                                       Description="{i18N:Locale Key=IsImportAgainDescription}"
+                                       Header="{i18N:Locale Key=IsImportAgain}">
                     <ToggleSwitch
                         IsOn="{x:Bind ViewModel.IsImportAgain, Mode=TwoWay}"
                         OffContent="{i18N:Locale Key=AllowOff}"

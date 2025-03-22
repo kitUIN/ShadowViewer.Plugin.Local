@@ -1,11 +1,15 @@
 {
   "DllName": "ShadowViewer.Plugin.Local",
-  "Description": "ShadowViewer\u672C\u5730\u9605\u8BFB\u63D2\u4EF6",
+  "Description": "ShadowViewer本地阅读插件",
   "Authors": "kitUIN",
   "WebUri": "https://github.com/kitUIN/ShadowViewer.Plugin.Local",
-  "Logo": "fluent://regular/\\uF66D",
+  "Logo": "fluent://regular/ResizeImage",
+  "CanSwitch": false,
+  "CanDelete": false,
+  "CanOpenFolder": false,
+  "SettingsPage": "ShadowViewer.Plugin.Local.Pages.BookShelfSettingsPage",
   "Id": "Local",
-  "Name": "\u672C\u5730\u9605\u8BFB\u5668",
-  "Version": "1.3.1",
+  "Name": "本地阅读器",
+  "Version": "1.3.6",
   "Dependencies": []
 }

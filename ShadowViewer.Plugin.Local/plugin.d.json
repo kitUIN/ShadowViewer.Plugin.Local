@@ -82,7 +82,7 @@
         "PluginId": {
           "Type": "System.String",
           "Nullable": false,
-          "Required": false,
+          "Required": true,
           "PropertyGroupName": "PluginId"
         }
       }
@@ -110,6 +110,12 @@
       "Nullable": false,
       "Required": true,
       "PropertyGroupName": "Version"
+    },
+    "Priority": {
+      "Type": "System.Int32",
+      "Nullable": false,
+      "Required": false,
+      "PropertyGroupName": "Priority"
     },
     "Dependencies": {
       "Type": "System.String[]",

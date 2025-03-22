@@ -5,7 +5,7 @@ using SqlSugar;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Services;
-using ShadowPluginLoader.MetaAttributes;
+using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.ViewModels;
 
 namespace ShadowViewer.Plugin.Local.Responders;

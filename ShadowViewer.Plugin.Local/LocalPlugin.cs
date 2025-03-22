@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using DryIoc;
 using Serilog;
-using ShadowPluginLoader.MetaAttributes;
+using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Plugin.Local.ViewModels;
 using SqlSugar;
@@ -20,7 +20,7 @@ namespace ShadowViewer.Plugin.Local;
 /// <summary>
 /// 
 /// </summary>
-[AutoPluginMeta]
+[MainPlugin]
 [CheckAutowired]
 public partial class LocalPlugin : AShadowViewerPlugin
 {

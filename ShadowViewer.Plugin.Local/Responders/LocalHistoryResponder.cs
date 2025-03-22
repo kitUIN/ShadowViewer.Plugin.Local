@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DryIoc;
-using ShadowPluginLoader.MetaAttributes;
+using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Core.Responders;

@@ -7,7 +7,7 @@ using CommunityToolkit.WinUI.Helpers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Serilog;
-using ShadowPluginLoader.MetaAttributes;
+using ShadowPluginLoader.Attributes;
 using ShadowViewer.Core;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Models;
