@@ -17,7 +17,6 @@
     xmlns:utils="using:ShadowViewer.Core.Utils"
     xmlns:extensions="using:ShadowViewer.Core.Extensions"
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
-    xmlns:controls2="using:ShadowViewer.Core.Controls"
     x:Name="RootPage"
     mc:Ignorable="d">
     <Page.Resources>
