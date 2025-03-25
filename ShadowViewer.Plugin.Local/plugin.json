@@ -7,9 +7,15 @@
   "CanSwitch": false,
   "CanDelete": false,
   "CanOpenFolder": false,
-  "SettingsPage": "ShadowViewer.Plugin.Local.Pages.BookShelfSettingsPage",
+  "AffiliationTag": {
+    "Name": "Local",
+    "BackgroundHex": "#ffd657",
+    "ForegroundHex": "#000000",
+    "Icon": "fluent://regular/ResizeImage",
+    "PluginId": "Local"
+  },
   "Id": "Local",
   "Name": "本地阅读器",
-  "Version": "1.3.7",
+  "Version": "1.3.10",
   "Dependencies": []
 }

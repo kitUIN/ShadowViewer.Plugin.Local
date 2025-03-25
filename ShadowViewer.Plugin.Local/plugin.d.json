@@ -1,5 +1,5 @@
 {
-  "MetaDataType": "ShadowViewer.Core.Plugins.PluginMetaData",
+  "Type": "ShadowViewer.Core.Plugins.PluginMetaData",
   "Properties": {
     "Description": {
       "Type": "System.String",
@@ -47,7 +47,8 @@
       "Type": "System.String",
       "Nullable": true,
       "Required": false,
-      "PropertyGroupName": "SettingsPage"
+      "PropertyGroupName": "SettingsPage",
+      "EntryPointName": "SettingsPage"
     },
     "AffiliationTag": {
       "Type": "ShadowViewer.Core.Models.ShadowTag",

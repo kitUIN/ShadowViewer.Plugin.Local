@@ -40,11 +40,18 @@
 			<CanOpenFolder>false</CanOpenFolder>
 			<CanDelete>false</CanDelete>
 			<CanSwitch>false</CanSwitch>
-			<SettingsPage>ShadowViewer.Plugin.Local.Pages.BookShelfSettingsPage</SettingsPage>
+			<AffiliationTag>
+				<Name>Local</Name>
+				<PluginId>Local</PluginId>
+				<Icon>fluent://regular/ResizeImage</Icon>
+				<ForegroundHex>#000000</ForegroundHex>
+				<BackgroundHex>#ffd657</BackgroundHex>
+			</AffiliationTag>
 		</PluginMeta>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 	<ItemGroup>
+		<!-- <PackageReference Include="ShadowPluginLoader.SourceGenerator" Version="2.1.0.20" /> -->
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240606-rc" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
@@ -53,5 +60,4 @@
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
 		<PackageReference Include="ShadowViewer.Core" Version="2025.03.22.16" />
 	</ItemGroup>
-
 </Project>
