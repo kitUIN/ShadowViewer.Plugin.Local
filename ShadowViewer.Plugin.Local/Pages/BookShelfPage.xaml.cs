@@ -114,28 +114,4 @@ public sealed partial class BookShelfPage : Page
         using var refreshCompletionDeferral = args.GetDeferral();
         ViewModel.RefreshLocalComic();
     }
-
-    // /// <summary>
-    // /// 触控/鼠标-点击漫画项
-    // /// </summary>
-    // private void ContentGridView_ItemClick(object sender, ItemClickEventArgs e)
-    // {
-    //     if (e.ClickedItem is LocalComic comic)
-    //     {
-    //         if (comic.IsFolder)
-    //             ViewModel.Init(new Uri(ViewModel.OriginPath, comic.Id.ToString()));
-    //         else
-    //         {
-    //             DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
-    //             {
-    //                 Id = comic.Id,
-    //                 LastReadDateTime = DateTime.Now,
-    //                 Thumb = comic.Thumb,
-    //                 Title = comic.Name,
-    //             }).ExecuteCommand();
-    //             Frame.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
-    //                 new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
-    //         }
-    //     }
-    // }
 }

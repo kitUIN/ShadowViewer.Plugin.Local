@@ -31,10 +31,9 @@ using ShadowViewer.Core.Extensions;
 using Windows.ApplicationModel.DataTransfer;
 using ShadowViewer.Core.Utils;
 using ShadowViewer.Plugin.Local.Enums;
-using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.UI.Xaml.Media.Animation;
+using ShadowPluginLoader.Attributes;
 using ShadowViewer.Core.Args;
-using ShadowViewer.Core.Controls;
 using ShadowViewer.Plugin.Local.Pages;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
@@ -96,33 +95,42 @@ public partial class BookShelfViewModel : ObservableObject
     /// 选中项的大小
     /// </summary>
     public long SelectedItemsSize => SelectedItems.Sum(x => x.Size);
-
-    private ISqlSugarClient Db { get; }
-    private INotifyService NotifyService { get; }
-    private ComicService ComicService { get; }
-    private ILogger Logger { get; }
-    private INavigateService NavigateService { get; }
-    private readonly ICallableService caller;
-
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="callableService"></param>
-    /// <param name="sqlSugarClient"></param>
-    /// <param name="notifyService"></param>
-    /// <param name="comicService"></param>
-    /// <param name="logger"></param>
-    public BookShelfViewModel(ICallableService callableService,
-        INavigateService navigateService,
-        ISqlSugarClient sqlSugarClient, INotifyService notifyService, ComicService comicService,
-        ILogger logger)
+    [Autowired]
+    private ISqlSugarClient Db { get; }
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
+    private INotifyService NotifyService { get; }
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
+    private ComicService ComicService { get; }
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
+    private ILogger Logger { get; }
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
+    private INavigateService NavigateService { get; }
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
+    private ICallableService Caller { get; }
+
+    /// <summary>
+    /// ConstructorInit
+    /// </summary>
+    partial void ConstructorInit()
     {
-        Db = sqlSugarClient;
-        NavigateService = navigateService;
-        caller = callableService;
-        NotifyService = notifyService;
-        ComicService = comicService;
-        Logger = logger;
         SelectedItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(SelectedItemsSize));
     }
 
@@ -144,14 +152,9 @@ public partial class BookShelfViewModel : ObservableObject
 
         Logger.Information("导航到{Path},Path={P}", uri, toId);
         var current = Db.Queryable<LocalComic>().First(x => x.Id == toId);
-        if (current == null)
-        {
-            // TODO: 跳转失败
-            throw new Exception("跳转失败");
-        }
 
         OriginPath = uri;
-        CurrentFolder = current;
+        CurrentFolder = current ?? throw new Exception("跳转失败");
         RefreshLocalComic();
     }
 
@@ -352,11 +355,10 @@ public partial class BookShelfViewModel : ObservableObject
     private async Task AddComicFromFolder(Page page)
     {
         var folder = await FileHelper.SelectFolderAsync("AddNewComic");
-        // if (folder != null) caller.ImportComic(new List<IStorageItem> { folder }, new string[1], 0);
         if (folder == null) return;
         var token = CancellationToken.None;
 
-        await Task.Run(() => DiFactory.Services.Resolve<ComicService>()
+        await Task.Run(() => ComicService
             .ImportComicFromFolderAsync(folder.Path, LocalPlugin.Meta.Id, CurrentFolder.Id), token);
         RefreshLocalComic();
     }
@@ -372,7 +374,7 @@ public partial class BookShelfViewModel : ObservableObject
         {
             if (SelectedItems.Count != 1) return;
             var comic = SelectedItems[0];
-            DiFactory.Services.Resolve<ISqlSugarClient>().Storageable(new LocalHistory()
+            Db.Storageable(new LocalHistory()
             {
                 Id = comic.Id,
                 LastReadDateTime = DateTime.Now,

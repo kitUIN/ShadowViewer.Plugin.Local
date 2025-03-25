@@ -1,13 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using ShadowPluginLoader.Attributes;
-using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core;
 using ShadowViewer.Core.Cache;
 using ShadowViewer.Core.Extensions;
@@ -20,6 +12,11 @@ using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.IO;
 using SqlSugar;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using ReaderOptions = SharpCompress.Readers.ReaderOptions;
 
 namespace ShadowViewer.Plugin.Local.Services
@@ -73,6 +70,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 return false;
             }
         }
+
         /// <summary>
         /// 从文件夹导入漫画
         /// </summary>
@@ -96,7 +94,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 ParentId = parentId,
                 IsFolder = false
             }).ExecuteReturnSnowflakeIdAsync();
-            await SaveComic(folder, comicId);
+            await SaveComic(folder, comicId, findThumb: true);
         }
 
         /// <summary>
@@ -216,19 +214,23 @@ namespace ShadowViewer.Plugin.Local.Services
         /// </summary>
         /// <param name="path"></param>
         /// <param name="comicId"></param>
+        /// <param name="findThumb"></param>
         /// <returns></returns>
-        private async Task<ShadowTreeNode> SaveComic(string path, long comicId)
+        private async Task<ShadowTreeNode> SaveComic(string path, long comicId, bool findThumb = false)
         {
             var node = ShadowTreeNode.FromFolder(path);
+            ShadowTreeNode? thumb = null;
             var number = 1;
             var pics = new List<LocalPicture>();
             var comicNode = node.GetFilesByHeight(2).FirstOrDefault();
             // 检查是否是多话漫画
             if (comicNode != null)
             {
+                if (findThumb) thumb = comicNode.Children.FirstOrDefault(child => child.IsPic);
+
                 foreach (var child in comicNode.Children.Where(child => child.IsDirectory))
                 {
-                    pics.AddRange(await CreateEpisode(comicId, child, number, pics));
+                    pics.AddRange(await CreateEpisode(comicId, child, number));
                     number++;
                 }
             }
@@ -237,8 +239,16 @@ namespace ShadowViewer.Plugin.Local.Services
                 var epNode = node.GetFilesByHeight(1).FirstOrDefault();
                 if (epNode != null)
                 {
-                    pics.AddRange(await CreateEpisode(comicId, epNode, number, pics));
+                    if (findThumb) thumb = epNode.Children.FirstOrDefault(child => child.IsPic);
+                    pics.AddRange(await CreateEpisode(comicId, epNode, number));
                 }
+            }
+
+            if (thumb != null)
+            {
+                Db.Updateable<LocalComic>()
+                    .SetColumns(x => x.Thumb == thumb.Path)
+                    .Where(x => x.Id == comicId);
             }
 
             await Db.Insertable(pics).ExecuteReturnSnowflakeIdListAsync();
@@ -246,7 +256,7 @@ namespace ShadowViewer.Plugin.Local.Services
         }
 
         private async Task<IEnumerable<LocalPicture>> CreateEpisode(long comicId,
-            ShadowTreeNode child, int number, List<LocalPicture> pics)
+            ShadowTreeNode child, int number)
         {
             var epId = await Db.Insertable(new LocalEpisode
             {
@@ -258,7 +268,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 CreateTime = DateTime.Now,
             }).ExecuteReturnSnowflakeIdAsync();
             return child.Children
-                .Where(c => !c.IsDirectory)
+                .Where(c => c.IsPic)
                 .Select(item =>
                     new LocalPicture
                     {
