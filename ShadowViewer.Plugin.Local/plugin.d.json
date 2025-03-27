@@ -25,30 +25,38 @@
       "Required": true,
       "PropertyGroupName": "Logo"
     },
-    "CanSwitch": {
-      "Type": "System.Boolean",
+    "PluginManage": {
+      "Type": "ShadowViewer.Core.Plugins.PluginManage",
       "Nullable": false,
       "Required": false,
-      "PropertyGroupName": "CanSwitch"
-    },
-    "CanDelete": {
-      "Type": "System.Boolean",
-      "Nullable": false,
-      "Required": false,
-      "PropertyGroupName": "CanDelete"
-    },
-    "CanOpenFolder": {
-      "Type": "System.Boolean",
-      "Nullable": false,
-      "Required": false,
-      "PropertyGroupName": "CanOpenFolder"
-    },
-    "SettingsPage": {
-      "Type": "System.Type",
-      "Nullable": true,
-      "Required": false,
-      "PropertyGroupName": "SettingsPage",
-      "EntryPointName": "SettingsPage"
+      "PropertyGroupName": "PluginManage",
+      "Properties": {
+        "CanSwitch": {
+          "Type": "System.Boolean",
+          "Nullable": false,
+          "Required": false,
+          "PropertyGroupName": "CanSwitch"
+        },
+        "CanDelete": {
+          "Type": "System.Boolean",
+          "Nullable": false,
+          "Required": false,
+          "PropertyGroupName": "CanDelete"
+        },
+        "CanOpenFolder": {
+          "Type": "System.Boolean",
+          "Nullable": false,
+          "Required": false,
+          "PropertyGroupName": "CanOpenFolder"
+        },
+        "SettingsPage": {
+          "Type": "System.Type",
+          "Nullable": false,
+          "Required": false,
+          "PropertyGroupName": "SettingsPage",
+          "EntryPointName": "SettingsPage"
+        }
+      }
     },
     "AffiliationTag": {
       "Type": "ShadowViewer.Core.Models.ShadowTag",
