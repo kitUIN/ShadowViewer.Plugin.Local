@@ -10,8 +10,9 @@ using Windows.System;
 
 namespace ShadowViewer.Plugin.Local.Controls;
 
+
 /// <summary>
-/// 
+/// 滑动阅读器的封装
 /// </summary>
 public class MangaScrollingReader: ListView
 {

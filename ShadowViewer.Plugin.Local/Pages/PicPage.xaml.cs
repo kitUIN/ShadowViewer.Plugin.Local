@@ -75,7 +75,8 @@ public sealed partial class PicPage : Page
         {
             if (!(e.NewValue - 1 >= 0) || !(e.NewValue - 1 < ViewModel.Images.Count) ||
                 !ViewModel.IsPageSliderPressed) return;
-            await PicViewer.SmoothScrollIntoViewWithIndexAsync((int)(e.NewValue - 1), ScrollItemPlacement.Top, disableAnimation: true);
+            await PicViewer.SmoothScrollIntoViewWithIndexAsync((int)(e.NewValue - 1),
+                ScrollItemPlacement.Top, disableAnimation: true);
         }
         catch (Exception ex)
         {
@@ -90,33 +91,14 @@ public sealed partial class PicPage : Page
     {
         try
         {
-            if(ViewModel.CurrentPage - 1 >= 0 && ViewModel.CurrentPage - 1 < ViewModel.Images.Count)
-                await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1, ScrollItemPlacement.Top, disableAnimation: true);
+            if (ViewModel.CurrentPage - 1 >= 0 && ViewModel.CurrentPage - 1 < ViewModel.Images.Count)
+                await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1,
+                    ScrollItemPlacement.Top, disableAnimation: true);
             ViewModel.IsPageSliderPressed = false;
         }
         catch (Exception ex)
         {
             Log.Error("监听是否松开点击进度条报错: {e}", ex);
         }
-    }
-
-    /// <summary>
-    /// 监听是否点击进度条
-    /// </summary>
-    private void PageSlider_OnPointerPressed(object sender, PointerRoutedEventArgs e)
-    {
-        ViewModel.IsPageSliderPressed = true;
-    }
-
-    /// <summary>
-    /// 进度条加载完毕事件
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    private void PageSlider_OnLoaded(object sender, RoutedEventArgs e)
-    {
-        var slider = (Slider)sender;
-        slider.AddHandler(PointerPressedEvent, new PointerEventHandler(PageSlider_OnPointerPressed), true);
-        slider.AddHandler(PointerReleasedEvent, new PointerEventHandler(PageSlider_OnPointerReleased), true);
     }
 }

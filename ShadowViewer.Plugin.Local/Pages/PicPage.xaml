@@ -17,7 +17,7 @@
         BorderThickness="1"
         CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
         <controls:MangaReader
-            x:Name="MangaReader" 
+            x:Name="MangaReader"
             ReadMode="{x:Bind ViewModel.ReadMode,Mode=OneWay}"
             CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
             HorizontalAlignment="Center"
@@ -75,16 +75,16 @@
                     <TextBlock TextAlignment="Right"
                                Grid.Column="1"
                                VerticalAlignment="Center" Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
-                    <Slider
+                    <controls:ReaderSlider
                         Grid.Column="2"
                         x:Name="PageSlider"
                         Width="300"
                         VerticalAlignment="Center"
                         Maximum="{x:Bind ViewModel.Images.Count, Mode=OneWay}"
                         Minimum="1"
+                        SliderPressed="{x:Bind ViewModel.IsPageSliderPressed,Mode=OneWay}"
                         SmallChange="1"
                         StepFrequency="1"
-                        Loaded="PageSlider_OnLoaded"
                         ValueChanged="PageSlider_ValueChanged"
                         Value="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}" />
                     <TextBlock

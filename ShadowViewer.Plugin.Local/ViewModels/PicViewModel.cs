@@ -36,7 +36,7 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 阅读模式,滚动:<see cref="LocalReadMode.Scrolling"/>>;双页翻页:<see cref="LocalReadMode.TwoPage"/>
     /// </summary>
-    [ObservableProperty] private LocalReadMode readMode = LocalReadMode.TwoPage;
+    [ObservableProperty] private LocalReadMode readMode = LocalReadMode.Scrolling;
     public string Affiliation { get; set; }
     private ISqlSugarClient Db { get; }
     private IPicViewResponder? PicViewResponder { get; set; }
