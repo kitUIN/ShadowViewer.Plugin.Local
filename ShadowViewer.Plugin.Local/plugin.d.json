@@ -44,7 +44,7 @@
       "PropertyGroupName": "CanOpenFolder"
     },
     "SettingsPage": {
-      "Type": "System.String",
+      "Type": "System.Type",
       "Nullable": true,
       "Required": false,
       "PropertyGroupName": "SettingsPage",
