@@ -59,7 +59,8 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
         if (viewModel.Affiliation != Id) return;
         if (viewModel.CurrentPage <= 0 || viewModel.Comic is not { } localComic) return;
         decimal percent = 0;
-        if (viewModel.CurrentEpisodeIndex >= 0 && viewModel.EpisodeCounts.Count > viewModel.CurrentEpisodeIndex)
+        if (viewModel.CurrentEpisodeIndex >= 0 && viewModel.EpisodeCounts.Count > viewModel.CurrentEpisodeIndex &&
+            localComic.Count != 0)
         {
             percent = Math.Round(
                 (viewModel.EpisodeCounts[viewModel.CurrentEpisodeIndex] + viewModel.CurrentPage) /

@@ -26,7 +26,7 @@
 		<PackageTags>kitUIN;wasdk;ShadowViewer;plugin;winui</PackageTags>
 		<PackageOutputPath>..\..\..\NugetPackages</PackageOutputPath>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<NoWarn>MSB3277</NoWarn>
+		<NoWarn>MSB3277;MVVMTK0045</NoWarn>
 		<!--插件元数据 -->
 		<PluginMeta>
 			<Id>Local</Id>

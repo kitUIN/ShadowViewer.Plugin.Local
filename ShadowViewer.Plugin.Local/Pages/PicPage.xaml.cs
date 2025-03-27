@@ -27,10 +27,6 @@ public sealed partial class PicPage : Page
     /// ViewModel
     /// </summary>
     public PicViewModel ViewModel { get; } = DiFactory.Services.Resolve<PicViewModel>();
-    /// <summary>
-    /// 进度条是否被点击(拖动)
-    /// </summary>
-    private bool isPageSliderPressed;
 
     /// <summary>
     /// 
@@ -38,55 +34,6 @@ public sealed partial class PicPage : Page
     public PicPage()
     {
         this.InitializeComponent();
-    }
-
-    /// <summary>
-    /// 滚动响应
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    /// <exception cref="InvalidOperationException"></exception>
-    private void PicViewer_Loaded(object sender, RoutedEventArgs e)
-    {
-        var hostScrollViewer = PicViewer.FindDescendant<ScrollViewer>();
-        if (hostScrollViewer == null)
-        {
-            throw new InvalidOperationException(
-                "This behavior can only be attached to an element which has a ScrollViewer as a parent.");
-        }
-
-        hostScrollViewer.ViewChanged -= ParentScrollViewer_ViewChanged;
-        hostScrollViewer.ViewChanged += ParentScrollViewer_ViewChanged;
-        hostScrollViewer.Tapped -= ScrollViewer_Tapped;
-        hostScrollViewer.Tapped += ScrollViewer_Tapped;
-    }
-
-    /// <summary>
-    /// 移动视图响应
-    /// </summary>
-    private void ParentScrollViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
-    {
-        if (isPageSliderPressed) return;
-        var hostScrollViewer = (ScrollViewer)sender!;
-        for (var i = ViewModel.Images.Count - 1; i > 0; i--)
-        {
-            var associatedObject = PicViewer.ContainerFromIndex(i) as FrameworkElement;
-            if (associatedObject == null) continue;
-            var associatedElementRect = associatedObject
-                .TransformToVisual(hostScrollViewer)
-                .TransformBounds(new Rect(0, 0, associatedObject.ActualWidth, associatedObject.ActualHeight));
-
-            var hostScrollViewerRect = new Rect(0, 0, hostScrollViewer.ActualWidth, hostScrollViewer.ActualHeight);
-
-            if (!hostScrollViewerRect.Contains(new Point(associatedElementRect.Left, associatedElementRect.Top)) &&
-                !hostScrollViewerRect.Contains(new Point(associatedElementRect.Right, associatedElementRect.Top)) &&
-                !hostScrollViewerRect.Contains(new Point(associatedElementRect.Right,
-                    associatedElementRect.Bottom)) &&
-                !hostScrollViewerRect.Contains(new Point(associatedElementRect.Left, associatedElementRect.Bottom)))
-                continue;
-            ViewModel.CurrentPage = i + 1;
-            break;
-        }
     }
 
     /// <summary>
@@ -100,24 +47,14 @@ public sealed partial class PicPage : Page
         ViewModel.LastPicturePositionLoadedEvent += async (_, _) =>
         {
             await Task.Delay(TimeSpan.FromSeconds(0.3));
-            isPageSliderPressed = true;
+            ViewModel.IsPageSliderPressed = true;
             await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1, ScrollItemPlacement.Top,true);
-            isPageSliderPressed = false;
+            ViewModel.IsPageSliderPressed = false;
         };
         ViewModel.Init(arg);
     }
-    /// <summary>
-    /// 按键检测
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    private void ScrollViewer_KeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        if (e.Key == VirtualKey.PageDown && sender is ScrollViewer scrollViewer)
-        {
-            scrollViewer.ChangeView(null, scrollViewer.VerticalOffset + scrollViewer.ViewportHeight, null);
-        }
-    }
+    
+
     /// <summary>
     /// 点击菜单检测
     /// </summary>
@@ -137,7 +74,7 @@ public sealed partial class PicPage : Page
         try
         {
             if (!(e.NewValue - 1 >= 0) || !(e.NewValue - 1 < ViewModel.Images.Count) ||
-                !isPageSliderPressed) return;
+                !ViewModel.IsPageSliderPressed) return;
             await PicViewer.SmoothScrollIntoViewWithIndexAsync((int)(e.NewValue - 1), ScrollItemPlacement.Top, disableAnimation: true);
         }
         catch (Exception ex)
@@ -155,7 +92,7 @@ public sealed partial class PicPage : Page
         {
             if(ViewModel.CurrentPage - 1 >= 0 && ViewModel.CurrentPage - 1 < ViewModel.Images.Count)
                 await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1, ScrollItemPlacement.Top, disableAnimation: true);
-            isPageSliderPressed = false;
+            ViewModel.IsPageSliderPressed = false;
         }
         catch (Exception ex)
         {
@@ -168,7 +105,7 @@ public sealed partial class PicPage : Page
     /// </summary>
     private void PageSlider_OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        isPageSliderPressed = true;
+        ViewModel.IsPageSliderPressed = true;
     }
 
     /// <summary>

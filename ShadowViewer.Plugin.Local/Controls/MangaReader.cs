@@ -1,6 +1,7 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -70,6 +71,32 @@ namespace ShadowViewer.Plugin.Local.Controls
         public static readonly DependencyProperty CurrentIndexProperty =
             DependencyProperty.Register(nameof(CurrentIndex), typeof(int), typeof(MangaReader),
                 new PropertyMetadata(0, OnCurrentIndexChanged));
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public LocalReadMode ReadMode
+        {
+            get => (LocalReadMode)GetValue(ReadModeProperty);
+            set => SetValue(ReadModeProperty, value);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static readonly DependencyProperty ReadModeProperty =
+            DependencyProperty.Register(nameof(ReadMode), typeof(LocalReadMode), typeof(MangaReader),
+                new PropertyMetadata(LocalReadMode.TwoPage, OnReadModeChanged));
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static void OnReadModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (MangaReader)d;
+            var mode = (LocalReadMode)e.NewValue;
+            control.Visibility = mode == LocalReadMode.TwoPage ? Visibility.Visible : Visibility.Collapsed;
+        }
 
         /// <summary>
         /// 

@@ -7,6 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
+    xmlns:controls="using:ShadowViewer.Plugin.Local.Controls"
     mc:Ignorable="d">
 
     <Grid
@@ -15,15 +16,20 @@
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
         CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
-        <ListView
-            x:Name="PicViewer"
+        <controls:MangaReader
+            x:Name="MangaReader" 
+            ReadMode="{x:Bind ViewModel.ReadMode,Mode=OneWay}"
+            CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
             HorizontalAlignment="Center"
-            ItemsSource="{x:Bind ViewModel.Images, Mode=OneWay}"
-            KeyDown="ScrollViewer_KeyDown"
-            Loaded="PicViewer_Loaded" 
-            SelectionMode="None"
-            ScrollViewer.VerticalScrollBarVisibility="Hidden">
-            <ListView.ItemTemplate>
+            Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
+        </controls:MangaReader>
+        <controls:MangaScrollingReader IgnoreViewChanged="{x:Bind ViewModel.IsPageSliderPressed,Mode=OneWay}"
+                                       ReadMode="{x:Bind ViewModel.ReadMode,Mode=OneWay}"
+                                       x:Name="PicViewer"
+                                       HorizontalAlignment="Center"
+                                       ItemsSource="{x:Bind ViewModel.Images, Mode=OneWay}"
+                                       ScrollViewer.VerticalScrollBarVisibility="Hidden">
+            <controls:MangaScrollingReader.ItemTemplate>
                 <DataTemplate x:DataType="interfaces:IUiPicture">
                     <Grid Padding="100,0" Tag="{x:Bind}">
                         <TextBlock
@@ -35,8 +41,8 @@
                         <Image Source="{x:Bind Source, Mode=OneWay}" />
                     </Grid>
                 </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+            </controls:MangaScrollingReader.ItemTemplate>
+        </controls:MangaScrollingReader>
         <Grid Grid.Column="0" VerticalAlignment="Bottom">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="80" />
@@ -67,8 +73,8 @@
                         ItemsSource="{x:Bind ViewModel.Episodes}"
                         SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" />
                     <TextBlock TextAlignment="Right"
-                        Grid.Column="1"
-                        VerticalAlignment="Center" Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
+                               Grid.Column="1"
+                               VerticalAlignment="Center" Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
                     <Slider
                         Grid.Column="2"
                         x:Name="PageSlider"
@@ -76,18 +82,18 @@
                         VerticalAlignment="Center"
                         Maximum="{x:Bind ViewModel.Images.Count, Mode=OneWay}"
                         Minimum="1"
-                        SmallChange="1" 
-                        StepFrequency="1" 
+                        SmallChange="1"
+                        StepFrequency="1"
                         Loaded="PageSlider_OnLoaded"
                         ValueChanged="PageSlider_ValueChanged"
                         Value="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}" />
-                    <TextBlock 
+                    <TextBlock
                         Grid.Column="3" VerticalAlignment="Center" Text="{x:Bind ViewModel.Images.Count, Mode=OneWay}" />
-                    <AppBarButton 
+                    <AppBarButton
                         Grid.Column="4" Width="48" Height="48">
                         <FontIcon Glyph="&#xE724;" />
                     </AppBarButton>
-                    <AppBarButton 
+                    <AppBarButton
                         Grid.Column="5" Width="48" Height="48">
                         <FontIcon Glyph="&#xE736;" />
                     </AppBarButton>
