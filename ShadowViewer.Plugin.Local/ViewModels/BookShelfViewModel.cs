@@ -1,3 +1,31 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.WinUI;
+using DryIoc;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Serilog;
+using ShadowPluginLoader.Attributes;
+using ShadowPluginLoader.WinUI;
+using ShadowViewer.Controls.Extensions;
+using ShadowViewer.Core;
+using ShadowViewer.Core.Args;
+using ShadowViewer.Core.Cache;
+using ShadowViewer.Core.Enums;
+using ShadowViewer.Core.Extensions;
+using ShadowViewer.Core.Helpers;
+using ShadowViewer.Core.Services;
+using ShadowViewer.Core.Utils;
+using ShadowViewer.Plugin.Local.Enums;
+using ShadowViewer.Plugin.Local.I18n;
+using ShadowViewer.Plugin.Local.Models;
+using ShadowViewer.Plugin.Local.Models.Interfaces;
+using ShadowViewer.Plugin.Local.Pages;
+using ShadowViewer.Plugin.Local.Services;
+using SharpCompress.Readers;
+using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -5,36 +33,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Storage.Pickers;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.WinUI;
-using DryIoc;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Serilog;
-using ShadowPluginLoader.WinUI;
-using ShadowViewer.Core;
-using ShadowViewer.Controls.Extensions;
-using ShadowViewer.Core.Enums;
-using ShadowViewer.Core.Helpers;
-using ShadowViewer.Core.Services;
-using ShadowViewer.Plugin.Local.I18n;
-using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Plugin.Local.Services;
-using SqlSugar;
-using SharpCompress.Readers;
-using Windows.Storage;
-using ShadowViewer.Core.Cache;
-using ShadowViewer.Core.Extensions;
 using Windows.ApplicationModel.DataTransfer;
-using ShadowViewer.Core.Utils;
-using ShadowViewer.Plugin.Local.Enums;
-using Microsoft.UI.Xaml.Media.Animation;
-using ShadowPluginLoader.Attributes;
-using ShadowViewer.Core.Args;
-using ShadowViewer.Plugin.Local.Pages;
+using Windows.Storage;
+using Windows.Storage.Pickers;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -280,7 +281,7 @@ public partial class BookShelfViewModel : ObservableObject
     private void DeleteComics()
     {
         var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-        foreach (var comic in SelectedItems)
+        foreach (var comic in SelectedItems.ToArray())
         {
             if (LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder)
             {
@@ -300,7 +301,6 @@ public partial class BookShelfViewModel : ObservableObject
                     .Where(x => x.Id == comic.Id)
                     .ExecuteCommand();
             }
-
             LocalComics.Remove(comic);
         }
     }

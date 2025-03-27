@@ -246,9 +246,10 @@ namespace ShadowViewer.Plugin.Local.Services
 
             if (thumb != null)
             {
-                Db.Updateable<LocalComic>()
+                await Db.Updateable<LocalComic>()
                     .SetColumns(x => x.Thumb == thumb.Path)
-                    .Where(x => x.Id == comicId);
+                    .Where(x => x.Id == comicId)
+                    .ExecuteCommandAsync();
             }
 
             await Db.Insertable(pics).ExecuteReturnSnowflakeIdListAsync();
