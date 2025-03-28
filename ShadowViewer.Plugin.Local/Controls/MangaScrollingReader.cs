@@ -129,7 +129,7 @@ public class MangaScrollingReader: ListView
     /// </summary>
     public static readonly DependencyProperty ReadModeProperty =
         DependencyProperty.Register(nameof(ReadMode), typeof(LocalReadMode), typeof(MangaReader),
-            new PropertyMetadata(LocalReadMode.Scrolling, OnReadModeChanged));
+            new PropertyMetadata(LocalReadMode.ScrollingReadMode, OnReadModeChanged));
 
     /// <summary>
     /// 
@@ -138,6 +138,6 @@ public class MangaScrollingReader: ListView
     {
         var control = (MangaScrollingReader)d;
         var mode = (LocalReadMode)e.NewValue;
-        control.Visibility = mode == LocalReadMode.Scrolling ? Visibility.Visible : Visibility.Collapsed;
+        control.Visibility = mode == LocalReadMode.ScrollingReadMode ? Visibility.Visible : Visibility.Collapsed;
     }
 }

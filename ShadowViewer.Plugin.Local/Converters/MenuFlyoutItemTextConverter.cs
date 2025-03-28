@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.UI.Xaml.Data;
 
 namespace ShadowViewer.Plugin.Local.Converters;
@@ -9,8 +9,9 @@ namespace ShadowViewer.Plugin.Local.Converters;
 public class MenuFlyoutItemTextConverter:IValueConverter
 {
     /// <inheritdoc />
-    public object Convert(object value, Type targetType, object parameter, string language)
+    public object Convert(object? value, Type targetType, object parameter, string language)
     {
+        if (value == null) return "";
         return I18n.ResourcesHelper.GetString(value.ToString());
     }
 

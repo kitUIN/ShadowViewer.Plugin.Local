@@ -17,11 +17,11 @@ public enum LocalReadMode
     /// 双页模式
     /// </summary>
     [MenuFlyoutItemIcon(Icon = Icon.BookOpen)]
-    TwoPage,
+    TwoPageReadMode,
 
     /// <summary>
     /// 滚动模式
     /// </summary>
     [MenuFlyoutItemIcon(Icon = Icon.DualScreenVerticalScroll)]
-    Scrolling,
+    ScrollingReadMode,
 }

@@ -9,8 +9,13 @@
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
     xmlns:controls="using:ShadowViewer.Plugin.Local.Controls"
     xmlns:winUi="using:FluentIcons.WinUI"
+    xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
+    xmlns:controls1="using:ShadowViewer.Controls"
+    xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
     mc:Ignorable="d">
-
+    <Page.Resources>
+        <converters:MenuFlyoutItemTextConverter x:Key="MenuFlyoutItemTextConverter" />
+    </Page.Resources>
     <Grid
         x:Name="RootGrid"
         Background="{ThemeResource LayerFillColorDefaultBrush}"
@@ -46,7 +51,7 @@
                 </DataTemplate>
             </controls:MangaScrollingReader.ItemTemplate>
         </controls:MangaScrollingReader>
-        <Grid Grid.Column="0" 
+        <Grid Grid.Column="0"
               Margin="0,0,0, 10"
               HorizontalAlignment="Center" VerticalAlignment="Bottom">
             <Border
@@ -56,30 +61,42 @@
                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                 CornerRadius="5">
                 <StackPanel>
-                    <Grid Height="48"   ColumnSpacing="10" 
+                    <Grid Height="48" ColumnSpacing="10"
                           Visibility="{x:Bind ReaderSettingButton.IsChecked, Mode=OneWay}">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"></ColumnDefinition>
+                            <ColumnDefinition Width="Auto"></ColumnDefinition>
                             <ColumnDefinition Width="30"></ColumnDefinition>
                             <ColumnDefinition Width="Auto"></ColumnDefinition>
                             <ColumnDefinition Width="30"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <ComboBox Grid.Column="0"  
-                                  VerticalAlignment="Center"
-                                  DisplayMemberPath="Title"
-                                  ItemsSource="{x:Bind ViewModel.Episodes}"
-                                  SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" />
+                        <!-- <ComboBox Grid.Column="0"   -->
+                        <!--           VerticalAlignment="Center" -->
+                        <!--           DisplayMemberPath="Title" -->
+                        <!--           ItemsSource="{x:Bind ViewModel.Episodes}" -->
+                        <!--           SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" /> -->
                         <!-- <AppBarButton VerticalAlignment="Center" Grid.Column="2" Content="翻页模式"></AppBarButton> -->
-                        <Button Style="{StaticResource PointerOverButtonStyle}" Grid.Column="2">
+                        <Button Style="{StaticResource PointerOverButtonStyle}" Grid.Column="0">
                             <Grid ColumnSpacing="6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"></ColumnDefinition>
                                     <ColumnDefinition Width="Auto"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
-                                <winUi:FluentIcon Grid.Column="0" Icon="DualScreenVerticalScroll "></winUi:FluentIcon>
-                                <TextBlock Grid.Column="1" Text="滚动阅读"></TextBlock>
+                                <winUi:FluentIcon Grid.Column="0" Icon="{x:Bind ViewModel.ReadModeIcon,Mode=OneWay}"
+                                                  IconVariant="{x:Bind ViewModel.ReadModeIconVariant,Mode=OneWay}">
+                                </winUi:FluentIcon>
+                                <TextBlock Grid.Column="1"
+                                           Text="{x:Bind ViewModel.ReadMode,Mode=OneWay,Converter={StaticResource MenuFlyoutItemTextConverter}}">
+                                </TextBlock>
                             </Grid>
+                            <Button.Flyout>
+                                <controls1:EnumMenuFlyout x:Name="ReadModeFlyout"
+                                                          SelectedValue="{x:Bind ViewModel.ReadMode,Mode=TwoWay}"
+                                                          TextConverter="{StaticResource MenuFlyoutItemTextConverter}"
+                                                          EnumSource="enums:LocalReadMode"
+                                                          Placement="Bottom">
+                                </controls1:EnumMenuFlyout>
+                            </Button.Flyout>
                         </Button>
                     </Grid>
                     <NavigationViewItemSeparator Visibility="{x:Bind ReaderSettingButton.IsChecked,Mode=OneWay}" />
@@ -94,7 +111,7 @@
                             <ColumnDefinition Width="48"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <Button Style="{StaticResource PointerOverButtonStyle}" Grid.Column="0" Content="上一话"></Button>
-                        
+
 
                         <TextBlock TextAlignment="Right"
                                    Grid.Column="1"

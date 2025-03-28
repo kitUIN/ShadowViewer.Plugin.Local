@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
+using FluentIcons.Common;
 using Serilog;
+using ShadowPluginLoader.Attributes;
+using ShadowViewer.Controls.Attributes;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Responders;
@@ -17,7 +21,18 @@ namespace ShadowViewer.Plugin.Local.ViewModels;
 
 public partial class PicViewModel : ObservableObject
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
     private ILogger Logger { get; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
+    private ISqlSugarClient Db { get; }
+
     /// <summary>
     /// 图片
     /// </summary>
@@ -33,18 +48,41 @@ public partial class PicViewModel : ObservableObject
     /// </summary>
     [ObservableProperty] private bool isPageSliderPressed;
 
+    #region 阅读模式
+
     /// <summary>
-    /// 阅读模式,滚动:<see cref="LocalReadMode.Scrolling"/>>;双页翻页:<see cref="LocalReadMode.TwoPage"/>
+    /// 阅读模式,滚动:<see cref="LocalReadMode.ScrollingReadMode"/>>;双页翻页:<see cref="LocalReadMode.TwoPageReadMode"/>
     /// </summary>
-    [ObservableProperty] private LocalReadMode readMode = LocalReadMode.Scrolling;
-    public string Affiliation { get; set; }
-    private ISqlSugarClient Db { get; }
-    private IPicViewResponder? PicViewResponder { get; set; }
-    public PicViewModel(ILogger logger, ISqlSugarClient sqlSugarClient)
+    [ObservableProperty] private LocalReadMode readMode = LocalReadMode.TwoPageReadMode;
+    /// <summary>
+    /// 阅读模式图标
+    /// </summary>
+    [ObservableProperty] private Icon readModeIcon;
+    /// <summary>
+    /// 阅读模式图标类型
+    /// </summary>
+    [ObservableProperty] private IconVariant readModeIconVariant = IconVariant.Regular;
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="oldValue"></param>
+    /// <param name="newValue"></param>
+
+    partial void OnReadModeChanged(LocalReadMode oldValue, LocalReadMode newValue)
     {
-        Logger = logger;
-        Db = sqlSugarClient;
+        if (oldValue == newValue) return;
+        var field = typeof(LocalReadMode).GetField(ReadMode.ToString()!);
+        var icon = field?.GetCustomAttribute<MenuFlyoutItemIconAttribute>();
+        if(icon == null) return;
+        ReadModeIcon = icon.Icon;
+        ReadModeIconVariant = icon.IconVariant;
     }
+
+    #endregion
+
+    public string Affiliation { get; set; }
+
+    private IPicViewResponder? PicViewResponder { get; set; }
 
     /// <summary>
     /// 初始化
