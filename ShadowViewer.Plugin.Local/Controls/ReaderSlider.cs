@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CommunityToolkit.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,11 +13,14 @@ namespace ShadowViewer.Plugin.Local.Controls;
 /// </summary>
 public class ReaderSlider: Slider
 {
+    public event EventHandler<PointerRoutedEventArgs>? SliderReleased;
+
     /// <summary>
     /// 
     /// </summary>
     public ReaderSlider() : base()
     {
+        this.DefaultStyleKey = typeof(ReaderSlider);
         Loaded += PageSlider_OnLoaded;
     }
 
@@ -44,6 +47,7 @@ public class ReaderSlider: Slider
     private void PageSlider_OnPointerReleased(object sender, PointerRoutedEventArgs e)
     {
         SliderPressed = false;
+        SliderReleased?.Invoke(this, e);
     }
 
     /// <summary>

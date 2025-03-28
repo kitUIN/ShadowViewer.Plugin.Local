@@ -19,4 +19,6 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style TargetType="local2:ReaderSlider" BasedOn="{StaticResource DefaultSliderStyle}" />
 </ResourceDictionary>

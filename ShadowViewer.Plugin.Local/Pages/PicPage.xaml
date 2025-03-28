@@ -23,7 +23,9 @@
             HorizontalAlignment="Center"
             Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
         </controls:MangaReader>
-        <controls:MangaScrollingReader IgnoreViewChanged="{x:Bind ViewModel.IsPageSliderPressed,Mode=OneWay}"
+        <controls:MangaScrollingReader
+            CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
+            IgnoreViewChanged="{x:Bind ViewModel.IsPageSliderPressed,Mode=OneWay}"
                                        ReadMode="{x:Bind ViewModel.ReadMode,Mode=OneWay}"
                                        x:Name="PicViewer"
                                        HorizontalAlignment="Center"
@@ -82,7 +84,8 @@
                         VerticalAlignment="Center"
                         Maximum="{x:Bind ViewModel.Images.Count, Mode=OneWay}"
                         Minimum="1"
-                        SliderPressed="{x:Bind ViewModel.IsPageSliderPressed,Mode=OneWay}"
+                        SliderPressed="{x:Bind ViewModel.IsPageSliderPressed, Mode=TwoWay}"
+                        SliderReleased="PageSlider_OnPointerReleased"
                         SmallChange="1"
                         StepFrequency="1"
                         ValueChanged="PageSlider_ValueChanged"
