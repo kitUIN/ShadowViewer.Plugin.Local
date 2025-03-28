@@ -12,6 +12,7 @@
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
     xmlns:controls1="using:ShadowViewer.Controls"
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
+    xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     mc:Ignorable="d">
     <Page.Resources>
         <converters:MenuFlyoutItemTextConverter x:Key="MenuFlyoutItemTextConverter" />
@@ -51,7 +52,8 @@
                 </DataTemplate>
             </controls:MangaScrollingReader.ItemTemplate>
         </controls:MangaScrollingReader>
-        <Grid Grid.Column="0"
+
+        <Grid Grid.Column="0" x:Name="BottomMenu"
               Margin="0,0,0, 10"
               HorizontalAlignment="Center" VerticalAlignment="Bottom">
             <Border
@@ -70,12 +72,6 @@
                             <ColumnDefinition Width="30"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <!-- <ComboBox Grid.Column="0"   -->
-                        <!--           VerticalAlignment="Center" -->
-                        <!--           DisplayMemberPath="Title" -->
-                        <!--           ItemsSource="{x:Bind ViewModel.Episodes}" -->
-                        <!--           SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" /> -->
-                        <!-- <AppBarButton VerticalAlignment="Center" Grid.Column="2" Content="翻页模式"></AppBarButton> -->
                         <Button Style="{StaticResource PointerOverButtonStyle}" Grid.Column="0">
                             <Grid ColumnSpacing="6">
                                 <Grid.ColumnDefinitions>
@@ -90,11 +86,11 @@
                                 </TextBlock>
                             </Grid>
                             <Button.Flyout>
-                                <controls1:EnumMenuFlyout x:Name="ReadModeFlyout"
-                                                          SelectedValue="{x:Bind ViewModel.ReadMode,Mode=TwoWay}"
-                                                          TextConverter="{StaticResource MenuFlyoutItemTextConverter}"
-                                                          EnumSource="enums:LocalReadMode"
-                                                          Placement="Bottom">
+                                <controls1:EnumMenuFlyout
+                                    SelectedValue="{x:Bind ViewModel.ReadMode,Mode=TwoWay}"
+                                    TextConverter="{StaticResource MenuFlyoutItemTextConverter}"
+                                    EnumSource="enums:LocalReadMode"
+                                    Placement="Top">
                                 </controls1:EnumMenuFlyout>
                             </Button.Flyout>
                         </Button>
@@ -110,8 +106,17 @@
                             <ColumnDefinition Width="Auto"></ColumnDefinition>
                             <ColumnDefinition Width="48"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <Button Style="{StaticResource PointerOverButtonStyle}" Grid.Column="0" Content="上一话"></Button>
-
+                        <Button Style="{StaticResource PointerOverButtonStyle}"
+                                Command="{x:Bind ViewModel.PrevEpisodeCommand}"
+                                ToolTipService.ToolTip="{i18N:Locale Key=PrevEpisode}"
+                                Grid.Column="0">
+                            <winUi:FluentIcon Icon="ChevronDoubleLeft"></winUi:FluentIcon>
+                        </Button>
+                        <!-- <ComboBox Grid.Column="0" -->
+                        <!--           VerticalAlignment="Center" -->
+                        <!--           DisplayMemberPath="Title" -->
+                        <!--           ItemsSource="{x:Bind ViewModel.Episodes}" -->
+                        <!--           SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" /> -->
 
                         <TextBlock TextAlignment="Right"
                                    Grid.Column="1"
@@ -132,7 +137,12 @@
                             Grid.Column="3" VerticalAlignment="Center"
                             Text="{x:Bind ViewModel.Images.Count, Mode=OneWay}" />
 
-                        <Button Style="{StaticResource PointerOverButtonStyle}" Grid.Column="4" Content="下一话"></Button>
+                        <Button Style="{StaticResource PointerOverButtonStyle}"
+                                Command="{x:Bind ViewModel.NextEpisodeCommand}"
+                                ToolTipService.ToolTip="{i18N:Locale Key=NextEpisode}"
+                                Grid.Column="4">
+                            <winUi:FluentIcon Icon="ChevronDoubleRight"></winUi:FluentIcon>
+                        </Button>
                         <ToggleButton x:Name="ReaderSettingButton"
                                       Style="{StaticResource PointerOverToggleButtonStyle}" Grid.Column="5">
 

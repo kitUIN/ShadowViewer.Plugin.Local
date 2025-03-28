@@ -378,4 +378,10 @@
   <data name="ScrollingReadMode" xml:space="preserve">
     <value>滚动阅读</value>
   </data>
+  <data name="PrevEpisode" xml:space="preserve">
+    <value>上一话</value>
+  </data>
+  <data name="NextEpisode" xml:space="preserve">
+    <value>下一话</value>
+  </data>
 </root>
