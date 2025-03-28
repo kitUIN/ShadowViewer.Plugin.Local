@@ -65,11 +65,11 @@
                             <ColumnDefinition Width="30"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <!-- <ComboBox Grid.Column="2" -->
-                        <!--           VerticalAlignment="Center" -->
-                        <!--           DisplayMemberPath="Title" -->
-                        <!--           ItemsSource="{x:Bind ViewModel.Episodes}" -->
-                        <!--           SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" /> -->
+                        <ComboBox Grid.Column="0"  
+                                  VerticalAlignment="Center"
+                                  DisplayMemberPath="Title"
+                                  ItemsSource="{x:Bind ViewModel.Episodes}"
+                                  SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" />
                         <!-- <AppBarButton VerticalAlignment="Center" Grid.Column="2" Content="翻页模式"></AppBarButton> -->
                         <Button Style="{StaticResource PointerOverButtonStyle}" Grid.Column="2">
                             <Grid ColumnSpacing="6">
@@ -94,7 +94,7 @@
                             <ColumnDefinition Width="48"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <Button Style="{StaticResource PointerOverButtonStyle}" Grid.Column="0" Content="上一话"></Button>
-
+                        
 
                         <TextBlock TextAlignment="Right"
                                    Grid.Column="1"

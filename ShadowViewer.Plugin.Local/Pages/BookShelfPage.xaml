@@ -17,6 +17,7 @@
     xmlns:utils="using:ShadowViewer.Core.Utils"
     xmlns:extensions="using:ShadowViewer.Core.Extensions"
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
+    xmlns:controls2="using:ShadowViewer.Controls"
     x:Name="RootPage"
     mc:Ignorable="d">
     <Page.Resources>
@@ -344,13 +345,13 @@
                                   Icon="{winUi:FontIcon Glyph=&#xE8CB;}"
                                   ToolTipService.ToolTip="{i18N:Locale Key=Sort}">
                         <AppBarButton.Flyout>
-                            <MenuFlyout
-                                extensions:MenuFlyoutExtensions.TextConverter="{StaticResource MenuFlyoutItemTextConverter}"
-                                extensions:MenuFlyoutExtensions.EnumSource="enums:LocalSort"
-                                extensions:MenuFlyoutExtensions.SelectedValue="{x:Bind ViewModel.Sort,Mode=TwoWay}"
-                                extensions:MenuFlyoutExtensions.EnumCommand="{x:Bind ViewModel.RefreshLocalComicCommand}"
+                            <controls2:EnumMenuFlyout 
+                                TextConverter="{StaticResource MenuFlyoutItemTextConverter}"
+                                EnumSource="enums:LocalSort"
+                                SelectedValue="{x:Bind ViewModel.Sort,Mode=TwoWay}"
+                                EnumCommand="{x:Bind ViewModel.RefreshLocalComicCommand}"
                                 Placement="Bottom">
-                            </MenuFlyout>
+                            </controls2:EnumMenuFlyout>
                         </AppBarButton.Flyout>
                     </AppBarButton>
                 </CommandBar>
@@ -402,12 +403,12 @@
                                     Visibility="{x:Bind ContentGridView.IsMulti,Mode=OneWay,Converter={StaticResource BoolToVisibilityConverter},ConverterParameter=True}"
                                     Text="{i18N:Locale Key=Status}"
                                     ToolTipService.ToolTip="{i18N:Locale Key=Status}" />
-                                <MenuFlyoutItem  
+                                <MenuFlyoutItem
                                     Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
                                     Command="{x:Bind ViewModel.DeleteCommand}"
                                     Icon="Delete"
                                     Text="{i18N:Locale Key=Delete}"
-                                    ToolTipService.ToolTip="{i18N:Locale Key=Delete}" >
+                                    ToolTipService.ToolTip="{i18N:Locale Key=Delete}">
                                 </MenuFlyoutItem>
                             </MenuFlyout>
                             <!--#endregion-->
