@@ -10,7 +10,6 @@ using Serilog;
 using ShadowPluginLoader.Attributes;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Controls.Extensions;
-using ShadowViewer.Core;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Cache;
 using ShadowViewer.Core.Enums;
@@ -21,7 +20,6 @@ using ShadowViewer.Core.Utils;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Plugin.Local.Models.Interfaces;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Plugin.Local.Services;
 using SharpCompress.Readers;
@@ -525,7 +523,7 @@ public partial class BookShelfViewModel : ObservableObject
         progressRingBackground.Visibility = Visibility.Visible;
         progressRingText.Visibility = Visibility.Visible;
         await Task.Run(() => ComicService.ImportComicFromZipAsync(file.Path,
-            CoreSettings.ComicsPath,
+            Core.Settings.CoreSettings.Instance.ComicsPath,
             LocalPlugin.Meta.Id, CurrentFolder.Id,
             new Progress<MemoryStream>(async void (thumbStream) =>
             {

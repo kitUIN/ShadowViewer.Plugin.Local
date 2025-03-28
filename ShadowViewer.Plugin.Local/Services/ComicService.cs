@@ -1,11 +1,11 @@
 using Serilog;
 using ShadowPluginLoader.Attributes;
-using ShadowViewer.Core;
 using ShadowViewer.Core.Cache;
 using ShadowViewer.Core.Extensions;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Core.Services;
+using ShadowViewer.Core.Settings;
 using ShadowViewer.Plugin.Local.Cache;
 using ShadowViewer.Plugin.Local.Models;
 using SharpCompress.Archives;
@@ -171,7 +171,7 @@ namespace ShadowViewer.Plugin.Local.Services
                 }
 
                 var bytes = ms.ToArray();
-                CacheImg.CreateImage(CoreSettings.TempPath, bytes, comicId);
+                CacheImg.CreateImage(CoreSettings.Instance.TempPath, bytes, comicId);
                 thumbProgress?.Report(new MemoryStream(bytes));
             }
 

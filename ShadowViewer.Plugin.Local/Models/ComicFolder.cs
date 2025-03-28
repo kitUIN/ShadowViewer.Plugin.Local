@@ -1,5 +1,5 @@
-﻿using ShadowViewer.Core;
 using ShadowViewer.Core.Models.Interfaces;
+using ShadowViewer.Core.Settings;
 using ShadowViewer.Plugin.Local.I18n;
 
 namespace ShadowViewer.Plugin.Local.Models;
@@ -23,8 +23,8 @@ public class ComicFolder: ISettingFolder
     /// <inheritdoc />
     public string Path
     {
-        get => CoreSettings.ComicsPath;
-        set => CoreSettings.ComicsPath = value;
+        get => CoreSettings.Instance.ComicsPath;
+        set => CoreSettings.Instance.ComicsPath = value;
     }
 
     /// <inheritdoc />
