@@ -384,4 +384,7 @@
   <data name="NextEpisode" xml:space="preserve">
     <value>下一话</value>
   </data>
+  <data name="DisplayName" xml:space="preserve">
+    <value>本地阅读器</value>
+  </data>
 </root>

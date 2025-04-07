@@ -1,18 +1,21 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
+using ShadowPluginLoader.Attributes;
 using ShadowViewer.Core.Models;
 using ShadowViewer.Core.Models.Interfaces;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Core.Responders;
 using ShadowViewer.Core.Utils;
+using ShadowViewer.Core.Plugins;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
 /// <summary>
 /// 本地阅读器导航响应器
 /// </summary>
+[EntryPoint(Name = nameof(PluginResponder.NavigationResponder))]
 public partial class LocalNavigationResponder : AbstractNavigationResponder
 {
     /// <summary>

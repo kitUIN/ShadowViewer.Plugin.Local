@@ -1,18 +1,20 @@
+using ShadowPluginLoader.Attributes;
 using ShadowViewer.Core.Models.Interfaces;
+using ShadowViewer.Core.Plugins;
 using ShadowViewer.Core.Settings;
 using ShadowViewer.Plugin.Local.I18n;
 
 namespace ShadowViewer.Plugin.Local.Models;
 
-public class ComicFolder: ISettingFolder
+/// <summary>
+/// 
+/// </summary>
+[EntryPoint(Name = nameof(PluginResponder.SettingFolders))]
+public partial class ComicFolder : ISettingFolder
 {
-    public ComicFolder(string pluginId)
-    {
-        PluginId = pluginId;
-    }
-
     /// <inheritdoc />
-    public string PluginId { get; }
+    [Autowired]
+    public string PluginId { get; } = null!;
 
     /// <inheritdoc />
     public string Name => I18N.ComicFolder;
@@ -28,7 +30,7 @@ public class ComicFolder: ISettingFolder
     }
 
     /// <inheritdoc />
-    public bool CanOpen   => true;
+    public bool CanOpen => true;
 
     /// <inheritdoc />
     public bool CanChange => false;

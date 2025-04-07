@@ -58,6 +58,49 @@
         }
       }
     },
+    "PluginResponder": {
+      "Type": "ShadowViewer.Core.Plugins.PluginResponder",
+      "Nullable": false,
+      "Required": false,
+      "PropertyGroupName": "PluginResponder",
+      "Properties": {
+        "HistoryResponder": {
+          "Type": "System.Type",
+          "Nullable": false,
+          "Required": false,
+          "PropertyGroupName": "HistoryResponder",
+          "EntryPointName": "HistoryResponder"
+        },
+        "NavigationResponder": {
+          "Type": "System.Type",
+          "Nullable": false,
+          "Required": false,
+          "PropertyGroupName": "NavigationResponder",
+          "EntryPointName": "NavigationResponder"
+        },
+        "PicViewResponder": {
+          "Type": "System.Type",
+          "Nullable": false,
+          "Required": false,
+          "PropertyGroupName": "PicViewResponder",
+          "EntryPointName": "PicViewResponder"
+        },
+        "SearchSuggestionResponder": {
+          "Type": "System.Type",
+          "Nullable": false,
+          "Required": false,
+          "PropertyGroupName": "SearchSuggestionResponder",
+          "EntryPointName": "SearchSuggestionResponder"
+        },
+        "SettingFolders": {
+          "Type": "System.Type[]",
+          "Nullable": true,
+          "Required": false,
+          "PropertyGroupName": "SettingFolders",
+          "EntryPointName": "SettingFolders"
+        }
+      }
+    },
     "AffiliationTag": {
       "Type": "ShadowViewer.Core.Models.ShadowTag",
       "Nullable": true,
@@ -95,6 +138,12 @@
           "PropertyGroupName": "PluginId"
         }
       }
+    },
+    "CoreVersion": {
+      "Type": "System.String",
+      "Nullable": false,
+      "Required": true,
+      "PropertyGroupName": "CoreVersion"
     },
     "Id": {
       "Type": "System.String",

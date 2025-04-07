@@ -1,22 +1,21 @@
 using System;
 using System.Collections.Generic;
-using DryIoc;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Core.Responders;
 using SqlSugar;
-using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Models.Interfaces;
-using ShadowViewer.Core;
 using ShadowViewer.Core.Services;
 using ShadowViewer.Core.Enums;
+using ShadowViewer.Core.Plugins;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
 /// <summary>
 /// 
 /// </summary>
+[EntryPoint(Name = nameof(PluginResponder.HistoryResponder))]
 public partial class LocalHistoryResponder : AbstractHistoryResponder
 {
     /// <summary>

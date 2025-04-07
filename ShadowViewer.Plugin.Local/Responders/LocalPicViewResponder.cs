@@ -2,17 +2,18 @@ using System;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Core.Responders;
 using SqlSugar;
-using ShadowViewer.Core.Models;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Services;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.ViewModels;
+using ShadowViewer.Core.Plugins;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
 /// <summary>
 /// 本地图片阅读器触发器
 /// </summary>
+[EntryPoint(Name = nameof(PluginResponder.PicViewResponder))]
 public partial class LocalPicViewResponder : AbstractPicViewResponder
 {
     /// <summary>
