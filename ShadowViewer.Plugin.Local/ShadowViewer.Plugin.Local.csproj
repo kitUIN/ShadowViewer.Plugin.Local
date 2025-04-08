@@ -37,10 +37,9 @@
 			<WebUri>$(RepositoryUrl)</WebUri>
 			<Description>$(Description)</Description>
 			<Authors>$(Authors)</Authors>
-			<CoreVersion>2025.4.7.3</CoreVersion>
+			<CoreVersion>2025.4.8.1</CoreVersion>
 			<PluginManage>
 				<CanOpenFolder>false</CanOpenFolder>
-				<CanDelete>false</CanDelete>
 				<CanSwitch>false</CanSwitch>
 			</PluginManage>
 			<AffiliationTag>
@@ -61,6 +60,6 @@
 		<ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Core.csproj"/>
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Core" Version="2025.4.7.3" />
+		<PackageReference Include="ShadowViewer.Core" Version="2025.4.8.1" />
 	</ItemGroup>
 </Project>

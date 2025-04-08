@@ -13,7 +13,7 @@ namespace ShadowViewer.Plugin.Local;
 /// <summary>
 /// 本地阅读器
 /// </summary>
-[MainPlugin]
+[MainPlugin(BuiltIn = true)]
 [CheckAutowired]
 public partial class LocalPlugin : AShadowViewerPlugin
 {
