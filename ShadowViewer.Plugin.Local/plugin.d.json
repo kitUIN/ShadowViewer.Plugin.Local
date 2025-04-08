@@ -99,9 +99,9 @@
           "Nullable": true,
           "Item": {
             "Type": "System.Type",
-            "Nullable": false,
-            "EntryPointName": "SettingFolders"
-          }
+            "Nullable": false
+          },
+          "EntryPointName": "SettingFolders"
         }
       }
     },
