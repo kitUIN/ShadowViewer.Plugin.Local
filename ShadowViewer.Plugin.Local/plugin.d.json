@@ -37,12 +37,6 @@
           "PropertyGroupName": "CanSwitch",
           "Nullable": false
         },
-        "CanDelete": {
-          "Type": "System.Boolean",
-          "Required": false,
-          "PropertyGroupName": "CanDelete",
-          "Nullable": false
-        },
         "CanOpenFolder": {
           "Type": "System.Boolean",
           "Required": false,
