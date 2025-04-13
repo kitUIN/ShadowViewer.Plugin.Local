@@ -74,7 +74,7 @@ public class MangaScrollingReader: ListView
     public void ScrollViewerInit(bool init=false)
     {
         if (hostScrollViewer != null) return;
-        if (ReadMode != LocalReadMode.ScrollingReadMode) return;
+        if (ReadMode != LocalReaderMode.ScrollingReadMode) return;
         Task.Run(() =>
         {
             if (!init) Thread.Sleep(TimeSpan.FromSeconds(0.5));
@@ -132,9 +132,9 @@ public class MangaScrollingReader: ListView
     /// <summary>
     /// 
     /// </summary>
-    public LocalReadMode ReadMode
+    public LocalReaderMode ReadMode
     {
-        get => (LocalReadMode)GetValue(ReadModeProperty);
+        get => (LocalReaderMode)GetValue(ReadModeProperty);
         set => SetValue(ReadModeProperty, value);
     }
 
@@ -142,8 +142,8 @@ public class MangaScrollingReader: ListView
     /// 
     /// </summary>
     public static readonly DependencyProperty ReadModeProperty =
-        DependencyProperty.Register(nameof(ReadMode), typeof(LocalReadMode), typeof(MangaReader),
-            new PropertyMetadata(LocalReadMode.ScrollingReadMode, OnReadModeChanged));
+        DependencyProperty.Register(nameof(ReadMode), typeof(LocalReaderMode), typeof(MangaReader),
+            new PropertyMetadata(LocalReaderMode.ScrollingReadMode, OnReadModeChanged));
 
     /// <summary>
     /// 
@@ -151,8 +151,8 @@ public class MangaScrollingReader: ListView
     private static void OnReadModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (MangaScrollingReader)d;
-        var mode = (LocalReadMode)e.NewValue;
-        control.Visibility = mode == LocalReadMode.ScrollingReadMode ? Visibility.Visible : Visibility.Collapsed;
-        if (mode == LocalReadMode.ScrollingReadMode) control.ScrollViewerInit();
+        var mode = (LocalReaderMode)e.NewValue;
+        control.Visibility = mode == LocalReaderMode.ScrollingReadMode ? Visibility.Visible : Visibility.Collapsed;
+        if (mode == LocalReaderMode.ScrollingReadMode) control.ScrollViewerInit();
     }
 }

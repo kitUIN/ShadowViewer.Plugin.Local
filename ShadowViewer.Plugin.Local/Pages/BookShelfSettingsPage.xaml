@@ -7,7 +7,14 @@
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     xmlns:icons="using:FluentIcons.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="using:ShadowViewer.Plugin.Local"
+    xmlns:controls1="using:ShadowViewer.Controls"
+    xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
+    xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
     mc:Ignorable="d">
+    <Page.Resources>
+        <converters:LocalReaderModeConverter x:Key="LocalReaderModeConverter" />
+    </Page.Resources>
     <Grid
         Background="{ThemeResource LayerFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -63,6 +70,32 @@
                         IsOn="{x:Bind ViewModel.IsImportAgain, Mode=TwoWay}"
                         OffContent="{i18N:Locale Key=AllowOff}"
                         OnContent="{i18N:Locale Key=AllowOn}" />
+                </controls:SettingsCard>
+                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=CubeArrowCurveDown}"
+                                       Description="{i18N:Locale Key=IsImportAgainDescription}"
+                                       Header="{i18N:Locale Key=IsImportAgain}">
+                    <Button Style="{StaticResource PointerOverButtonStyle}" Grid.Column="0">
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <icons:FluentIcon Grid.Column="0" Icon="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}"
+                                              IconVariant="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
+                            </icons:FluentIcon>
+                            <TextBlock Grid.Column="1"
+                                       Text="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
+                            </TextBlock>
+                        </Grid>
+                        <Button.Flyout>
+                            <controls1:EnumMenuFlyout
+                                SelectedValue="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
+                                TextConverter="{StaticResource LocalReaderModeConverter}"
+                                EnumSource="enums:LocalReaderMode"
+                                Placement="Top">
+                            </controls1:EnumMenuFlyout>
+                        </Button.Flyout>
+                    </Button>
                 </controls:SettingsCard>
             </StackPanel>
         </ScrollViewer>

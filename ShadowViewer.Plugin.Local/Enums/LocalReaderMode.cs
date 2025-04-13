@@ -11,7 +11,7 @@ namespace ShadowViewer.Plugin.Local.Enums;
 /// <summary>
 /// 阅读模式
 /// </summary>
-public enum LocalReadMode
+public enum LocalReaderMode
 {
     /// <summary>
     /// 双页模式

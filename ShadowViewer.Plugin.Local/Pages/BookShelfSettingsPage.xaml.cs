@@ -1,6 +1,8 @@
+using DryIoc;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using ShadowPluginLoader.Attributes;
+using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Plugins;
 using ShadowViewer.Plugin.Local.ViewModels;
 
@@ -12,7 +14,8 @@ namespace ShadowViewer.Plugin.Local.Pages;
 [EntryPoint(Name = nameof(PluginManage.SettingsPage))]
 public sealed partial class BookShelfSettingsPage : Page
 {
-    private BookShelfSettingsViewModel ViewModel { get; } = new BookShelfSettingsViewModel();
+
+    public BookShelfSettingsViewModel ViewModel { get; } = DiFactory.Services.Resolve<BookShelfSettingsViewModel>();
 
     /// <summary>
     /// 

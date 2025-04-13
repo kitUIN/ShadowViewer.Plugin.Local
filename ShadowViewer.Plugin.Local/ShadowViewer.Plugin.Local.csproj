@@ -37,7 +37,7 @@
 			<WebUri>$(RepositoryUrl)</WebUri>
 			<Description>$(Description)</Description>
 			<Authors>$(Authors)</Authors>
-			<CoreVersion>2025.4.13.4</CoreVersion>
+			<CoreVersion>2025.4.13.7</CoreVersion>
 			<PluginManage>
 				<CanOpenFolder>false</CanOpenFolder>
 				<CanSwitch>false</CanSwitch>
@@ -57,10 +57,10 @@
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240916" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
-		<PackageReference Include="ShadowViewer.Core" Version="2025.4.13.4" />
+		<PackageReference Include="ShadowViewer.Core" Version="2025.4.13.7" />
 		<!-- <ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Core.csproj"/> -->
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Core" Version="2025.4.13.4" />
+		<PackageReference Include="ShadowViewer.Core" Version="2025.4.13.7" />
 	</ItemGroup>
 </Project>

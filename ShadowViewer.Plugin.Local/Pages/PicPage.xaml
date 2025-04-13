@@ -16,7 +16,7 @@
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     mc:Ignorable="d">
     <Page.Resources>
-        <converters:MenuFlyoutItemTextConverter x:Key="MenuFlyoutItemTextConverter" />
+        <converters:LocalReaderModeConverter x:Key="LocalReaderModeConverter" />
     </Page.Resources>
     <Grid
         x:Name="RootGrid"
@@ -79,18 +79,18 @@
                                     <ColumnDefinition Width="Auto"></ColumnDefinition>
                                     <ColumnDefinition Width="Auto"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
-                                <winUi:FluentIcon Grid.Column="0" Icon="{x:Bind ViewModel.ReadModeIcon,Mode=OneWay}"
-                                                  IconVariant="{x:Bind ViewModel.ReadModeIconVariant,Mode=OneWay}">
+                                <winUi:FluentIcon Grid.Column="0" Icon="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}"
+                                                  IconVariant="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
                                 </winUi:FluentIcon>
                                 <TextBlock Grid.Column="1"
-                                           Text="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource MenuFlyoutItemTextConverter}}">
+                                           Text="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
                                 </TextBlock>
                             </Grid>
                             <Button.Flyout>
                                 <controls1:EnumMenuFlyout
                                     SelectedValue="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
-                                    TextConverter="{StaticResource MenuFlyoutItemTextConverter}"
-                                    EnumSource="enums:LocalReadMode"
+                                    TextConverter="{StaticResource LocalReaderModeConverter}"
+                                    EnumSource="enums:LocalReaderMode"
                                     Placement="Top">
                                 </controls1:EnumMenuFlyout>
                             </Button.Flyout>

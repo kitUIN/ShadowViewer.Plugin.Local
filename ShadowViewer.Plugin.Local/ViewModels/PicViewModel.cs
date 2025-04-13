@@ -1,17 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentIcons.Common;
 using Serilog;
 using ShadowPluginLoader.Attributes;
-using ShadowViewer.Controls.Attributes;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Responders;
-using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using SqlSugar;
@@ -75,47 +71,6 @@ public partial class PicViewModel : ObservableObject
     /// </summary>
     [ObservableProperty] private bool isPageSliderPressed;
 
-
-    #region 阅读模式
-
-    /// <summary>
-    /// 阅读模式,滚动:<see cref="LocalReadMode.ScrollingReadMode"/>>;双页翻页:<see cref="LocalReadMode.TwoPageReadMode"/>
-    /// </summary>
-    [ObservableProperty] private LocalReadMode readMode;
-
-    /// <summary>
-    /// 阅读模式图标
-    /// </summary>
-    [ObservableProperty] private Icon readModeIcon;
-
-    /// <summary>
-    /// 阅读模式图标类型
-    /// </summary>
-    [ObservableProperty] private IconVariant readModeIconVariant = IconVariant.Regular;
-
-
-    /// <summary>
-    /// Constructor Init
-    /// </summary>
-    partial void ConstructorInit()
-    {
-        OnReadModeChanged(ReadMode);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="value"></param>
-    partial void OnReadModeChanged(LocalReadMode value)
-    {
-        var field = typeof(LocalReadMode).GetField(value.ToString()!);
-        var icon = field?.GetCustomAttribute<MenuFlyoutItemIconAttribute>();
-        if (icon == null) return;
-        ReadModeIcon = icon.Icon;
-        ReadModeIconVariant = icon.IconVariant;
-    }
-
-    #endregion
 
     /// <summary>
     /// 类别(插件id)

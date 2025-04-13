@@ -41,6 +41,6 @@ public enum LocalSettingKey
     /// <summary>
     /// 阅读模式-滑动/双页
     /// </summary>
-    [ShadowSetting(typeof(LocalReadMode),  comment: "阅读模式-滑动/双页")]
+    [ShadowSetting(typeof(LocalReaderMode), "ShadowViewer.Plugin.Local.Enums.LocalReaderMode.TwoPageReadMode",  comment: "阅读模式-滑动/双页")]
     LocalReaderMode,
 }

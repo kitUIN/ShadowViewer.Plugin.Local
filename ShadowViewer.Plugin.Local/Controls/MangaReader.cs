@@ -73,9 +73,9 @@ public sealed class MangaReader : Control
     /// <summary>
     /// 
     /// </summary>
-    public LocalReadMode ReadMode
+    public LocalReaderMode ReadMode
     {
-        get => (LocalReadMode)GetValue(ReadModeProperty);
+        get => (LocalReaderMode)GetValue(ReadModeProperty);
         set => SetValue(ReadModeProperty, value);
     }
 
@@ -83,8 +83,8 @@ public sealed class MangaReader : Control
     /// 
     /// </summary>
     public static readonly DependencyProperty ReadModeProperty =
-        DependencyProperty.Register(nameof(ReadMode), typeof(LocalReadMode), typeof(MangaReader),
-            new PropertyMetadata(LocalReadMode.TwoPageReadMode, OnReadModeChanged));
+        DependencyProperty.Register(nameof(ReadMode), typeof(LocalReaderMode), typeof(MangaReader),
+            new PropertyMetadata(LocalReaderMode.TwoPageReadMode, OnReadModeChanged));
 
     /// <summary>
     /// 
@@ -92,8 +92,8 @@ public sealed class MangaReader : Control
     private static void OnReadModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (MangaReader)d;
-        var mode = (LocalReadMode)e.NewValue;
-        control.Visibility = mode == LocalReadMode.TwoPageReadMode ? Visibility.Visible : Visibility.Collapsed;
+        var mode = (LocalReaderMode)e.NewValue;
+        control.Visibility = mode == LocalReaderMode.TwoPageReadMode ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>
