@@ -1,12 +1,14 @@
-﻿using CommunityToolkit.WinUI;
+using CommunityToolkit.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using ShadowViewer.Core.Args;
 using ShadowViewer.Plugin.Local.Enums;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.System;
+using DispatcherQueuePriority = Microsoft.UI.Dispatching.DispatcherQueuePriority;
 
 namespace ShadowViewer.Plugin.Local.Controls;
 
@@ -22,7 +24,7 @@ public class MangaScrollingReader: ListView
     public MangaScrollingReader():base()
     {
         SelectionMode = ListViewSelectionMode.None;
-        Loaded += PicViewer_Loaded;
+        Loaded += (_, _) => ScrollViewerInit(true);
     }
 
     /// <summary>
@@ -59,20 +61,32 @@ public class MangaScrollingReader: ListView
     /// 
     /// </summary>
     private static void OnCurrentIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    { 
+    {
     }
+    /// <summary>
+    /// 
+    /// </summary>
+    private ScrollViewer? hostScrollViewer;
     /// <summary>
     /// 滚动响应
     /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
     /// <exception cref="InvalidOperationException"></exception>
-    private void PicViewer_Loaded(object sender, RoutedEventArgs e)
+    public void ScrollViewerInit(bool init=false)
     {
-        var hostScrollViewer = this.FindDescendant<ScrollViewer>();
-        if (hostScrollViewer == null) return;
-        hostScrollViewer.ViewChanged -= ParentScrollViewer_ViewChanged;
-        hostScrollViewer.ViewChanged += ParentScrollViewer_ViewChanged;
+        if (hostScrollViewer != null) return;
+        if (ReadMode != LocalReadMode.ScrollingReadMode) return;
+        Task.Run(() =>
+        {
+            if (!init) Thread.Sleep(TimeSpan.FromSeconds(0.5));
+            this.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Normal, () =>
+            {
+                var scrollViewer = this.FindDescendant<ScrollViewer>();
+                if (scrollViewer == null) return;
+                hostScrollViewer = scrollViewer;
+                hostScrollViewer.ViewChanged -= ParentScrollViewer_ViewChanged;
+                hostScrollViewer.ViewChanged += ParentScrollViewer_ViewChanged;
+            });
+        });
     }
     /// <summary>
     /// 移动视图响应
@@ -80,16 +94,16 @@ public class MangaScrollingReader: ListView
     private void ParentScrollViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
         if (IgnoreViewChanged) return;
-        var hostScrollViewer = (ScrollViewer)sender!;
-        for (var i = Items.Count - 1; i > 0; i--)
+        var scrollViewer = (ScrollViewer)sender!;
+        for (var i = Items.Count - 1; i >= 0; i--)
         {
             var associatedObject = ContainerFromIndex(i) as FrameworkElement;
             if (associatedObject == null) continue;
             var associatedElementRect = associatedObject
-                .TransformToVisual(hostScrollViewer)
+                .TransformToVisual(scrollViewer)
                 .TransformBounds(new Rect(0, 0, associatedObject.ActualWidth, associatedObject.ActualHeight));
 
-            var hostScrollViewerRect = new Rect(0, 0, hostScrollViewer.ActualWidth, hostScrollViewer.ActualHeight);
+            var hostScrollViewerRect = new Rect(0, 0, scrollViewer.ActualWidth, scrollViewer.ActualHeight);
 
             if (!hostScrollViewerRect.Contains(new Point(associatedElementRect.Left, associatedElementRect.Top)) &&
                 !hostScrollViewerRect.Contains(new Point(associatedElementRect.Right, associatedElementRect.Top)) &&
@@ -97,7 +111,7 @@ public class MangaScrollingReader: ListView
                     associatedElementRect.Bottom)) &&
                 !hostScrollViewerRect.Contains(new Point(associatedElementRect.Left, associatedElementRect.Bottom)))
                 continue;
-            CurrentIndex = i + 1;
+            if(i + 1 != CurrentIndex) CurrentIndex = i + 1;
             break;
         }
     }
@@ -139,5 +153,6 @@ public class MangaScrollingReader: ListView
         var control = (MangaScrollingReader)d;
         var mode = (LocalReadMode)e.NewValue;
         control.Visibility = mode == LocalReadMode.ScrollingReadMode ? Visibility.Visible : Visibility.Collapsed;
+        if (mode == LocalReadMode.ScrollingReadMode) control.ScrollViewerInit();
     }
 }

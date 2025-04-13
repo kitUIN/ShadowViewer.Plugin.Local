@@ -75,6 +75,7 @@ public sealed partial class PicPage : Page
         {
             if (!(e.NewValue - 1 >= 0) || !(e.NewValue - 1 < ViewModel.Images.Count) ||
                 !ViewModel.IsPageSliderPressed) return;
+            ViewModel.CurrentPage = (int)e.NewValue;
             await PicViewer.SmoothScrollIntoViewWithIndexAsync((int)(e.NewValue - 1),
                 ScrollItemPlacement.Top, disableAnimation: true);
         }

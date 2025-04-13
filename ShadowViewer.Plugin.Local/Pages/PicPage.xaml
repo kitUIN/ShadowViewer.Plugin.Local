@@ -132,7 +132,7 @@
                             SmallChange="1"
                             StepFrequency="1"
                             ValueChanged="PageSlider_ValueChanged"
-                            Value="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}" />
+                            Value="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
                         <TextBlock
                             Grid.Column="3" VerticalAlignment="Center"
                             Text="{x:Bind ViewModel.Images.Count, Mode=OneWay}" />
