@@ -11,6 +11,7 @@
     xmlns:winUi="using:FluentIcons.WinUI"
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
     xmlns:controls1="using:ShadowViewer.Controls"
+    xmlns:local="using:ShadowViewer.Plugin.Local"
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     mc:Ignorable="d">
@@ -25,7 +26,7 @@
         CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
         <controls:MangaReader
             x:Name="MangaReader"
-            ReadMode="{x:Bind ViewModel.ReadMode,Mode=OneWay}"
+            ReadMode="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay}"
             CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
             HorizontalAlignment="Center"
             Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
@@ -33,7 +34,7 @@
         <controls:MangaScrollingReader
             CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
             IgnoreViewChanged="{x:Bind ViewModel.IsPageSliderPressed,Mode=OneWay}"
-            ReadMode="{x:Bind ViewModel.ReadMode,Mode=OneWay}"
+            ReadMode="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay}"
             x:Name="PicViewer"
             HorizontalAlignment="Center"
             ItemsSource="{x:Bind ViewModel.Images, Mode=OneWay}"
@@ -82,12 +83,12 @@
                                                   IconVariant="{x:Bind ViewModel.ReadModeIconVariant,Mode=OneWay}">
                                 </winUi:FluentIcon>
                                 <TextBlock Grid.Column="1"
-                                           Text="{x:Bind ViewModel.ReadMode,Mode=OneWay,Converter={StaticResource MenuFlyoutItemTextConverter}}">
+                                           Text="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource MenuFlyoutItemTextConverter}}">
                                 </TextBlock>
                             </Grid>
                             <Button.Flyout>
                                 <controls1:EnumMenuFlyout
-                                    SelectedValue="{x:Bind ViewModel.ReadMode,Mode=TwoWay}"
+                                    SelectedValue="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
                                     TextConverter="{StaticResource MenuFlyoutItemTextConverter}"
                                     EnumSource="enums:LocalReadMode"
                                     Placement="Top">

@@ -37,4 +37,10 @@ public enum LocalSettingKey
     /// </summary>
     [ShadowSetting(typeof(bool), "false", "书架-样式-详细/简约")]
     LocalBookStyleDetail,
+
+    /// <summary>
+    /// 阅读模式-滑动/双页
+    /// </summary>
+    [ShadowSetting(typeof(LocalReadMode),  comment: "阅读模式-滑动/双页")]
+    LocalReaderMode,
 }
