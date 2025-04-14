@@ -4,27 +4,25 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using ShadowViewer.Plugin.Local.Enums;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.System;
-using DispatcherQueuePriority = Microsoft.UI.Dispatching.DispatcherQueuePriority;
 
 namespace ShadowViewer.Plugin.Local.Controls;
-
 
 /// <summary>
 /// 滑动阅读器的封装
 /// </summary>
-public class MangaScrollingReader: ListView
+public class MangaScrollingReader : ListView
 {
     /// <summary>
     /// 
     /// </summary>
-    public MangaScrollingReader():base()
+    public MangaScrollingReader() : base()
     {
         SelectionMode = ListViewSelectionMode.None;
-        Loaded += (_, _) => ScrollViewerInit(true);
     }
 
     /// <summary>
@@ -42,6 +40,7 @@ public class MangaScrollingReader: ListView
     public static readonly DependencyProperty IgnoreViewChangedProperty =
         DependencyProperty.Register(nameof(IgnoreViewChanged), typeof(bool), typeof(MangaScrollingReader),
             new PropertyMetadata(false));
+
     /// <summary>
     /// 
     /// </summary>
@@ -57,37 +56,19 @@ public class MangaScrollingReader: ListView
     public static readonly DependencyProperty CurrentIndexProperty =
         DependencyProperty.Register(nameof(CurrentIndex), typeof(int), typeof(MangaScrollingReader),
             new PropertyMetadata(0, OnCurrentIndexChanged));
+
     /// <summary>
     /// 
     /// </summary>
     private static void OnCurrentIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
     }
+
     /// <summary>
     /// 
     /// </summary>
     private ScrollViewer? hostScrollViewer;
-    /// <summary>
-    /// 滚动响应
-    /// </summary>
-    /// <exception cref="InvalidOperationException"></exception>
-    public void ScrollViewerInit(bool init=false)
-    {
-        if (hostScrollViewer != null) return;
-        if (ReadMode != LocalReaderMode.ScrollingReadMode) return;
-        Task.Run(() =>
-        {
-            if (!init) Thread.Sleep(TimeSpan.FromSeconds(0.5));
-            this.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Normal, () =>
-            {
-                var scrollViewer = this.FindDescendant<ScrollViewer>();
-                if (scrollViewer == null) return;
-                hostScrollViewer = scrollViewer;
-                hostScrollViewer.ViewChanged -= ParentScrollViewer_ViewChanged;
-                hostScrollViewer.ViewChanged += ParentScrollViewer_ViewChanged;
-            });
-        });
-    }
+
     /// <summary>
     /// 移动视图响应
     /// </summary>
@@ -111,7 +92,7 @@ public class MangaScrollingReader: ListView
                     associatedElementRect.Bottom)) &&
                 !hostScrollViewerRect.Contains(new Point(associatedElementRect.Left, associatedElementRect.Bottom)))
                 continue;
-            if(i + 1 != CurrentIndex) CurrentIndex = i + 1;
+            if (i + 1 != CurrentIndex) CurrentIndex = i + 1;
             break;
         }
     }
@@ -123,9 +104,14 @@ public class MangaScrollingReader: ListView
     /// <param name="e"></param>
     private void ScrollViewer_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == VirtualKey.PageDown && sender is ScrollViewer scrollViewer)
+        if (sender is not ScrollViewer scrollViewer) return;
+        if (e.Key == VirtualKey.PageDown)
         {
             scrollViewer.ChangeView(null, scrollViewer.VerticalOffset + scrollViewer.ViewportHeight, null);
+        }
+        else if (e.Key == VirtualKey.PageUp)
+        {
+            scrollViewer.ChangeView(null, scrollViewer.VerticalOffset - scrollViewer.ViewportHeight, null);
         }
     }
 
@@ -153,6 +139,17 @@ public class MangaScrollingReader: ListView
         var control = (MangaScrollingReader)d;
         var mode = (LocalReaderMode)e.NewValue;
         control.Visibility = mode == LocalReaderMode.ScrollingReadMode ? Visibility.Visible : Visibility.Collapsed;
-        if (mode == LocalReaderMode.ScrollingReadMode) control.ScrollViewerInit();
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    protected override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+        hostScrollViewer = GetTemplateChild("ScrollViewer") as ScrollViewer;
+        if(hostScrollViewer == null) return;
+        hostScrollViewer.ViewChanged -= ParentScrollViewer_ViewChanged;
+        hostScrollViewer.ViewChanged += ParentScrollViewer_ViewChanged;
     }
 }
