@@ -1,4 +1,3 @@
-using Windows.System;
 using CommunityToolkit.WinUI;
 using DryIoc;
 using Microsoft.UI.Xaml;
@@ -6,15 +5,18 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using ShadowViewer.Plugin.Local.ViewModels;
+using Serilog;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Extensions;
+using ShadowViewer.Plugin.Local.ViewModels;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Foundation;
-using Serilog;
+using Windows.System;
+using Windows.UI.Core;
+using ShadowViewer.Plugin.Local.Enums;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -100,6 +102,34 @@ public sealed partial class PicPage : Page
         catch (Exception ex)
         {
             Log.Error("监听是否松开点击进度条报错: {e}", ex);
+        }
+    }
+    /// <summary>
+    /// 滚轮翻页响应
+    /// </summary>
+    private void MangaPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        // var thread = CoreWindow.GetForCurrentThread();
+        // if (thread != null)
+        // {
+        //     var ctrlState = thread.GetKeyState(VirtualKey.Control);
+        //     if (ctrlState.HasFlag(CoreVirtualKeyStates.Down))
+        //         return;
+        // }
+        if (LocalPlugin.Settings.LocalReaderMode != LocalReaderMode.TwoPageReadMode) return;
+        var point = e.GetCurrentPoint(this);
+        var delta = point.Properties.MouseWheelDelta;
+        var scrollSteps = delta / 120;
+        if (scrollSteps == 0) return;
+        if (scrollSteps > 0)
+        {
+            for (var i = 0; i < scrollSteps; i++)
+                ViewModel.CurrentPage = int.Max(1, ViewModel.CurrentPage - 2);
+        }
+        else
+        {
+            for (var i = 0; i < -scrollSteps; i++)
+                ViewModel.CurrentPage = int.Min(ViewModel.Images.Count, ViewModel.CurrentPage + 2);
         }
     }
 }

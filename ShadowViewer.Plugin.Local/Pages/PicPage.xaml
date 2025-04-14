@@ -22,7 +22,7 @@
         x:Name="RootGrid"
         Background="{ThemeResource LayerFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        BorderThickness="1"
+        BorderThickness="1" PointerWheelChanged="MangaPointerWheelChanged"
         CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
         <controls:MangaReader
             x:Name="MangaReader"
