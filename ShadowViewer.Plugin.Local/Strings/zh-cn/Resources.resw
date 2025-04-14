@@ -399,4 +399,13 @@
   <data name="PrevPage" xml:space="preserve">
     <value>上一页</value>
   </data>
+  <data name="LocalReaderModeDescription" xml:space="preserve">
+    <value>阅读器所使用的阅读模式,影响您的阅读方式</value>
+  </data>
+  <data name="LocalReaderMode" xml:space="preserve">
+    <value>阅读模式</value>
+  </data>
+  <data name="LocalReaderSetting" xml:space="preserve">
+    <value>阅读器设置</value>
+  </data>
 </root>

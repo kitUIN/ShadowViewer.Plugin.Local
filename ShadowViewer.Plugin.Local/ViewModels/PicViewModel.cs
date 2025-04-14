@@ -129,7 +129,7 @@ public partial class PicViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 
+    /// <inheritdoc cref="IPicViewResponder.CurrentEpisodeIndexChanged"/>
     /// </summary>
     /// <param name="oldValue"></param>
     /// <param name="newValue"></param>
@@ -139,7 +139,7 @@ public partial class PicViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 
+    /// <inheritdoc cref="IPicViewResponder.CurrentPageIndexChanged"/>
     /// </summary>
     /// <param name="oldValue"></param>
     /// <param name="newValue"></param>
@@ -180,6 +180,9 @@ public partial class PicViewModel : ObservableObject
         CurrentEpisodeIndex += 1;
     }
 
+    /// <summary>
+    /// 上一话
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanPrevEpisode))]
     private void PrevEpisode()
     {
