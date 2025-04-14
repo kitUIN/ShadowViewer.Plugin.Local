@@ -132,4 +132,22 @@ public sealed partial class PicPage : Page
                 ViewModel.CurrentPage = int.Min(ViewModel.Images.Count, ViewModel.CurrentPage + 2);
         }
     }
+
+    private void MenuTapped(object sender, TappedRoutedEventArgs e)
+    {
+        ViewModel.IsMenu = !ViewModel.IsMenu;
+    }
+
+    private void NextPageTapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (ViewModel.TappedGridSetting) return;
+        if (!ViewModel.NextPageCommand.CanExecute(null)) return;
+        ViewModel.NextPageCommand.Execute(null);
+    }
+    private void PrevPageTapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (ViewModel.TappedGridSetting) return;
+        if (!ViewModel.PrevPageCommand.CanExecute(null)) return;
+        ViewModel.PrevPageCommand.Execute(null);
+    }
 }

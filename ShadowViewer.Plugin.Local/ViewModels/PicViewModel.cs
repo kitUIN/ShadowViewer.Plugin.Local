@@ -1,13 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using ABI.Windows.UI;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Serilog;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Responders;
+using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using SqlSugar;
@@ -71,6 +76,31 @@ public partial class PicViewModel : ObservableObject
     /// </summary>
     [ObservableProperty] private bool isPageSliderPressed;
 
+    /// <summary>
+    /// 点击区域设定模式
+    /// </summary>
+    [NotifyPropertyChangedFor(nameof(TappedGridBackground))]
+    [NotifyPropertyChangedFor(nameof(TappedGridVisibility))]
+    [NotifyPropertyChangedFor(nameof(MenuOpacity))]
+    [ObservableProperty]
+    private bool tappedGridSetting;
+
+    /// <summary>
+    /// 点击区域的背景色
+    /// </summary>
+    public Brush TappedGridBackground => TappedGridSetting
+        ? (Brush)Application.Current.Resources["ControlSolidFillColorDefaultBrush"]
+        : new SolidColorBrush(Colors.Transparent);
+
+    /// <summary>
+    /// 点击区域显示
+    /// </summary>
+    public Visibility TappedGridVisibility => TappedGridSetting ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>
+    /// 菜单透明度
+    /// </summary>
+    public double MenuOpacity => TappedGridSetting ? 0.7 : 1;
 
     /// <summary>
     /// 类别(插件id)
@@ -153,5 +183,37 @@ public partial class PicViewModel : ObservableObject
     private void PrevEpisode()
     {
         CurrentEpisodeIndex -= 1;
+    }
+
+    /// <summary>
+    /// 允许下一页
+    /// </summary>
+    public bool CanNextPage => LocalPlugin.Settings.LocalReaderMode == LocalReaderMode.TwoPageReadMode
+        ? Images.Count > CurrentPage + 2
+        : Images.Count > CurrentPage + 1;
+
+    /// <summary>
+    /// 允许上一页
+    /// </summary>
+    public bool CanPrevPage => LocalPlugin.Settings.LocalReaderMode == LocalReaderMode.TwoPageReadMode
+        ? Images.Count > CurrentPage - 2 && CurrentPage - 2 > 0
+        : Images.Count > CurrentPage - 1 && CurrentPage - 1 > 0;
+
+    /// <summary>
+    /// 下一页
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanNextPage))]
+    private void NextPage()
+    {
+        CurrentPage += LocalPlugin.Settings.LocalReaderMode == LocalReaderMode.TwoPageReadMode ? 2 : 1;
+    }
+
+    /// <summary>
+    /// 上一页
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanPrevPage))]
+    private void PrevPage()
+    {
+        CurrentPage -= LocalPlugin.Settings.LocalReaderMode == LocalReaderMode.TwoPageReadMode ? 2 : 1;
     }
 }

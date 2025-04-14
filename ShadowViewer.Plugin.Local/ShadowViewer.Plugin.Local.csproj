@@ -55,6 +55,7 @@
 	<ItemGroup>
 		<!-- <PackageReference Include="ShadowPluginLoader.SourceGenerator" Version="2.1.0.20" /> -->
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240916" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.1.240916" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
 		<PackageReference Include="ShadowViewer.Core" Version="2025.4.13.7" />

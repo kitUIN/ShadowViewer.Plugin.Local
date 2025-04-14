@@ -387,4 +387,16 @@
   <data name="DisplayName" xml:space="preserve">
     <value>本地阅读器</value>
   </data>
+  <data name="ReaderTappedGridSetting" xml:space="preserve">
+    <value>点击区域设置</value>
+  </data>
+  <data name="Menu" xml:space="preserve">
+    <value>菜单</value>
+  </data>
+  <data name="NextPage" xml:space="preserve">
+    <value>下一页</value>
+  </data>
+  <data name="PrevPage" xml:space="preserve">
+    <value>上一页</value>
+  </data>
 </root>
