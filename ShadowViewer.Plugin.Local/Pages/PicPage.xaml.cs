@@ -9,14 +9,15 @@ using Serilog;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Extensions;
+using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.ViewModels;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Storage;
 using Windows.System;
 using Windows.UI.Core;
-using ShadowViewer.Plugin.Local.Enums;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -54,17 +55,6 @@ public sealed partial class PicPage : Page
             ViewModel.IsPageSliderPressed = false;
         };
         ViewModel.Init(arg);
-    }
-    
-
-    /// <summary>
-    /// 点击菜单检测
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    private void ScrollViewer_Tapped(object sender, TappedRoutedEventArgs e)
-    {
-        Menu.Visibility = (Menu.Visibility != Visibility.Visible).ToVisibility();
     }
 
 
@@ -150,4 +140,51 @@ public sealed partial class PicPage : Page
         if (!ViewModel.PrevPageCommand.CanExecute(null)) return;
         ViewModel.PrevPageCommand.Execute(null);
     }
+
+
+    private void TappedGridSet(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.TappedGridSetting) return;
+        LocalPlugin.Settings.TappedGridLayout = new ApplicationDataCompositeValue
+        {
+            ["Row0"] = TappedGrid.RowDefinitions[0].Height.Value,
+            ["Row0_Unit"] = (int)TappedGrid.RowDefinitions[0].Height.GridUnitType,
+            ["Row2"] = TappedGrid.RowDefinitions[2].Height.Value,
+            ["Row2_Unit"] = (int)TappedGrid.RowDefinitions[2].Height.GridUnitType,
+            ["Row4"] = TappedGrid.RowDefinitions[4].Height.Value,
+            ["Row4_Unit"] = (int)TappedGrid.RowDefinitions[4].Height.GridUnitType,
+
+            ["Col0"] = TappedGrid.ColumnDefinitions[0].Width.Value,
+            ["Col0_Unit"] = (int)TappedGrid.ColumnDefinitions[0].Width.GridUnitType,
+            ["Col2"] = TappedGrid.ColumnDefinitions[2].Width.Value,
+            ["Col2_Unit"] = (int)TappedGrid.ColumnDefinitions[2].Width.GridUnitType,
+            ["Col4"] = TappedGrid.ColumnDefinitions[4].Width.Value,
+            ["Col4_Unit"] = (int)TappedGrid.ColumnDefinitions[4].Width.GridUnitType,
+        };
+    }
+
+
+    private void InitTappedGridLayout(object sender, RoutedEventArgs e)
+    {
+        var layout = LocalPlugin.Settings.TappedGridLayout;
+
+        if (layout.TryGetValue("Row0", out var row0) && layout.TryGetValue("Row0_Unit", out var row0Unit))
+            TappedGrid.RowDefinitions[0].Height = new GridLength((double)row0, (GridUnitType)(int)row0Unit);
+
+        if (layout.TryGetValue("Row2", out var row2) && layout.TryGetValue("Row2_Unit", out var row2Unit))
+            TappedGrid.RowDefinitions[2].Height = new GridLength((double)row2, (GridUnitType)(int)row2Unit);
+
+        if (layout.TryGetValue("Row4", out var row4) && layout.TryGetValue("Row4_Unit", out var row4Unit))
+            TappedGrid.RowDefinitions[4].Height = new GridLength((double)row4, (GridUnitType)(int)row4Unit);
+
+        if (layout.TryGetValue("Col0", out var col0) && layout.TryGetValue("Col0_Unit", out var col0Unit))
+            TappedGrid.ColumnDefinitions[0].Width = new GridLength((double)col0, (GridUnitType)(int)col0Unit);
+
+        if (layout.TryGetValue("Col2", out var col2) && layout.TryGetValue("Col2_Unit", out var col2Unit))
+            TappedGrid.ColumnDefinitions[2].Width = new GridLength((double)col2, (GridUnitType)(int)col2Unit);
+
+        if (layout.TryGetValue("Col4", out var col4) && layout.TryGetValue("Col4_Unit", out var col4Unit))
+            TappedGrid.ColumnDefinitions[4].Width = new GridLength((double)col4, (GridUnitType)(int)col4Unit);
+    }
+
 }

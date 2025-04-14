@@ -1,4 +1,5 @@
 using ShadowPluginLoader.Attributes;
+using Windows.Storage;
 
 namespace ShadowViewer.Plugin.Local.Enums;
 
@@ -43,4 +44,9 @@ public enum LocalSettingKey
     /// </summary>
     [ShadowSetting(typeof(LocalReaderMode), "ShadowViewer.Plugin.Local.Enums.LocalReaderMode.TwoPageReadMode",  comment: "阅读模式-滑动/双页")]
     LocalReaderMode,
+    /// <summary>
+    /// 阅读器点击区域设置
+    /// </summary>
+    [ShadowSetting(typeof(ApplicationDataCompositeValue), "new Windows.Storage.ApplicationDataCompositeValue()",  comment: "阅读器点击区域设置")]
+    TappedGridLayout,
 }

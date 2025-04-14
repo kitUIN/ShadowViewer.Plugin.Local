@@ -52,7 +52,7 @@
                 </DataTemplate>
             </controls:MangaScrollingReader.ItemTemplate>
         </controls:MangaScrollingReader>
-        <Grid x:Name="TappedGrid" Background="{x:Bind ViewModel.TappedGridBackground,Mode=OneWay}">
+        <Grid Loaded="InitTappedGridLayout" x:Name="TappedGrid" Background="{x:Bind ViewModel.TappedGridBackground,Mode=OneWay}">
             <Grid.Resources>
                 <x:Double x:Key="TextFontSize">24</x:Double>
                 <SolidColorBrush x:Key="TextForeground">White</SolidColorBrush>
@@ -202,7 +202,7 @@
                             </Button.Flyout>
                         </Button>
 
-                        <ToggleButton IsChecked="{x:Bind ViewModel.TappedGridSetting,Mode=TwoWay}"
+                        <ToggleButton Checked="TappedGridSet" IsChecked="{x:Bind ViewModel.TappedGridSetting,Mode=TwoWay}"
                                       Style="{StaticResource PointerOverToggleButtonStyle}"
                                       Grid.Column="2">
                             <TextBlock Text="{i18N:Locale Key=ReaderTappedGridSetting}"></TextBlock>

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using ABI.Windows.UI;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,6 +13,10 @@ using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using SqlSugar;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using Windows.Storage;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -216,4 +217,5 @@ public partial class PicViewModel : ObservableObject
     {
         CurrentPage -= LocalPlugin.Settings.LocalReaderMode == LocalReaderMode.TwoPageReadMode ? 2 : 1;
     }
+
 }
