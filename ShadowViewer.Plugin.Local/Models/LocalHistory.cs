@@ -41,6 +41,5 @@ public partial class LocalHistory : ObservableObject, IHistory
     /// <summary>
     /// <inheritdoc cref="IHistory.PluginId"/>
     /// </summary>
-    [SugarColumn(IsIgnore = true)]
-    public string PluginId => LocalPlugin.Meta.Id;
+    public virtual string PluginId { get; set; } = LocalPlugin.Meta.Id;
 }
