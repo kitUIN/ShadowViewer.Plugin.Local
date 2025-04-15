@@ -11,7 +11,7 @@
 
 
 		<!--插件版本号(nuget包版本号)-->
-		<Version>1.3.21</Version>
+		<Version>1.3.23</Version>
 		<!--插件仓库地址(nuget包仓库地址)-->
 		<RepositoryUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</RepositoryUrl>
 		<!--插件介绍(nuget包介绍)-->
@@ -37,7 +37,7 @@
 			<WebUri>$(RepositoryUrl)</WebUri>
 			<Description>$(Description)</Description>
 			<Authors>$(Authors)</Authors>
-			<CoreVersion>2025.4.14.1</CoreVersion>
+			<CoreVersion>2025.4.15.7</CoreVersion>
 			<PluginManage>
 				<CanOpenFolder>false</CanOpenFolder>
 				<CanSwitch>false</CanSwitch>
@@ -58,10 +58,10 @@
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.1.240916" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
-		<PackageReference Include="ShadowViewer.Core" Version="2025.4.14.1" />
+		<PackageReference Include="ShadowViewer.Core" Version="2025.4.15.7" />
 		<!-- <ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Core.csproj"/> -->
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Core" Version="2025.4.14.1" />
+		<PackageReference Include="ShadowViewer.Core" Version="2025.4.15.7" />
 	</ItemGroup>
 </Project>

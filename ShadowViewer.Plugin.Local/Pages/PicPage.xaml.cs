@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Serilog;
 using ShadowPluginLoader.WinUI;
@@ -51,7 +52,8 @@ public sealed partial class PicPage : Page
         {
             await Task.Delay(TimeSpan.FromSeconds(0.3));
             ViewModel.IsPageSliderPressed = true;
-            await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1, ScrollItemPlacement.Top,true);
+            await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1, ScrollItemPlacement.Top,
+                true);
             ViewModel.IsPageSliderPressed = false;
         };
         ViewModel.Init(arg);
@@ -94,6 +96,7 @@ public sealed partial class PicPage : Page
             Log.Error("监听是否松开点击进度条报错: {e}", ex);
         }
     }
+
     /// <summary>
     /// 滚轮翻页响应
     /// </summary>
@@ -123,18 +126,62 @@ public sealed partial class PicPage : Page
         }
     }
 
-    private void MenuTapped(object sender, TappedRoutedEventArgs e)
+    private void PageTapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (sender is not Grid grid) return;
+        var position = e.GetPosition(grid);
+        var colStar = 0D;
+        var col0 = TappedGrid.ColumnDefinitions[0].Width;
+        var col2 = TappedGrid.ColumnDefinitions[2].Width;
+        var col4 = TappedGrid.ColumnDefinitions[4].Width;
+        if (col0.GridUnitType == GridUnitType.Star) colStar += col0.Value;
+        if (col2.GridUnitType == GridUnitType.Star) colStar += col2.Value;
+        if (col4.GridUnitType == GridUnitType.Star) colStar += col4.Value;
+        var avWidth = grid.ActualWidth / colStar;
+        
+        var x1 = col0.GridUnitType == GridUnitType.Star ? col0.Value * avWidth : col0.Value;
+        var x2 = x1 + (col2.GridUnitType == GridUnitType.Star ? col2.Value * avWidth : col2.Value);
+
+        var rowStar = 0D;
+        var row0 = TappedGrid.RowDefinitions[0].Height;
+        var row2 = TappedGrid.RowDefinitions[2].Height;
+        var row4 = TappedGrid.RowDefinitions[4].Height;
+        if (row0.GridUnitType == GridUnitType.Star) rowStar += row0.Value;
+        if (row2.GridUnitType == GridUnitType.Star) rowStar += row2.Value;
+        if (row4.GridUnitType == GridUnitType.Star) rowStar += row4.Value;
+        var avHeight = grid.ActualHeight / rowStar;
+
+        var y1 = row0.GridUnitType == GridUnitType.Star ? row0.Value * avHeight : row0.Value;
+        var y2 = y1 + (row2.GridUnitType == GridUnitType.Star ? row2.Value * avHeight : row2.Value);
+
+        if (position.X < x1 || position.X < x2 && position.Y < y1)
+        {
+            PrevPageTapped();
+        }
+        else if (position.X > x2 || position.X > x1 && position.Y > y2)
+        {
+            NextPageTapped();
+        }
+        else
+        {
+            MenuTapped();
+        }
+         
+    }
+
+    private void MenuTapped()
     {
         ViewModel.IsMenu = !ViewModel.IsMenu;
     }
 
-    private void NextPageTapped(object sender, TappedRoutedEventArgs e)
+    private void NextPageTapped()
     {
         if (ViewModel.TappedGridSetting) return;
         if (!ViewModel.NextPageCommand.CanExecute(null)) return;
         ViewModel.NextPageCommand.Execute(null);
     }
-    private void PrevPageTapped(object sender, TappedRoutedEventArgs e)
+
+    private void PrevPageTapped()
     {
         if (ViewModel.TappedGridSetting) return;
         if (!ViewModel.PrevPageCommand.CanExecute(null)) return;
@@ -186,5 +233,4 @@ public sealed partial class PicPage : Page
         if (layout.TryGetValue("Col4", out var col4) && layout.TryGetValue("Col4_Unit", out var col4Unit))
             TappedGrid.ColumnDefinitions[4].Width = new GridLength((double)col4, (GridUnitType)(int)col4Unit);
     }
-
 }
