@@ -14,14 +14,25 @@ namespace ShadowViewer.Plugin.Local.Enums;
 public enum LocalReaderMode
 {
     /// <summary>
+    /// 单页模式
+    /// </summary>
+    [MenuFlyoutItemIcon(Icon = Icon.BookOpen)]
+    SinglePage = 0,
+
+    /// <summary>
     /// 双页模式
     /// </summary>
     [MenuFlyoutItemIcon(Icon = Icon.BookOpen)]
-    TwoPageReadMode,
+    DoublePage,
 
     /// <summary>
-    /// 滚动模式
+    /// 竖直滚动模式
     /// </summary>
     [MenuFlyoutItemIcon(Icon = Icon.DualScreenVerticalScroll)]
-    ScrollingReadMode,
+    VerticalScrolling,
+    /// <summary>
+    /// 横向滚动模式
+    /// </summary>
+    [MenuFlyoutItemIcon(Icon = Icon.DualScreenVerticalScroll)]
+    HorizontalScrolling,
 }

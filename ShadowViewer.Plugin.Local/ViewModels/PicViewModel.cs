@@ -1,4 +1,3 @@
-using ABI.Windows.UI;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI;
@@ -9,14 +8,12 @@ using ShadowPluginLoader.Attributes;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Responders;
-using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Windows.Storage;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -65,7 +62,7 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 当前页
     /// </summary>
-    [ObservableProperty] private int currentPage = 1;
+    [ObservableProperty] private int currentPage = 0;
 
     /// <summary>
     /// 菜单可见性
@@ -126,6 +123,7 @@ public partial class PicViewModel : ObservableObject
         EpisodeCounts.Clear();
         PicViewResponder = ResponderHelper.GetEnabledResponder<IPicViewResponder>(Affiliation);
         PicViewResponder?.PicturesLoadStarting(this, arg);
+
     }
 
     /// <summary>
@@ -187,38 +185,6 @@ public partial class PicViewModel : ObservableObject
     private void PrevEpisode()
     {
         CurrentEpisodeIndex -= 1;
-    }
-
-    /// <summary>
-    /// 允许下一页
-    /// </summary>
-    public bool CanNextPage => LocalPlugin.Settings.LocalReaderMode == LocalReaderMode.TwoPageReadMode
-        ? Images.Count > CurrentPage + 2
-        : Images.Count > CurrentPage + 1;
-
-    /// <summary>
-    /// 允许上一页
-    /// </summary>
-    public bool CanPrevPage => LocalPlugin.Settings.LocalReaderMode == LocalReaderMode.TwoPageReadMode
-        ? Images.Count > CurrentPage - 2 && CurrentPage - 2 > 0
-        : Images.Count > CurrentPage - 1 && CurrentPage - 1 > 0;
-
-    /// <summary>
-    /// 下一页
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanNextPage))]
-    private void NextPage()
-    {
-        CurrentPage += LocalPlugin.Settings.LocalReaderMode == LocalReaderMode.TwoPageReadMode ? 2 : 1;
-    }
-
-    /// <summary>
-    /// 上一页
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanPrevPage))]
-    private void PrevPage()
-    {
-        CurrentPage -= LocalPlugin.Settings.LocalReaderMode == LocalReaderMode.TwoPageReadMode ? 2 : 1;
     }
 
 }

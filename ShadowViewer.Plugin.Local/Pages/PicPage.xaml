@@ -23,251 +23,233 @@
           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
           BorderThickness="1" PointerWheelChanged="MangaPointerWheelChanged"
           CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
-        <controls:MangaReader
+        <controls:LocalReader
             x:Name="MangaReader"
-            ReadMode="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay}"
+            ReadMode="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
             CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
             HorizontalAlignment="Center"
+            IgnoreViewChanged="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
             Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
-        </controls:MangaReader>
-        <controls:MangaScrollingReader
-            CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
-            IgnoreViewChanged="{x:Bind ViewModel.IsPageSliderPressed,Mode=OneWay}"
-            ReadMode="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay}"
-            x:Name="PicViewer"
-            HorizontalAlignment="Center"
-            ItemsSource="{x:Bind ViewModel.Images, Mode=OneWay}"
-            ScrollViewer.VerticalScrollBarVisibility="Hidden">
-            <controls:MangaScrollingReader.ItemTemplate>
-                <DataTemplate x:DataType="interfaces:IUiPicture">
-                    <Grid Padding="100,0" Tag="{x:Bind}">
-                        <TextBlock
-                            Padding="0,100"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            FontSize="45"
-                            Text="{x:Bind Index}" />
-                        <Image Source="{x:Bind Source, Mode=OneWay}" />
-                    </Grid>
-                </DataTemplate>
-            </controls:MangaScrollingReader.ItemTemplate>
-        </controls:MangaScrollingReader>
-        <Grid Loaded="InitTappedGridLayout" x:Name="TappedGrid"
-              Visibility="{x:Bind ViewModel.TappedGridSetting,Mode=OneWay}">
-            <Grid.Resources>
-                <x:Double x:Key="TextFontSize">24</x:Double>
-                <SolidColorBrush x:Key="TextForeground">White</SolidColorBrush>
-            </Grid.Resources>
-            <!-- 5 行布局：上、中间分隔条、中、下分隔条、下 -->
-            <Grid.RowDefinitions>
-                <RowDefinition Height="2*" />
+        </controls:LocalReader>
+
+        <Grid Background="#AA141414" Visibility="{x:Bind ViewModel.IsMenu,Mode=OneWay}">
+            <Grid Loaded="InitTappedGridLayout" x:Name="TappedGrid"
+
+                  Visibility="{x:Bind ViewModel.TappedGridSetting,Mode=OneWay}">
+                <Grid.Resources>
+                    <x:Double x:Key="TextFontSize">24</x:Double>
+                    <SolidColorBrush x:Key="TextForeground">White</SolidColorBrush>
+                </Grid.Resources>
+                <!-- 5 行布局：上、中间分隔条、中、下分隔条、下 -->
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*" />
+                    <!-- 上 -->
+                    <RowDefinition Height="Auto" />
+                    <!-- 上下分隔条 -->
+                    <RowDefinition Height="4*" />
+                    <!-- 中 -->
+                    <RowDefinition Height="Auto" />
+                    <!-- 上下分隔条 -->
+                    <RowDefinition Height="2*" />
+                    <!-- 下 -->
+                </Grid.RowDefinitions>
+
+                <!-- 5 列布局：左、分隔条、中、分隔条、右 -->
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <!-- 左 -->
+                    <ColumnDefinition Width="Auto" />
+                    <!-- 左右分隔条 -->
+                    <ColumnDefinition Width="3*" />
+                    <!-- 中 -->
+                    <ColumnDefinition Width="Auto" />
+                    <!-- 左右分隔条 -->
+                    <ColumnDefinition Width="2*" />
+                    <!-- 右 -->
+                </Grid.ColumnDefinitions>
+
                 <!-- 上 -->
-                <RowDefinition Height="Auto" />
-                <!-- 上下分隔条 -->
-                <RowDefinition Height="4*" />
-                <!-- 中 -->
-                <RowDefinition Height="Auto" />
-                <!-- 上下分隔条 -->
-                <RowDefinition Height="2*" />
-                <!-- 下 -->
-            </Grid.RowDefinitions>
-
-            <!-- 5 列布局：左、分隔条、中、分隔条、右 -->
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
+                <Grid Grid.Row="0" Grid.Column="2">
+                    <Rectangle Fill="Transparent" />
+                    <TextBlock Text="{i18N:Locale Key=PrevPage}" HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="{StaticResource TextFontSize}"
+                               Foreground="{StaticResource TextForeground}" FontWeight="Bold"
+                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                </Grid>
                 <!-- 左 -->
-                <ColumnDefinition Width="Auto" />
-                <!-- 左右分隔条 -->
-                <ColumnDefinition Width="3*" />
-                <!-- 中 -->
-                <ColumnDefinition Width="Auto" />
-                <!-- 左右分隔条 -->
-                <ColumnDefinition Width="2*" />
+                <Grid Grid.Row="2" Grid.Column="0">
+                    <Rectangle Fill="Transparent" />
+                    <TextBlock Text="{i18N:Locale Key=PrevPage}" HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="{StaticResource TextFontSize}"
+                               Foreground="{StaticResource TextForeground}" FontWeight="Bold"
+                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                </Grid>
+                <!-- 下 -->
+                <Grid Grid.Row="4" Grid.Column="2">
+                    <Rectangle Fill="Transparent" />
+                    <TextBlock Text="{i18N:Locale Key=NextPage}" HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="{StaticResource TextFontSize}"
+                               Foreground="{StaticResource TextForeground}"
+                               FontWeight="Bold"
+                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                </Grid>
                 <!-- 右 -->
-            </Grid.ColumnDefinitions>
+                <Grid Grid.Row="2" Grid.Column="4">
+                    <Rectangle Fill="Transparent" />
+                    <TextBlock Text="{i18N:Locale Key=NextPage}" HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="{StaticResource TextFontSize}"
+                               Foreground="{StaticResource TextForeground}" FontWeight="Bold"
+                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                </Grid>
 
-            <!-- 上 -->
-            <Grid Grid.Row="0" Grid.Column="2">
-                <Rectangle Fill="Transparent" />
-                <TextBlock Text="{i18N:Locale Key=PrevPage}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="{StaticResource TextFontSize}"
-                           Foreground="{StaticResource TextForeground}" FontWeight="Bold"
-                           Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                <!-- 中 -->
+                <Grid Grid.Row="2" Grid.Column="2">
+                    <Rectangle Fill="Transparent" />
+                    <TextBlock Text="{i18N:Locale Key=Menu}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontSize="{StaticResource TextFontSize}"
+                               Foreground="{StaticResource TextForeground}" FontWeight="Bold"
+                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                </Grid>
+
+                <!-- 上下分隔条（上） -->
+                <controls2:GridSplitter Grid.Row="1" Grid.ColumnSpan="5" Grid.Column="0"
+                                        Height="5" HorizontalAlignment="Stretch"
+                                        Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
+                                        Background="Gray" />
+
+                <!-- 上下分隔条（下） -->
+                <controls2:GridSplitter Grid.Row="3" Grid.ColumnSpan="5" Grid.Column="0"
+                                        Height="5" HorizontalAlignment="Stretch"
+                                        Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
+                                        Background="Gray" />
+
+                <!-- 左右分隔条（左） -->
+                <controls2:GridSplitter Grid.Column="1" Grid.Row="0" Grid.RowSpan="5"
+                                        Width="5" VerticalAlignment="Stretch"
+                                        Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
+                                        Background="Gray" />
+
+                <!-- 左右分隔条（右） -->
+                <controls2:GridSplitter Grid.Column="3" Grid.Row="0" Grid.RowSpan="5"
+                                        Width="5" VerticalAlignment="Stretch"
+                                        Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
+                                        Background="Gray" />
+
             </Grid>
-            <!-- 左 -->
-            <Grid Grid.Row="2" Grid.Column="0">
-                <Rectangle Fill="Transparent" />
-                <TextBlock Text="{i18N:Locale Key=PrevPage}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="{StaticResource TextFontSize}"
-                           Foreground="{StaticResource TextForeground}" FontWeight="Bold"
-                           Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+            <Grid Background="{ThemeResource AcrylicBackgroundFillColorBaseBrush}"
+                  Opacity="{x:Bind ViewModel.MenuOpacity,Mode=OneWay}" Margin="0,0,0, 10"
+                  CornerRadius="5" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                <Border
+                    x:Name="Menu"
+                    Padding="20,5"
+                    HorizontalAlignment="Center">
+                    <StackPanel>
+                        <Grid Height="48" ColumnSpacing="10"
+                              Visibility="{x:Bind ReaderSettingButton.IsChecked, Mode=OneWay}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="30"></ColumnDefinition>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="30"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Button Style="{StaticResource PointerOverButtonStyle}"
+                                    Grid.Column="0">
+                                <Grid ColumnSpacing="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+                                    <winUi:FluentIcon Grid.Column="0"
+                                                      Icon="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}"
+                                                      IconVariant="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
+                                    </winUi:FluentIcon>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
+                                    </TextBlock>
+                                </Grid>
+                                <Button.Flyout>
+                                    <controls1:EnumMenuFlyout
+                                        SelectedValue="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
+                                        TextConverter="{StaticResource LocalReaderModeConverter}"
+                                        EnumSource="enums:LocalReaderMode"
+                                        Placement="Top">
+                                    </controls1:EnumMenuFlyout>
+                                </Button.Flyout>
+                            </Button>
+
+                            <ToggleButton Checked="TappedGridSet"
+                                          IsChecked="{x:Bind ViewModel.TappedGridSetting,Mode=TwoWay}"
+                                          Style="{StaticResource PointerOverToggleButtonStyle}"
+                                          Grid.Column="2">
+                                <StackPanel Spacing="4" Orientation="Horizontal">
+                                    <winUi:FluentIcon Icon="SelectObjectSkew" />
+                                    <TextBlock Text="{i18N:Locale Key=ReaderTappedGridSetting}"></TextBlock>
+                                </StackPanel>
+                            </ToggleButton>
+                        </Grid>
+                        <NavigationViewItemSeparator Visibility="{x:Bind ReaderSettingButton.IsChecked,Mode=OneWay}" />
+
+                        <Grid Height="48" ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="30"></ColumnDefinition>
+                                <ColumnDefinition Width="300"></ColumnDefinition>
+                                <ColumnDefinition Width="30"></ColumnDefinition>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="48"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Button Style="{StaticResource PointerOverButtonStyle}"
+                                    Command="{x:Bind ViewModel.PrevEpisodeCommand}"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=PrevEpisode}"
+                                    Grid.Column="0">
+                                <winUi:FluentIcon Icon="ChevronDoubleLeft"></winUi:FluentIcon>
+                            </Button>
+                            <!-- <ComboBox Grid.Column="0" -->
+                            <!--           VerticalAlignment="Center" -->
+                            <!--           DisplayMemberPath="Title" -->
+                            <!--           ItemsSource="{x:Bind ViewModel.Episodes}" -->
+                            <!--           SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" /> -->
+
+                            <TextBlock TextAlignment="Right"
+                                       Grid.Column="1"
+                                       VerticalAlignment="Center" Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
+                            <controls:ReaderSlider
+                                Grid.Column="2"
+                                x:Name="PageSlider"
+                                VerticalAlignment="Center"
+                                Maximum="{x:Bind ViewModel.Images.Count, Mode=OneWay}"
+                                Minimum="1" 
+                                SmallChange="1"
+                                StepFrequency="1"
+                                Value="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}" />
+                            <TextBlock
+                                Grid.Column="3" VerticalAlignment="Center"
+                                Text="{x:Bind ViewModel.Images.Count, Mode=OneWay}" />
+
+                            <Button Style="{StaticResource PointerOverButtonStyle}"
+                                    Command="{x:Bind ViewModel.NextEpisodeCommand}"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=NextEpisode}"
+                                    Grid.Column="4">
+                                <winUi:FluentIcon Icon="ChevronDoubleRight"></winUi:FluentIcon>
+                            </Button>
+                            <ToggleButton x:Name="ReaderSettingButton"
+                                          Style="{StaticResource PointerOverToggleButtonStyle}" Grid.Column="5">
+
+                                <winUi:FluentIcon Icon="Settings"></winUi:FluentIcon>
+                            </ToggleButton>
+                        </Grid>
+
+                    </StackPanel>
+
+                </Border>
             </Grid>
-             <!-- 下 -->
-            <Grid Grid.Row="4" Grid.Column="2">
-                <Rectangle Fill="Transparent" />
-                <TextBlock Text="{i18N:Locale Key=NextPage}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="{StaticResource TextFontSize}"
-                           Foreground="{StaticResource TextForeground}"
-                           FontWeight="Bold"
-                           Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
-            </Grid>
-            <!-- 右 -->
-            <Grid Grid.Row="2" Grid.Column="4">
-                <Rectangle Fill="Transparent" />
-                <TextBlock Text="{i18N:Locale Key=NextPage}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="{StaticResource TextFontSize}"
-                           Foreground="{StaticResource TextForeground}" FontWeight="Bold"
-                           Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
-            </Grid>
 
-            <!-- 中 -->
-            <Grid Grid.Row="2" Grid.Column="2">
-                <Rectangle Fill="Transparent" />
-                <TextBlock Text="{i18N:Locale Key=Menu}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="{StaticResource TextFontSize}"
-                           Foreground="{StaticResource TextForeground}" FontWeight="Bold"
-                           Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
-            </Grid>
 
-            <!-- 上下分隔条（上） -->
-            <controls2:GridSplitter Grid.Row="1" Grid.ColumnSpan="5" Grid.Column="0"
-                                    Height="5" HorizontalAlignment="Stretch"
-                                    Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
-                                    Background="Gray" />
-
-            <!-- 上下分隔条（下） -->
-            <controls2:GridSplitter Grid.Row="3" Grid.ColumnSpan="5" Grid.Column="0"
-                                    Height="5" HorizontalAlignment="Stretch"
-                                    Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
-                                    Background="Gray" />
-
-            <!-- 左右分隔条（左） -->
-            <controls2:GridSplitter Grid.Column="1" Grid.Row="0" Grid.RowSpan="5"
-                                    Width="5" VerticalAlignment="Stretch"
-                                    Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
-                                    Background="Gray" />
-
-            <!-- 左右分隔条（右） -->
-            <controls2:GridSplitter Grid.Column="3" Grid.Row="0" Grid.RowSpan="5"
-                                    Width="5" VerticalAlignment="Stretch"
-                                    Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
-                                    Background="Gray" />
-
-        </Grid>
-        <Grid Grid.Column="0" x:Name="BottomMenu"
-              Opacity="{x:Bind ViewModel.MenuOpacity,Mode=OneWay}"
-              Margin="0,0,0, 10" Visibility="{x:Bind ViewModel.IsMenu,Mode=OneWay}"
-              HorizontalAlignment="Center" VerticalAlignment="Bottom">
-            <Border
-                x:Name="Menu"
-                Padding="20,5"
-                HorizontalAlignment="Center"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-
-                CornerRadius="5">
-                <StackPanel>
-                    <Grid Height="48" ColumnSpacing="10"
-                          Visibility="{x:Bind ReaderSettingButton.IsChecked, Mode=OneWay}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
-                            <ColumnDefinition Width="30"></ColumnDefinition>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
-                            <ColumnDefinition Width="30"></ColumnDefinition>
-                            <ColumnDefinition Width="*"></ColumnDefinition>
-                        </Grid.ColumnDefinitions>
-                        <Button Style="{StaticResource PointerOverButtonStyle}"
-                                Grid.Column="0">
-                            <Grid ColumnSpacing="6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
-                                <winUi:FluentIcon Grid.Column="0"
-                                                  Icon="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}"
-                                                  IconVariant="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
-                                </winUi:FluentIcon>
-                                <TextBlock Grid.Column="1"
-                                           Text="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
-                                </TextBlock>
-                            </Grid>
-                            <Button.Flyout>
-                                <controls1:EnumMenuFlyout
-                                    SelectedValue="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
-                                    TextConverter="{StaticResource LocalReaderModeConverter}"
-                                    EnumSource="enums:LocalReaderMode"
-                                    Placement="Top">
-                                </controls1:EnumMenuFlyout>
-                            </Button.Flyout>
-                        </Button>
-
-                        <ToggleButton Checked="TappedGridSet"
-                                      IsChecked="{x:Bind ViewModel.TappedGridSetting,Mode=TwoWay}"
-                                      Style="{StaticResource PointerOverToggleButtonStyle}"
-                                      Grid.Column="2">
-                            <StackPanel Spacing="4" Orientation="Horizontal">
-                                <winUi:FluentIcon Icon="SelectObjectSkew"/> 
-                                <TextBlock Text="{i18N:Locale Key=ReaderTappedGridSetting}"></TextBlock>
-                            </StackPanel>
-                        </ToggleButton>
-                    </Grid>
-                    <NavigationViewItemSeparator Visibility="{x:Bind ReaderSettingButton.IsChecked,Mode=OneWay}" />
-
-                    <Grid Height="48" ColumnSpacing="10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
-                            <ColumnDefinition Width="30"></ColumnDefinition>
-                            <ColumnDefinition Width="300"></ColumnDefinition>
-                            <ColumnDefinition Width="30"></ColumnDefinition>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
-                            <ColumnDefinition Width="48"></ColumnDefinition>
-                        </Grid.ColumnDefinitions>
-                        <Button Style="{StaticResource PointerOverButtonStyle}"
-                                Command="{x:Bind ViewModel.PrevEpisodeCommand}"
-                                ToolTipService.ToolTip="{i18N:Locale Key=PrevEpisode}"
-                                Grid.Column="0">
-                            <winUi:FluentIcon Icon="ChevronDoubleLeft"></winUi:FluentIcon>
-                        </Button>
-                        <!-- <ComboBox Grid.Column="0" -->
-                        <!--           VerticalAlignment="Center" -->
-                        <!--           DisplayMemberPath="Title" -->
-                        <!--           ItemsSource="{x:Bind ViewModel.Episodes}" -->
-                        <!--           SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" /> -->
-
-                        <TextBlock TextAlignment="Right"
-                                   Grid.Column="1"
-                                   VerticalAlignment="Center" Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
-                        <controls:ReaderSlider
-                            Grid.Column="2"
-                            x:Name="PageSlider"
-                            VerticalAlignment="Center"
-                            Maximum="{x:Bind ViewModel.Images.Count, Mode=OneWay}"
-                            Minimum="1"
-                            SliderPressed="{x:Bind ViewModel.IsPageSliderPressed, Mode=TwoWay}"
-                            SliderReleased="PageSlider_OnPointerReleased"
-                            SmallChange="1"
-                            StepFrequency="1"
-                            ValueChanged="PageSlider_ValueChanged"
-                            Value="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
-                        <TextBlock
-                            Grid.Column="3" VerticalAlignment="Center"
-                            Text="{x:Bind ViewModel.Images.Count, Mode=OneWay}" />
-
-                        <Button Style="{StaticResource PointerOverButtonStyle}"
-                                Command="{x:Bind ViewModel.NextEpisodeCommand}"
-                                ToolTipService.ToolTip="{i18N:Locale Key=NextEpisode}"
-                                Grid.Column="4">
-                            <winUi:FluentIcon Icon="ChevronDoubleRight"></winUi:FluentIcon>
-                        </Button>
-                        <ToggleButton x:Name="ReaderSettingButton"
-                                      Style="{StaticResource PointerOverToggleButtonStyle}" Grid.Column="5">
-
-                            <winUi:FluentIcon Icon="Settings"></winUi:FluentIcon>
-                        </ToggleButton>
-                    </Grid>
-
-                </StackPanel>
-
-            </Border>
         </Grid>
     </Grid>
 

@@ -41,6 +41,10 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
             viewModel.CurrentPage = readingRecord.LastPicture;
             viewModel.LastPicturePositionLoaded();
         }
+        else
+        {
+            viewModel.CurrentPage = 1;
+        }
 
         Db.Updateable<LocalReadingRecord>()
             .SetColumns(x => x.LastEpisode == episode.Source.Order)

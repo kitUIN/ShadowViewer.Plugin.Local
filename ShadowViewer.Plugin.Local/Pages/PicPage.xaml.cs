@@ -52,8 +52,7 @@ public sealed partial class PicPage : Page
         {
             await Task.Delay(TimeSpan.FromSeconds(0.3));
             ViewModel.IsPageSliderPressed = true;
-            await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1, ScrollItemPlacement.Top,
-                true);
+            // await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1, ScrollItemPlacement.Top, true);
             ViewModel.IsPageSliderPressed = false;
         };
         ViewModel.Init(arg);
@@ -67,11 +66,6 @@ public sealed partial class PicPage : Page
     {
         try
         {
-            if (!(e.NewValue - 1 >= 0) || !(e.NewValue - 1 < ViewModel.Images.Count) ||
-                !ViewModel.IsPageSliderPressed) return;
-            ViewModel.CurrentPage = (int)e.NewValue;
-            await PicViewer.SmoothScrollIntoViewWithIndexAsync((int)(e.NewValue - 1),
-                ScrollItemPlacement.Top, disableAnimation: true);
         }
         catch (Exception ex)
         {
@@ -84,17 +78,7 @@ public sealed partial class PicPage : Page
     /// </summary>
     private async void PageSlider_OnPointerReleased(object sender, PointerRoutedEventArgs e)
     {
-        try
-        {
-            if (ViewModel.CurrentPage - 1 >= 0 &&
-                ViewModel.CurrentPage - 1 < ViewModel.Images.Count)
-                await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1,
-                    ScrollItemPlacement.Top, disableAnimation: true);
-        }
-        catch (Exception ex)
-        {
-            Log.Error("监听是否松开点击进度条报错: {e}", ex);
-        }
+
     }
 
     /// <summary>
@@ -109,7 +93,7 @@ public sealed partial class PicPage : Page
         //     if (ctrlState.HasFlag(CoreVirtualKeyStates.Down))
         //         return;
         // }
-        if (LocalPlugin.Settings.LocalReaderMode != LocalReaderMode.TwoPageReadMode) return;
+        if ((int)LocalPlugin.Settings.LocalReaderMode > 1) return;
         var point = e.GetCurrentPoint(this);
         var delta = point.Properties.MouseWheelDelta;
         var scrollSteps = delta / 120;
@@ -117,12 +101,12 @@ public sealed partial class PicPage : Page
         if (scrollSteps > 0)
         {
             for (var i = 0; i < scrollSteps; i++)
-                ViewModel.CurrentPage = int.Max(1, ViewModel.CurrentPage - 2);
+                MangaReader.PrevPage();
         }
         else
         {
             for (var i = 0; i < -scrollSteps; i++)
-                ViewModel.CurrentPage = int.Min(ViewModel.Images.Count, ViewModel.CurrentPage + 2);
+                MangaReader.NextPage();
         }
     }
 
@@ -138,7 +122,7 @@ public sealed partial class PicPage : Page
         if (col2.GridUnitType == GridUnitType.Star) colStar += col2.Value;
         if (col4.GridUnitType == GridUnitType.Star) colStar += col4.Value;
         var avWidth = grid.ActualWidth / colStar;
-        
+
         var x1 = col0.GridUnitType == GridUnitType.Star ? col0.Value * avWidth : col0.Value;
         var x2 = x1 + (col2.GridUnitType == GridUnitType.Star ? col2.Value * avWidth : col2.Value);
 
@@ -166,7 +150,6 @@ public sealed partial class PicPage : Page
         {
             MenuTapped();
         }
-         
     }
 
     private void MenuTapped()
@@ -176,16 +159,14 @@ public sealed partial class PicPage : Page
 
     private void NextPageTapped()
     {
-        if (ViewModel.TappedGridSetting) return;
-        if (!ViewModel.NextPageCommand.CanExecute(null)) return;
-        ViewModel.NextPageCommand.Execute(null);
+        if (ViewModel.TappedGridSetting || ViewModel.IsMenu) return;
+        MangaReader.NextPage();
     }
 
     private void PrevPageTapped()
     {
-        if (ViewModel.TappedGridSetting) return;
-        if (!ViewModel.PrevPageCommand.CanExecute(null)) return;
-        ViewModel.PrevPageCommand.Execute(null);
+        if (ViewModel.TappedGridSetting || ViewModel.IsMenu) return;
+        MangaReader.PrevPage();
     }
 
 

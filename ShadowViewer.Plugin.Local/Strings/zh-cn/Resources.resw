@@ -372,11 +372,11 @@
   <data name="BackFolder" xml:space="preserve">
     <value>返回上级</value>
   </data>
-  <data name="TwoPageReadMode" xml:space="preserve">
+  <data name="DoublePage" xml:space="preserve">
     <value>双页阅读</value>
   </data>
-  <data name="ScrollingReadMode" xml:space="preserve">
-    <value>滚动阅读</value>
+  <data name="VerticalScrolling" xml:space="preserve">
+    <value>竖直滚动</value>
   </data>
   <data name="PrevEpisode" xml:space="preserve">
     <value>上一话</value>
@@ -407,5 +407,11 @@
   </data>
   <data name="LocalReaderSetting" xml:space="preserve">
     <value>阅读器设置</value>
+  </data>
+  <data name="SinglePage" xml:space="preserve">
+    <value>单页阅读</value>
+  </data>
+  <data name="HorizontalScrolling" xml:space="preserve">
+    <value>横向滚动</value>
   </data>
 </root>
