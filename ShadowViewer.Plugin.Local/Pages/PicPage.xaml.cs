@@ -1,24 +1,12 @@
-using CommunityToolkit.WinUI;
 using DryIoc;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using Serilog;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Args;
-using ShadowViewer.Core.Extensions;
-using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.ViewModels;
-using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Windows.Foundation;
 using Windows.Storage;
-using Windows.System;
-using Windows.UI.Core;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -48,37 +36,7 @@ public sealed partial class PicPage : Page
     {
         if (e.Parameter is not PicViewArg arg) return;
         ViewModel.Affiliation = arg.Affiliation;
-        ViewModel.LastPicturePositionLoadedEvent += async (_, _) =>
-        {
-            await Task.Delay(TimeSpan.FromSeconds(0.3));
-            ViewModel.IsPageSliderPressed = true;
-            // await PicViewer.SmoothScrollIntoViewWithIndexAsync(ViewModel.CurrentPage - 1, ScrollItemPlacement.Top, true);
-            ViewModel.IsPageSliderPressed = false;
-        };
         ViewModel.Init(arg);
-    }
-
-
-    /// <summary>
-    /// 移动进度条跳转
-    /// </summary>
-    private async void PageSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-    {
-        try
-        {
-        }
-        catch (Exception ex)
-        {
-            Log.Error("移动进度条响应报错: {e}", ex);
-        }
-    }
-
-    /// <summary>
-    /// 监听是否松开点击进度条
-    /// </summary>
-    private async void PageSlider_OnPointerReleased(object sender, PointerRoutedEventArgs e)
-    {
-
     }
 
     /// <summary>
@@ -93,7 +51,7 @@ public sealed partial class PicPage : Page
         //     if (ctrlState.HasFlag(CoreVirtualKeyStates.Down))
         //         return;
         // }
-        if ((int)LocalPlugin.Settings.LocalReaderMode > 1) return;
+        if ((int)LocalPlugin.Settings.LocalReaderMode > 1 || ViewModel.IsMenu) return;
         var point = e.GetCurrentPoint(this);
         var delta = point.Properties.MouseWheelDelta;
         var scrollSteps = delta / 120;

@@ -6,13 +6,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:interfaces="using:ShadowViewer.Plugin.Local.Models.Interfaces"
+    x:Name="Reader"
     mc:Ignorable="d">
     <UserControl.Resources>
 
         <ItemsPanelTemplate x:Key="HorizontalItemsPanelTemplate">
-            <VirtualizingStackPanel Orientation="Horizontal"  
+            <VirtualizingStackPanel Orientation="Horizontal"
                                     ScrollViewer.HorizontalScrollMode="Enabled"
-                                    ScrollViewer.VerticalScrollMode="Disabled"/>
+                                    ScrollViewer.VerticalScrollMode="Disabled" />
         </ItemsPanelTemplate>
     </UserControl.Resources>
     <Grid x:Name="RootGrid">
@@ -84,23 +85,23 @@
             <Image Grid.Column="1" Source="{x:Bind CurrentRightPage,Mode=OneWay}" Stretch="Uniform" />
         </Grid>
 
-        <ListView  
+        <ListView
             x:Name="PicViewer" SelectionMode="None"
-            Visibility="Collapsed"  
-            HorizontalAlignment="Center"  Padding="50,0"
+            Visibility="Collapsed"
+            HorizontalAlignment="Center" Padding="50,0"
             ScrollViewer.VerticalScrollBarVisibility="Hidden"
             ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-            ItemsSource="{x:Bind  Pictures, Mode=OneWay}" > 
+            ItemsSource="{x:Bind  Pictures, Mode=OneWay}">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="interfaces:IUiPicture">
-                    <Grid  Tag="{x:Bind}">
+                    <Grid Tag="{x:Bind}" >
                         <TextBlock Padding="100"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
                                    FontSize="45"
                                    Text="{x:Bind Index, Mode=OneWay}" />
-                        <Image   Source="{x:Bind Source, Mode=OneWay}" 
-                                   Stretch="Uniform"   />
+                        <Image Source="{x:Bind Source, Mode=OneWay}"
+                               Stretch="Uniform" />
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

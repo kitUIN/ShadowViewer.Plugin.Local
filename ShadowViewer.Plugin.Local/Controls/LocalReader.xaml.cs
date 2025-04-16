@@ -25,7 +25,7 @@ public sealed partial class LocalReader : UserControl
     {
         this.InitializeComponent();
         Loaded += (sender, args) =>
-        { 
+        {
             CheckScrollViewerEvent();
             ReadMode = ReadMode;
         };
@@ -46,6 +46,7 @@ public sealed partial class LocalReader : UserControl
     /// 
     /// </summary>
     public IReadingModeStrategy ReadingModeStrategy => ReadingModeStrategies[(int)ReadMode];
+
 
     /// <summary>
     /// 
@@ -266,6 +267,21 @@ public sealed partial class LocalReader : UserControl
     public void ScrollIntoCurrentPage(int toPage)
     {
         if ((int)LocalPlugin.Settings.LocalReaderMode <= 1 || !IgnoreViewChanged) return;
+        if (PicViewer.Items == null || PicViewer.Items.Count < toPage) return;
         PicViewer.ScrollIntoView(PicViewer.Items[toPage - 1], ScrollIntoViewAlignment.Default);
+    }
+
+    /// <summary>
+    /// 滑动到当前页面长度
+    /// </summary>
+    public void ScrollIntoOffset(bool next)
+    {
+        if ((int)LocalPlugin.Settings.LocalReaderMode <= 1 || hostScrollViewer == null) return;
+        var offset = next
+            ? hostScrollViewer.VerticalOffset + this.ActualHeight
+            : hostScrollViewer.VerticalOffset - this.ActualHeight;
+        if (next && offset > hostScrollViewer.ScrollableHeight) offset = hostScrollViewer.ScrollableHeight;
+        else if (!next && offset < 0) offset = 0;
+        hostScrollViewer.ScrollToVerticalOffset(offset);
     }
 }

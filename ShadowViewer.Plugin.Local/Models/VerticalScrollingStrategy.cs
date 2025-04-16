@@ -24,13 +24,13 @@ public class VerticalScrollingStrategy : IReadingModeStrategy
     /// <inheritdoc />
     public void NextPage(LocalReader reader)
     {
-        if (CanNextPage(reader)) reader.ScrollIntoCurrentPage(reader.CurrentIndex + 1);
+        reader.ScrollIntoOffset(true);
     }
 
     /// <inheritdoc />
     public void PrevPage(LocalReader reader)
     {
-        if (CanPrevPage(reader)) reader.ScrollIntoCurrentPage(reader.CurrentIndex - 1);
+        reader.ScrollIntoOffset(false);
     }
 
     /// <inheritdoc />
