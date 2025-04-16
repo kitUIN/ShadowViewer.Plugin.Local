@@ -40,7 +40,7 @@ public partial class NewUiTag : ObservableObject
     /// <summary>
     /// 名称
     /// </summary>
-    [ObservableProperty] private string name;
+    [ObservableProperty] private string name = "";
 
     /// <summary>
     /// 清理

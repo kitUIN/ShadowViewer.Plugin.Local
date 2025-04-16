@@ -14,7 +14,9 @@ namespace ShadowViewer.Plugin.Local.Pages;
 [EntryPoint(Name = nameof(PluginManage.SettingsPage))]
 public sealed partial class BookShelfSettingsPage : Page
 {
-
+    /// <summary>
+    /// ViewModel
+    /// </summary>
     public BookShelfSettingsViewModel ViewModel { get; } = DiFactory.Services.Resolve<BookShelfSettingsViewModel>();
 
     /// <summary>

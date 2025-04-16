@@ -13,6 +13,9 @@ namespace ShadowViewer.Plugin.Local.Controls;
 /// </summary>
 public class ReaderSlider: Slider
 {
+    /// <summary>
+    /// 松开点击进度条
+    /// </summary>
     public event EventHandler<PointerRoutedEventArgs>? SliderReleased;
 
     /// <summary>
