@@ -230,7 +230,7 @@ namespace ShadowViewer.Plugin.Local.Services
             {
                 if (findThumb) thumb = comicNode.Children.FirstOrDefault(child => child.IsPic);
 
-                foreach (var child in comicNode.Children.Where(child => child.IsDirectory))
+                foreach (var child in comicNode.Children.Where(child => child is { IsDirectory: true, Count: > 0 }))
                 {
                     pics.AddRange(await CreateEpisode(comicId, child, number));
                     number++;
