@@ -135,6 +135,31 @@ public sealed partial class LocalReader : UserControl
     /// <summary>
     /// 
     /// </summary>
+    public int CurrentEpisodeIndex
+    {
+        get => (int)GetValue(CurrentEpisodeIndexProperty);
+        set => SetValue(CurrentEpisodeIndexProperty, value);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public static readonly DependencyProperty CurrentEpisodeIndexProperty =
+        DependencyProperty.Register(nameof(CurrentEpisodeIndex), typeof(int), typeof(LocalReader),
+            new PropertyMetadata(-1, OnCurrentEpisodeIndexChanged));
+
+    /// <summary>
+    /// 
+    /// </summary>
+    private static void OnCurrentEpisodeIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (LocalReader)d;
+        control.ReadingModeStrategy.OnCurrentIndexChanged(control, control.CurrentIndex, control.CurrentIndex);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     public void CheckCanPage()
     {
         CanNextPage = ReadingModeStrategy.CanNextPage(this);

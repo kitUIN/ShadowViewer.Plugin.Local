@@ -23,13 +23,13 @@
           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
           BorderThickness="1" PointerWheelChanged="MangaPointerWheelChanged"
           CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
-        <controls:LocalReader
-            x:Name="MangaReader"
-            ReadMode="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
-            CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
-            HorizontalAlignment="Center"
-            IgnoreViewChanged="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
-            Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
+        <controls:LocalReader CurrentEpisodeIndex="{x:Bind ViewModel.CurrentEpisodeIndex,Mode=TwoWay}"
+                              x:Name="MangaReader"
+                              ReadMode="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
+                              CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
+                              HorizontalAlignment="Center"
+                              IgnoreViewChanged="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
+                              Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
         </controls:LocalReader>
 
         <Grid Background="#AA141414" Visibility="{x:Bind ViewModel.IsMenu,Mode=OneWay}">
@@ -143,7 +143,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"></ColumnDefinition>
                                 <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                <ColumnDefinition Width="Auto"></ColumnDefinition> 
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
                                 <ColumnDefinition Width="*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <Button Style="{StaticResource PointerOverButtonStyle}"
@@ -163,10 +163,10 @@
                                 </Grid>
                                 <Button.Flyout>
                                     <controls1:EnumMenuFlyout Closed="ReadModeClosed"
-                                        SelectedValue="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
-                                        TextConverter="{StaticResource LocalReaderModeConverter}"
-                                        EnumSource="enums:LocalReaderMode"
-                                        Placement="Top">
+                                                              SelectedValue="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
+                                                              TextConverter="{StaticResource LocalReaderModeConverter}"
+                                                              EnumSource="enums:LocalReaderMode"
+                                                              Placement="Top">
                                     </controls1:EnumMenuFlyout>
                                 </Button.Flyout>
                             </Button>
