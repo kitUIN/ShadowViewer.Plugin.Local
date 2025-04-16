@@ -34,7 +34,6 @@
 
         <Grid Background="#AA141414" Visibility="{x:Bind ViewModel.IsMenu,Mode=OneWay}">
             <Grid Loaded="InitTappedGridLayout" x:Name="TappedGrid"
-
                   Visibility="{x:Bind ViewModel.TappedGridSetting,Mode=OneWay}">
                 <Grid.Resources>
                     <x:Double x:Key="TextFontSize">24</x:Double>
@@ -74,8 +73,7 @@
                     <TextBlock Text="{i18N:Locale Key=PrevPage}" HorizontalAlignment="Center"
                                VerticalAlignment="Center"
                                FontSize="{StaticResource TextFontSize}"
-                               Foreground="{StaticResource TextForeground}" FontWeight="Bold"
-                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                               Foreground="{StaticResource TextForeground}" FontWeight="Bold" />
                 </Grid>
                 <!-- 左 -->
                 <Grid Grid.Row="2" Grid.Column="0">
@@ -83,8 +81,7 @@
                     <TextBlock Text="{i18N:Locale Key=PrevPage}" HorizontalAlignment="Center"
                                VerticalAlignment="Center"
                                FontSize="{StaticResource TextFontSize}"
-                               Foreground="{StaticResource TextForeground}" FontWeight="Bold"
-                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                               Foreground="{StaticResource TextForeground}" FontWeight="Bold" />
                 </Grid>
                 <!-- 下 -->
                 <Grid Grid.Row="4" Grid.Column="2">
@@ -93,8 +90,7 @@
                                VerticalAlignment="Center"
                                FontSize="{StaticResource TextFontSize}"
                                Foreground="{StaticResource TextForeground}"
-                               FontWeight="Bold"
-                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                               FontWeight="Bold" />
                 </Grid>
                 <!-- 右 -->
                 <Grid Grid.Row="2" Grid.Column="4">
@@ -102,8 +98,7 @@
                     <TextBlock Text="{i18N:Locale Key=NextPage}" HorizontalAlignment="Center"
                                VerticalAlignment="Center"
                                FontSize="{StaticResource TextFontSize}"
-                               Foreground="{StaticResource TextForeground}" FontWeight="Bold"
-                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                               Foreground="{StaticResource TextForeground}" FontWeight="Bold" />
                 </Grid>
 
                 <!-- 中 -->
@@ -111,32 +106,27 @@
                     <Rectangle Fill="Transparent" />
                     <TextBlock Text="{i18N:Locale Key=Menu}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                FontSize="{StaticResource TextFontSize}"
-                               Foreground="{StaticResource TextForeground}" FontWeight="Bold"
-                               Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}" />
+                               Foreground="{StaticResource TextForeground}" FontWeight="Bold" />
                 </Grid>
 
                 <!-- 上下分隔条（上） -->
                 <controls2:GridSplitter Grid.Row="1" Grid.ColumnSpan="5" Grid.Column="0"
                                         Height="5" HorizontalAlignment="Stretch"
-                                        Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
                                         Background="Gray" />
 
                 <!-- 上下分隔条（下） -->
                 <controls2:GridSplitter Grid.Row="3" Grid.ColumnSpan="5" Grid.Column="0"
                                         Height="5" HorizontalAlignment="Stretch"
-                                        Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
                                         Background="Gray" />
 
                 <!-- 左右分隔条（左） -->
                 <controls2:GridSplitter Grid.Column="1" Grid.Row="0" Grid.RowSpan="5"
                                         Width="5" VerticalAlignment="Stretch"
-                                        Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
                                         Background="Gray" />
 
                 <!-- 左右分隔条（右） -->
                 <controls2:GridSplitter Grid.Column="3" Grid.Row="0" Grid.RowSpan="5"
                                         Width="5" VerticalAlignment="Stretch"
-                                        Visibility="{x:Bind ViewModel.TappedGridVisibility,Mode=OneWay}"
                                         Background="Gray" />
 
             </Grid>
@@ -152,9 +142,8 @@
                               Visibility="{x:Bind ReaderSettingButton.IsChecked, Mode=OneWay}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                <ColumnDefinition Width="30"></ColumnDefinition>
                                 <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                <ColumnDefinition Width="30"></ColumnDefinition>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition> 
                                 <ColumnDefinition Width="*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <Button Style="{StaticResource PointerOverButtonStyle}"
@@ -173,7 +162,7 @@
                                     </TextBlock>
                                 </Grid>
                                 <Button.Flyout>
-                                    <controls1:EnumMenuFlyout
+                                    <controls1:EnumMenuFlyout Closed="ReadModeClosed"
                                         SelectedValue="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
                                         TextConverter="{StaticResource LocalReaderModeConverter}"
                                         EnumSource="enums:LocalReaderMode"
@@ -181,7 +170,15 @@
                                     </controls1:EnumMenuFlyout>
                                 </Button.Flyout>
                             </Button>
-
+                            <!-- <ToggleButton  IsEnabled="{x:Bind ViewModel.ScrollingPaddingEnabled,Mode=OneWay}" -->
+                            <!--               IsChecked="{x:Bind ViewModel.ScrollingPaddingSetting,Mode=TwoWay}" -->
+                            <!--               Style="{StaticResource PointerOverToggleButtonStyle}" -->
+                            <!--               Grid.Column="1"> -->
+                            <!--     <StackPanel Spacing="4" Orientation="Horizontal"> -->
+                            <!--         <winUi:FluentIcon Icon="SelectObjectSkew" /> -->
+                            <!--         <TextBlock Text="{i18N:Locale Key=ReaderTappedGridSetting}"></TextBlock> -->
+                            <!--     </StackPanel> -->
+                            <!-- </ToggleButton> -->
                             <ToggleButton Checked="TappedGridSet"
                                           IsChecked="{x:Bind ViewModel.TappedGridSetting,Mode=TwoWay}"
                                           Style="{StaticResource PointerOverToggleButtonStyle}"
@@ -223,7 +220,7 @@
                                 x:Name="PageSlider"
                                 VerticalAlignment="Center"
                                 Maximum="{x:Bind ViewModel.Images.Count, Mode=OneWay}"
-                                Minimum="1" 
+                                Minimum="1"
                                 SmallChange="1"
                                 StepFrequency="1"
                                 Value="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}" />

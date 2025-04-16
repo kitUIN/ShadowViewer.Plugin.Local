@@ -62,38 +62,29 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 当前页
     /// </summary>
-    [ObservableProperty] private int currentPage = 0;
+    [ObservableProperty] private int currentPage  ;
 
     /// <summary>
     /// 菜单可见性
     /// </summary>
     [ObservableProperty] private bool isMenu;
 
-    /// <summary>
-    /// 进度条是否被点击(拖动)
-    /// </summary>
-    [ObservableProperty] private bool isPageSliderPressed;
 
     /// <summary>
     /// 点击区域设定模式
     /// </summary>
-    [NotifyPropertyChangedFor(nameof(TappedGridBackground))]
-    [NotifyPropertyChangedFor(nameof(TappedGridVisibility))]
     [NotifyPropertyChangedFor(nameof(MenuOpacity))]
     [ObservableProperty]
     private bool tappedGridSetting;
 
     /// <summary>
-    /// 点击区域的背景色
+    /// 
     /// </summary>
-    public Brush TappedGridBackground => TappedGridSetting
-        ? (Brush)Application.Current.Resources["ControlSolidFillColorDefaultBrush"]
-        : new SolidColorBrush(Colors.Transparent);
-
+    [ObservableProperty] private bool scrollingPaddingSetting;
     /// <summary>
-    /// 点击区域显示
+    /// 
     /// </summary>
-    public Visibility TappedGridVisibility => TappedGridSetting ? Visibility.Visible : Visibility.Collapsed;
+    [ObservableProperty] private bool scrollingPaddingEnabled; 
 
     /// <summary>
     /// 菜单透明度
@@ -123,7 +114,6 @@ public partial class PicViewModel : ObservableObject
         EpisodeCounts.Clear();
         PicViewResponder = ResponderHelper.GetEnabledResponder<IPicViewResponder>(Affiliation);
         PicViewResponder?.PicturesLoadStarting(this, arg);
-
     }
 
     /// <summary>
@@ -186,5 +176,4 @@ public partial class PicViewModel : ObservableObject
     {
         CurrentEpisodeIndex -= 1;
     }
-
 }

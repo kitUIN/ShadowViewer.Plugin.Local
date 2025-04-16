@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DryIoc;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -7,6 +8,7 @@ using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Plugin.Local.ViewModels;
 using Windows.Storage;
+using ShadowViewer.Plugin.Local.Enums;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -130,6 +132,7 @@ public sealed partial class PicPage : Page
 
     private void TappedGridSet(object sender, RoutedEventArgs e)
     {
+        ViewModel.ScrollingPaddingEnabled = MangaReader.ReadMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
         if (ViewModel.TappedGridSetting) return;
         LocalPlugin.Settings.TappedGridLayout = new ApplicationDataCompositeValue
         {
@@ -172,4 +175,9 @@ public sealed partial class PicPage : Page
         if (layout.TryGetValue("Col4", out var col4) && layout.TryGetValue("Col4_Unit", out var col4Unit))
             TappedGrid.ColumnDefinitions[4].Width = new GridLength((double)col4, (GridUnitType)(int)col4Unit);
     }
+
+    private void ReadModeClosed(object? sender, object e)
+    {
+        ViewModel.ScrollingPaddingEnabled = MangaReader.ReadMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
+    } 
 }

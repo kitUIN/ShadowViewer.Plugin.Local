@@ -47,6 +47,22 @@ public sealed partial class LocalReader : UserControl
     /// </summary>
     public IReadingModeStrategy ReadingModeStrategy => ReadingModeStrategies[(int)ReadMode];
 
+    /// <summary>
+    /// 
+    /// </summary>
+    public Thickness ScrollPadding
+    {
+        get => (Thickness)GetValue(ScrollPaddingProperty);
+        set => SetValue(ScrollPaddingProperty, value);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public static readonly DependencyProperty ScrollPaddingProperty =
+        DependencyProperty.Register(nameof(ScrollPadding), typeof(Thickness), typeof(LocalReader),
+            new PropertyMetadata(new Thickness(0)));
+
 
     /// <summary>
     /// 
