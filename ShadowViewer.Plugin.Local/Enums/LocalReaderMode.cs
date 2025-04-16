@@ -16,7 +16,7 @@ public enum LocalReaderMode
     /// <summary>
     /// 单页模式
     /// </summary>
-    [MenuFlyoutItemIcon(Icon = Icon.BookOpen)]
+    [MenuFlyoutItemIcon(Icon = Icon.DocumentHeader)]
     SinglePage = 0,
 
     /// <summary>
@@ -30,9 +30,10 @@ public enum LocalReaderMode
     /// </summary>
     [MenuFlyoutItemIcon(Icon = Icon.DualScreenVerticalScroll)]
     VerticalScrolling,
-    /// <summary>
-    /// 横向滚动模式
-    /// </summary>
-    [MenuFlyoutItemIcon(Icon = Icon.DualScreenVerticalScroll)]
-    HorizontalScrolling,
+    
+    // /// <summary>
+    // /// 横向滚动模式
+    // /// </summary>
+    // [MenuFlyoutItemIcon(Icon = Icon.DualScreenVerticalScroll)]
+    // HorizontalScrolling,
 }
