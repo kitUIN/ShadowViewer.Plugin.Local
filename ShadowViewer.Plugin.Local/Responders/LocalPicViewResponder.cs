@@ -36,19 +36,12 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
             .Where(x => x.Id == episode.Source.ComicId)
             .Where(x => x.LastEpisode == episode.Source.Order)
             .First();
-        if (readingRecord is { LastPicture: >= 2 })
-        {
-            viewModel.CurrentPage = readingRecord.LastPicture;
-            viewModel.LastPicturePositionLoaded();
-        }
-        else
-        {
-            viewModel.CurrentPage = 1;
-        }
+        viewModel.CurrentPage = readingRecord is { LastPicture: >= 2 } ? readingRecord.LastPicture : 1;
 
         Db.Updateable<LocalReadingRecord>()
             .SetColumns(x => x.LastEpisode == episode.Source.Order)
             .SetColumns(x => x.LastPicture == viewModel.CurrentPage)
+            .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
             .Where(x => x.Id == episode.Source.ComicId)
             .ExecuteCommand();
     }
@@ -75,6 +68,7 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
         Db.Updateable<LocalReadingRecord>()
             .SetColumns(x => x.LastPicture == viewModel.CurrentPage)
             .SetColumns(x => x.Percent == percent)
+            .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
             .Where(x => x.Id == localComic.Id)
             .ExecuteCommand();
     }

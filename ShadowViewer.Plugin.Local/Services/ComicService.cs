@@ -86,15 +86,21 @@ namespace ShadowViewer.Plugin.Local.Services
             IProgress<MemoryStream>? thumbProgress = null,
             IProgress<double>? progress = null)
         {
-            var comicId = await Db.Insertable(new LocalComic()
+            var comicId = SnowFlakeSingle.instance.NextId();
+            var comic  = await Db.InsertNav(new LocalComic()
             {
                 Name = Path.GetFileNameWithoutExtension(folder),
                 Thumb = "mx-appx:///default.png",
                 Affiliation = affiliation,
                 ParentId = parentId,
-                IsFolder = false
-            }).ExecuteReturnSnowflakeIdAsync();
-            await SaveComic(folder, comicId, findThumb: true);
+                IsFolder = false,
+                ReadingRecord = new LocalReadingRecord()
+                {
+                    CreatedDateTime = DateTime.Now,
+                    UpdatedDateTime = DateTime.Now
+                },
+            }).Include(z1 => z1.ReadingRecord).ExecuteReturnEntityAsync();
+            await SaveComic(folder, comic.Id, findThumb: true);
         }
 
         /// <summary>
@@ -151,7 +157,11 @@ namespace ShadowViewer.Plugin.Local.Services
                     IsFolder = false,
                     Link = path,
                     Id = comicId,
-                    ReadingRecord = new LocalReadingRecord(),
+                    ReadingRecord = new LocalReadingRecord()
+                    {
+                        CreatedDateTime = DateTime.Now,
+                        UpdatedDateTime = DateTime.Now, 
+                    },
                 })
                 .Include(z1 => z1.ReadingRecord)
                 .ExecuteCommandAsync();
@@ -188,15 +198,7 @@ namespace ShadowViewer.Plugin.Local.Services
             }
 
             var node = await SaveComic(path, comicId);
-            var episodeCount =
-                await Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comicId).CountAsync();
-            var count = await Db.Queryable<LocalPicture>().Where(x => x.ComicId == comicId).CountAsync();
-            await Db.Updateable<LocalComic>()
-                .SetColumns(it => it.Size == node.Size)
-                .SetColumns(it => it.EpisodeCount == episodeCount)
-                .SetColumns(it => it.Count == count)
-                .Where(x => x.Id == comicId)
-                .ExecuteCommandAsync();
+            
             progress?.Report(100D);
             var stop = DateTime.Now;
             cacheZip.ComicId = comicId;
@@ -253,6 +255,15 @@ namespace ShadowViewer.Plugin.Local.Services
             }
 
             await Db.Insertable(pics).ExecuteReturnSnowflakeIdListAsync();
+            var episodeCount =
+                await Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comicId).CountAsync();
+            var count = await Db.Queryable<LocalPicture>().Where(x => x.ComicId == comicId).CountAsync();
+            await Db.Updateable<LocalComic>()
+                .SetColumns(it => it.Size == node.Size)
+                .SetColumns(it => it.EpisodeCount == episodeCount)
+                .SetColumns(it => it.Count == count)
+                .Where(x => x.Id == comicId)
+                .ExecuteCommandAsync();
             return node;
         }
 
