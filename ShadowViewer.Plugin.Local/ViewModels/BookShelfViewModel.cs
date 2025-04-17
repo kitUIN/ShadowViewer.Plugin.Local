@@ -27,6 +27,7 @@ using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -94,31 +95,37 @@ public partial class BookShelfViewModel : ObservableObject
     /// 选中项的大小
     /// </summary>
     public long SelectedItemsSize => SelectedItems.Sum(x => x.Size);
+
     /// <summary>
     /// 
     /// </summary>
     [Autowired]
     private ISqlSugarClient Db { get; }
+
     /// <summary>
     /// 
     /// </summary>
     [Autowired]
     private INotifyService NotifyService { get; }
+
     /// <summary>
     /// 
     /// </summary>
     [Autowired]
-    private ComicService ComicService { get; }
+    private ComicImportService ComicImportService { get; }
+
     /// <summary>
     /// 
     /// </summary>
     [Autowired]
     private ILogger Logger { get; }
+
     /// <summary>
     /// 
     /// </summary>
     [Autowired]
     private INavigateService NavigateService { get; }
+
     /// <summary>
     /// 
     /// </summary>
@@ -183,7 +190,7 @@ public partial class BookShelfViewModel : ObservableObject
     {
         if (SelectedItems.Count != 1) return;
         var comic = SelectedItems[0];
-        var dialog = XamlHelper.CreateOneTextBoxDialog(null, 
+        var dialog = XamlHelper.CreateOneTextBoxDialog(null,
             I18N.Rename, comic.Name,
             primaryAction: (_, _, name) =>
             {
@@ -195,6 +202,7 @@ public partial class BookShelfViewModel : ObservableObject
             });
         await DialogHelper.ShowDialog(dialog);
     }
+
     /// <summary>
     /// 菜单-查看属性
     /// </summary>
@@ -205,6 +213,7 @@ public partial class BookShelfViewModel : ObservableObject
         var comic = SelectedItems[0];
         NavigateService.Navigate(typeof(AttributesPage), comic?.Id);
     }
+
     /// <summary>   
     /// 删除二次确定框
     /// </summary>
@@ -299,6 +308,7 @@ public partial class BookShelfViewModel : ObservableObject
                     .Where(x => x.Id == comic.Id)
                     .ExecuteCommand();
             }
+
             LocalComics.Remove(comic);
         }
     }
@@ -355,9 +365,8 @@ public partial class BookShelfViewModel : ObservableObject
         var folder = await FileHelper.SelectFolderAsync("AddNewComic");
         if (folder == null) return;
         var token = CancellationToken.None;
-
-        await Task.Run(() => ComicService
-            .ImportComicFromFolderAsync(folder.Path, LocalPlugin.Meta.Id, CurrentFolder.Id), token);
+        await ComicImportService
+            .Import(folder, CurrentFolder.Id, page.DispatcherQueue, token);
         RefreshLocalComic();
     }
 
@@ -400,169 +409,15 @@ public partial class BookShelfViewModel : ObservableObject
     private async Task AddComicFromZip(Page page)
     {
         var files = await FileHelper.SelectMultipleFileAsync(
-            "AddComicsFromZip", PickerViewMode.List, ".zip", ".rar", ".7z");
+            "AddComicsFromZip", PickerViewMode.List, "*");
         if (!files.Any()) return;
         var token = CancellationToken.None;
         foreach (var file in files)
         {
-            await DecompressComicAsync(file, page, token);
+            await ComicImportService.Import(file, CurrentFolder.Id, page.DispatcherQueue, token);
         }
 
         RefreshLocalComic();
-    }
-
-
-    /// <summary>
-    /// 解压漫画文件
-    /// </summary>
-    /// <param name="file"></param>
-    /// <param name="page"></param>
-    /// <param name="token"></param>
-    /// <returns></returns>
-    private async Task DecompressComicAsync(IStorageItem file, Page page, CancellationToken token)
-    {
-        var progressRing = new ProgressRing()
-        {
-            Width = 20,
-            Height = 20,
-            Maximum = 100,
-            Value = 0,
-        };
-        var progressRingBackground = new ProgressRing()
-        {
-            Width = 20,
-            Height = 20,
-            Maximum = 100,
-            Value = 100,
-            IsIndeterminate = false,
-            Visibility = Visibility.Collapsed,
-            Opacity = 0.3,
-        };
-        var progressRingText = new TextBlock()
-        {
-            VerticalAlignment = VerticalAlignment.Center,
-            FontSize = 16,
-            Visibility = Visibility.Collapsed,
-            Text = "0.00%"
-        };
-        var zipThumb = new Image()
-        {
-            Width = 120,
-            Height = 160,
-            Visibility = Visibility.Collapsed
-        };
-        var progressStackPanel = new StackPanel()
-        {
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Spacing = 10,
-            Orientation = Orientation.Horizontal,
-            Children =
-            {
-                new Grid()
-                {
-                    Children =
-                    {
-                        progressRingBackground,
-                        progressRing
-                    }
-                },
-                progressRingText
-            }
-        };
-        var infoBar = new InfoBar()
-        {
-            Title = I18N.ImportComic + ": " + Path.GetFileNameWithoutExtension(file.Path),
-            Severity = InfoBarSeverity.Informational,
-            IsClosable = false,
-            IsIconVisible = true,
-            IsOpen = true,
-            FlowDirection = FlowDirection.LeftToRight,
-            Content = new StackPanel()
-            {
-                Orientation = Orientation.Vertical,
-                Margin = new Thickness(0, 0, 45, 18),
-                Spacing = 10,
-                Children =
-                {
-                    zipThumb,
-                    progressStackPanel,
-                }
-            }
-        };
-        NotifyService.NotifyTip(
-            this, infoBar, 0, TipPopupPosition.Right);
-        var op = new ReaderOptions();
-        var passed = false;
-        while (!passed) // 检查压缩包密码
-        {
-            passed = await Task.Run(() => ComicService.CheckPassword(file.Path, op), token);
-            if (passed) break;
-            infoBar.Severity = InfoBarSeverity.Warning;
-            infoBar.Title = I18N.NeedPassword + ": " + Path.GetFileNameWithoutExtension(file.Path);
-            var dialog = XamlHelper.CreateOneTextBoxDialog(null,
-                Core.I18n.I18N.PasswordError,
-                "", Core.I18n.I18N.ZipPasswordPlaceholder, "",
-                (_, _, text) => op.Password = text);
-            var res = await DialogHelper.ShowDialog(dialog);
-            if (res == ContentDialogResult.None) break;
-        }
-
-        if (!passed) // 如果取消输入密码
-        {
-            await infoBar.Close(0.5);
-            return;
-        }
-
-        if (infoBar.Severity == InfoBarSeverity.Warning)
-        {
-            infoBar.Severity = InfoBarSeverity.Informational;
-            infoBar.Title = I18N.ImportComic + ": " + Path.GetFileNameWithoutExtension(file.Path);
-        }
-
-        progressRing.IsIndeterminate = false;
-        progressRingBackground.Visibility = Visibility.Visible;
-        progressRingText.Visibility = Visibility.Visible;
-        await Task.Run(() => ComicService.ImportComicFromZipAsync(file.Path,
-            Core.Settings.CoreSettings.Instance.ComicsPath,
-            LocalPlugin.Meta.Id, CurrentFolder.Id,
-            new Progress<MemoryStream>(async void (thumbStream) =>
-            {
-                try
-                {
-                    await page.DispatcherQueue.EnqueueAsync(async () =>
-                    {
-                        var bitmapImage = new BitmapImage();
-                        await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
-                        zipThumb.Source = bitmapImage;
-                        zipThumb.Visibility = Visibility.Visible;
-                    });
-                }
-                catch (Exception e)
-                {
-                    Logger.Error("上报缩略图报错: {e}", e);
-                }
-            }),
-            new Progress<double>(async void (v) =>
-            {
-                try
-                {
-                    await page.DispatcherQueue.EnqueueAsync(async () =>
-                    {
-                        progressRing.Value = v;
-                        progressRingText.Text = $"{v:0.00}%";
-                        if (Math.Abs(v - 100) == 0)
-                        {
-                            infoBar.Severity = InfoBarSeverity.Success;
-                            infoBar.Title = I18N.ImportComicSuccess;
-                            await infoBar.Close();
-                        }
-                    });
-                }
-                catch (Exception e)
-                {
-                    Logger.Error("上报进度报错: {e}", e);
-                }
-            }), op), token);
     }
 
     /// <summary>

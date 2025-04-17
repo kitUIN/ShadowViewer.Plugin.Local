@@ -7,6 +7,7 @@ using ShadowViewer.Core.Plugins;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Services;
 using ShadowViewer.Plugin.Local.Cache;
+using ShadowViewer.Plugin.Local.Services.Interfaces;
 
 namespace ShadowViewer.Plugin.Local;
 
@@ -19,7 +20,11 @@ public partial class LocalPlugin : AShadowViewerPlugin
 {
     partial void ConstructorInit()
     {
-        DiFactory.Services.Register<ComicService>(Reuse.Transient);
+        DiFactory.Services.Register<IComicImporter, FolderComicImporter>(Reuse.Singleton,
+            made: Parameters.Of.Type(_ => Meta.Id));
+        DiFactory.Services.Register<IComicImporter, ZipComicImporter>(Reuse.Singleton,
+            made: Parameters.Of.Type(_ => Meta.Id));
+        DiFactory.Services.Register<ComicImportService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfSettingsViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);

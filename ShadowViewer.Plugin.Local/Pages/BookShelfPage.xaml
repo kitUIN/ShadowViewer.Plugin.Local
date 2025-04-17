@@ -297,6 +297,7 @@
                                     Text="{i18N:Locale Key=NewFolder}">
                                 </MenuFlyoutItem>
                                 <MenuFlyoutItem Command="{x:Bind ViewModel.AddComicFromFolderCommand}"
+                                                CommandParameter="{x:Bind RootPage}"
                                                 ToolTipService.ToolTip="{i18N:Locale Key=ImportFromFolder}"
                                                 Icon="{winUi:FontIcon Glyph=&#xE82E;}"
                                                 Text="{i18N:Locale Key=ImportFromFolder}">

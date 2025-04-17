@@ -88,6 +88,7 @@ public sealed partial class BookShelfPage : Page
         // path.SetSize(size);
         // MoveTeachingTip.IsOpen = false;
         // ViewModel.RefreshLocalComic();
+        
     }
 
 
