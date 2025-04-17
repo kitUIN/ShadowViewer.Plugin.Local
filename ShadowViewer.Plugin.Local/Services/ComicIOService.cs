@@ -13,15 +13,15 @@ using ShadowViewer.Plugin.Local.I18n;
 namespace ShadowViewer.Plugin.Local.Services;
 
 /// <summary>
-/// 漫画导入工厂
+/// 漫画导入导出服务
 /// </summary>
-public partial class ComicImportService
+public partial class ComicIOService
 {
     /// <summary>
     /// 导入器
     /// </summary>
     [Autowired]
-    private IEnumerable<IComicImporter> Importers { get; }
+    private IEnumerable<IComicIOer> Importers { get; }
 
     /// <summary>
     /// NotifyService
@@ -35,7 +35,7 @@ public partial class ComicImportService
     /// <param name="item"></param>
     /// <returns></returns>
     /// <exception cref="NotSupportedException"></exception>
-    public IComicImporter GetImporter(IStorageItem item)
+    public IComicIOer GetImporter(IStorageItem item)
     {
         foreach (var importer in Importers)
         {

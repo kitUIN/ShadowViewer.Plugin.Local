@@ -8,9 +8,9 @@ using Windows.Storage;
 namespace ShadowViewer.Plugin.Local.Services.Interfaces;
 
 /// <summary>
-/// 导入漫画的处理器
+/// 漫画导入导出的处理器
 /// </summary>
-public interface IComicImporter
+public interface IComicIOer
 {
     /// <summary>
     /// 类别(插件Id)

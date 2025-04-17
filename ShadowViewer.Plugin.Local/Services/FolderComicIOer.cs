@@ -20,7 +20,7 @@ namespace ShadowViewer.Plugin.Local.Services;
 /// <summary>
 /// 文件夹类型导入器
 /// </summary>
-public partial class FolderComicImporter : IComicImporter
+public partial class FolderComicIOer : IComicIOer
 {
     /// <summary>
     /// NotifyService

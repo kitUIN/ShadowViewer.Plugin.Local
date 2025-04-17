@@ -20,11 +20,11 @@ public partial class LocalPlugin : AShadowViewerPlugin
 {
     partial void ConstructorInit()
     {
-        DiFactory.Services.Register<IComicImporter, FolderComicImporter>(Reuse.Singleton,
+        DiFactory.Services.Register<IComicIOer, FolderComicIOer>(Reuse.Singleton,
             made: Parameters.Of.Type(_ => Meta.Id));
-        DiFactory.Services.Register<IComicImporter, ZipComicImporter>(Reuse.Singleton,
+        DiFactory.Services.Register<IComicIOer, ZipComicIOer>(Reuse.Singleton,
             made: Parameters.Of.Type(_ => Meta.Id));
-        DiFactory.Services.Register<ComicImportService>(Reuse.Transient);
+        DiFactory.Services.Register<ComicIOService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfSettingsViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);

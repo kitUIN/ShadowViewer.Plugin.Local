@@ -34,7 +34,7 @@ namespace ShadowViewer.Plugin.Local.Services;
 /// 压缩包导入器
 /// </summary>
 [CheckAutowired]
-public partial class ZipComicImporter : FolderComicImporter
+public partial class ZipComicIOer : FolderComicIOer
 {
 
     /// <summary>

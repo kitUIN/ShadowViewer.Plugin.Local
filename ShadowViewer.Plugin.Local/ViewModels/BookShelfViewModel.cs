@@ -112,7 +112,7 @@ public partial class BookShelfViewModel : ObservableObject
     /// 
     /// </summary>
     [Autowired]
-    private ComicImportService ComicImportService { get; }
+    private ComicIOService ComicIoService { get; }
 
     /// <summary>
     /// 
@@ -365,7 +365,7 @@ public partial class BookShelfViewModel : ObservableObject
         var folder = await FileHelper.SelectFolderAsync("AddNewComic");
         if (folder == null) return;
         var token = CancellationToken.None;
-        await ComicImportService
+        await ComicIoService
             .Import(folder, CurrentFolder.Id, page.DispatcherQueue, token);
         RefreshLocalComic();
     }
@@ -414,7 +414,7 @@ public partial class BookShelfViewModel : ObservableObject
         var token = CancellationToken.None;
         foreach (var file in files)
         {
-            await ComicImportService.Import(file, CurrentFolder.Id, page.DispatcherQueue, token);
+            await ComicIoService.Import(file, CurrentFolder.Id, page.DispatcherQueue, token);
         }
 
         RefreshLocalComic();
