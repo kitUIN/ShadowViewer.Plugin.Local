@@ -10,11 +10,9 @@ using ShadowViewer.Core.Cache;
 using ShadowViewer.Core.Enums;
 using ShadowViewer.Core.Extensions;
 using ShadowViewer.Core.Helpers;
-using ShadowViewer.Core.Services;
 using ShadowViewer.Plugin.Local.Cache;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Plugin.Local.Services.Interfaces;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.IO;
@@ -26,6 +24,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
+using SharpCompress.Archives.Zip;
 using CoreSettings = ShadowViewer.Core.Settings.CoreSettings;
 
 namespace ShadowViewer.Plugin.Local.Services;
@@ -36,16 +35,38 @@ namespace ShadowViewer.Plugin.Local.Services;
 [CheckAutowired]
 public partial class ZipComicIOer : FolderComicIOer
 {
-
     /// <summary>
     /// 支持的类型
     /// </summary>
-    protected string[] SupportTypes = [".zip", ".rar", ".tar", ".cbr", ".cbz"];
+    protected string[] SupportImportTypes = [".zip", ".rar", ".tar", ".cbr", ".cbz", ".shad"];
+
+    /// <inheritdoc />
+    public override string[] SupportExportTypes => [".zip", ".shad"];
 
     /// <inheritdoc />
     public override bool Check(IStorageItem item)
     {
-        return item is StorageFile file && SupportTypes.Contains(file.FileType);
+        return item is StorageFile file && SupportImportTypes.Contains(file.FileType);
+    }
+
+    /// <inheritdoc />
+    public override async Task ExportComic(string outputPath, LocalComic comic,
+        string exportType, DispatcherQueue dispatcher, CancellationToken token)
+    {
+        if (exportType == ".zip")
+        {
+            using var archive = ZipArchive.Create();
+            foreach (var ep in await Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comic.Id).ToArrayAsync())
+            {
+                foreach (var pic in await Db.Queryable<LocalPicture>()
+                             .Where(x => x.ComicId == comic.Id && x.EpisodeId == ep.Id).ToArrayAsync())
+                {
+                    archive.AddEntry($"{ep.Name}/{pic.Name}", pic.Img);
+                }
+            }
+
+            archive.SaveTo(outputPath, CompressionType.Deflate);
+        }
     }
 
 

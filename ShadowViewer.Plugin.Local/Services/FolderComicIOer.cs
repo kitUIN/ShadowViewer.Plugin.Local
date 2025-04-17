@@ -155,4 +155,15 @@ public partial class FolderComicIOer : IComicIOer
         await SaveComic(folder.Path, comic.Id, findThumb: true);
         NotifyService.NotifyTip(this, I18N.ImportComicSuccess, InfoBarSeverity.Success);
     }
+
+    /// <inheritdoc />
+    public virtual Task ExportComic(string outputPath, LocalComic comic, string exportType,
+        DispatcherQueue dispatcher,
+        CancellationToken token)
+    {
+        throw new MethodAccessException("不支持导出为文件夹");
+    }
+
+    /// <inheritdoc />
+    public virtual string[] SupportExportTypes => [];
 }
