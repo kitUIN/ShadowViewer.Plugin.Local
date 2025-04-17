@@ -33,42 +33,20 @@ namespace ShadowViewer.Plugin.Local.Services;
 /// 压缩包导入器
 /// </summary>
 [CheckAutowired]
-public partial class ZipComicIOer : FolderComicIOer
+public partial class ZipComicImporter : FolderComicImporter
 {
     /// <summary>
     /// 支持的类型
     /// </summary>
     protected string[] SupportImportTypes = [".zip", ".rar", ".tar", ".cbr", ".cbz", ".shad"];
 
-    /// <inheritdoc />
-    public override string[] SupportExportTypes => [".zip", ".shad"];
 
     /// <inheritdoc />
     public override bool Check(IStorageItem item)
     {
         return item is StorageFile file && SupportImportTypes.Contains(file.FileType);
     }
-
-    /// <inheritdoc />
-    public override async Task ExportComic(string outputPath, LocalComic comic,
-        string exportType, DispatcherQueue dispatcher, CancellationToken token)
-    {
-        if (exportType == ".zip")
-        {
-            using var archive = ZipArchive.Create();
-            foreach (var ep in await Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comic.Id).ToArrayAsync())
-            {
-                foreach (var pic in await Db.Queryable<LocalPicture>()
-                             .Where(x => x.ComicId == comic.Id && x.EpisodeId == ep.Id).ToArrayAsync())
-                {
-                    archive.AddEntry($"{ep.Name}/{pic.Name}", pic.Img);
-                }
-            }
-
-            archive.SaveTo(outputPath, CompressionType.Deflate);
-        }
-    }
-
+    
 
     /// <inheritdoc />
     public override async Task ImportComic(IStorageItem item, long parentId, DispatcherQueue dispatcher,

@@ -411,6 +411,13 @@
                                     Text="{i18N:Locale Key=Delete}"
                                     ToolTipService.ToolTip="{i18N:Locale Key=Delete}">
                                 </MenuFlyoutItem>
+                                <MenuFlyoutItem
+                                    Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
+                                    Command="{x:Bind ViewModel.ExportCommand}"
+                                    Icon="Export"
+                                    Text="{i18N:Locale Key=Export}"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=Export}">
+                                </MenuFlyoutItem>
                             </MenuFlyout>
                             <!--#endregion-->
                         </controls1:BookShelfGridView.ContextFlyout>

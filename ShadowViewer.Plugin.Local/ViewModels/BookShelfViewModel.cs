@@ -112,7 +112,7 @@ public partial class BookShelfViewModel : ObservableObject
     /// 
     /// </summary>
     [Autowired]
-    private ComicIOService ComicIoService { get; }
+    private ComicIoService ComicIoService { get; }
 
     /// <summary>
     /// 
@@ -280,6 +280,25 @@ public partial class BookShelfViewModel : ObservableObject
             else
                 await DeleteMessageDialog();
         }
+    }
+
+    /// <summary>
+    /// 导出
+    /// </summary>=
+    [RelayCommand]
+    private async Task ExportCommand(Page page)
+    {
+        foreach (var item in SelectedItems.ToList())
+        {
+            var file = await FileHelper.SaveFileAsync("SaveFile", item.Name, 
+                new Dictionary<string, IList<string>>
+            {
+                ["Local"] = new List<string> { ".zip" }
+            });
+            if (file == null) continue;
+            var token = CancellationToken.None;
+            // await ComicIoService.Export(file, CurrentFolder.Id, page.DispatcherQueue, token);
+        } 
     }
 
     /// <summary>

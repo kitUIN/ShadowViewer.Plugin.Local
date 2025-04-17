@@ -20,7 +20,7 @@ namespace ShadowViewer.Plugin.Local.Services;
 /// <summary>
 /// 文件夹类型导入器
 /// </summary>
-public partial class FolderComicIOer : IComicIOer
+public partial class FolderComicImporter : IComicImporter
 {
     /// <summary>
     /// NotifyService
@@ -33,6 +33,9 @@ public partial class FolderComicIOer : IComicIOer
     /// </summary>
     [Autowired]
     public string PluginId { get; }
+
+    /// <inheritdoc />
+    public virtual int Priority => 0;
 
     /// <summary>
     /// Logger
@@ -155,15 +158,4 @@ public partial class FolderComicIOer : IComicIOer
         await SaveComic(folder.Path, comic.Id, findThumb: true);
         NotifyService.NotifyTip(this, I18N.ImportComicSuccess, InfoBarSeverity.Success);
     }
-
-    /// <inheritdoc />
-    public virtual Task ExportComic(string outputPath, LocalComic comic, string exportType,
-        DispatcherQueue dispatcher,
-        CancellationToken token)
-    {
-        throw new MethodAccessException("不支持导出为文件夹");
-    }
-
-    /// <inheritdoc />
-    public virtual string[] SupportExportTypes => [];
 }

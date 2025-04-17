@@ -20,18 +20,18 @@ public partial class LocalPlugin : AShadowViewerPlugin
 {
     partial void ConstructorInit()
     {
-        DiFactory.Services.Register<IComicIOer, FolderComicIOer>(Reuse.Singleton,
+        DiFactory.Services.Register<IComicImporter, FolderComicImporter>(Reuse.Singleton,
             made: Parameters.Of.Type(_ => Meta.Id));
-        DiFactory.Services.Register<IComicIOer, ZipComicIOer>(Reuse.Singleton,
+        DiFactory.Services.Register<IComicImporter, ZipComicImporter>(Reuse.Singleton,
             made: Parameters.Of.Type(_ => Meta.Id));
-        DiFactory.Services.Register<ComicIOService>(Reuse.Transient);
+        DiFactory.Services.Register<ComicIoService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfSettingsViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
         Db.CodeFirst.InitTables<LocalEpisode>();
         Db.CodeFirst.InitTables<LocalPicture>();
-        Db.CodeFirst.InitTables<CacheImg>();
+        Db.CodeFirst.InitTables<CacheImg>(); 
         Db.CodeFirst
             .InitTables<LocalAuthor, LocalComic, LocalReadingRecord, LocalComicAuthorMapping, LocalComicTagMapping>();
         Db.CodeFirst.InitTables<LocalHistory>();

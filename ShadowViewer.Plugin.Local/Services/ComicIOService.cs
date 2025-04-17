@@ -8,20 +8,26 @@ using Windows.Storage;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
 using ShadowViewer.Core.Services;
-using ShadowViewer.Plugin.Local.I18n;
+using ShadowViewer.Plugin.Local.Models;
 
 namespace ShadowViewer.Plugin.Local.Services;
 
 /// <summary>
 /// 漫画导入导出服务
 /// </summary>
-public partial class ComicIOService
+public partial class ComicIoService
 {
     /// <summary>
     /// 导入器
     /// </summary>
     [Autowired]
-    private IEnumerable<IComicIOer> Importers { get; }
+    private IEnumerable<IComicImporter> Importers { get; }
+
+    /// <summary>
+    /// 导出器
+    /// </summary>
+    [Autowired]
+    private IEnumerable<IComicExporter> Exporters { get; }
 
     /// <summary>
     /// NotifyService
@@ -35,11 +41,11 @@ public partial class ComicIOService
     /// <param name="item"></param>
     /// <returns></returns>
     /// <exception cref="NotSupportedException"></exception>
-    public IComicIOer GetImporter(IStorageItem item)
+    public IComicImporter GetImporter(IStorageItem item)
     {
         foreach (var importer in Importers)
         {
-            if (importer.Check(item))  return importer;
+            if (importer.Check(item)) return importer;
         }
 
         throw new NotSupportedException($"No importer found for file: {item.Name}");
@@ -57,7 +63,44 @@ public partial class ComicIOService
     {
         try
         {
-            await GetImporter(item).ImportComic(item, parentId, dispatcher, token); 
+            await GetImporter(item).ImportComic(item, parentId, dispatcher, token);
+        }
+        catch (Exception ex)
+        {
+            NotifyService.NotifyTip(this, $"{ex}", InfoBarSeverity.Error);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
+    public IComicExporter GetExporter(IStorageItem item)
+    {
+        foreach (var exporter in Exporters)
+        {
+            if (exporter.Check(item)) return exporter;
+        }
+
+        throw new NotSupportedException($"No exporter found for file: {item.Name}");
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="comic"></param>
+    /// <param name="exportType"></param>
+    /// <param name="dispatcher"></param>
+    /// <param name="token"></param>
+    public async Task Import(IStorageItem item, LocalComic comic, string exportType,
+        DispatcherQueue dispatcher, CancellationToken token)
+    {
+        try
+        {
+            await GetExporter(item).ExportComic((StorageFile)item, comic, exportType, dispatcher, token);
         }
         catch (Exception ex)
         {

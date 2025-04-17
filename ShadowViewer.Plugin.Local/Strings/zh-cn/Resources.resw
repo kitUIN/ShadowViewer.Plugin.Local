@@ -420,4 +420,7 @@
   <data name="ZipPasswordPlaceholder" xml:space="preserve">
     <value>请输入压缩包密码</value>
   </data>
+  <data name="Export" xml:space="preserve">
+    <value>导出</value>
+  </data>
 </root>
