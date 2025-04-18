@@ -412,7 +412,7 @@
                                     ToolTipService.ToolTip="{i18N:Locale Key=Delete}">
                                 </MenuFlyoutItem>
                                 <MenuFlyoutItem
-                                    Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
+                                    Visibility="{x:Bind ContentGridView.IsSingle,Mode=OneWay}"
                                     Command="{x:Bind ViewModel.ExportCommand}"
                                     CommandParameter="{x:Bind RootPage}"
                                     Icon="{icons:FluentIcon Icon=ArrowExport}"
@@ -495,10 +495,7 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Bottom">
                 <StackPanel Orientation="Horizontal">
-                    <HyperlinkButton Height="28">
-                        <FontIcon FontSize="14" Glyph="&#xE897;" />
-                    </HyperlinkButton>
-                    <HyperlinkButton Height="28">
+                    <HyperlinkButton Height="28" Command="{x:Bind ViewModel.NavigateSettingCommand}">
                         <FontIcon FontSize="14" Glyph="&#xE713;" />
                     </HyperlinkButton>
                 </StackPanel>

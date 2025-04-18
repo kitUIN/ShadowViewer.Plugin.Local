@@ -289,7 +289,7 @@
     <value>当前文件夹</value>
   </data>
   <data name="BookShelfEmpty" xml:space="preserve">
-    <value>什么都没有呢,点击右下角❓查看帮助吧</value>
+    <value>什么都没有呢,赶快导入一个漫画吧</value>
   </data>
   <data name="Object" xml:space="preserve">
     <value>对象</value>

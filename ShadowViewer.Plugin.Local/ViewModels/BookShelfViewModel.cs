@@ -281,13 +281,21 @@ public partial class BookShelfViewModel : ObservableObject
     private async Task Export(Page page)
     {
         var exportTypes = ComicIoService.GetExportSupportType();
-        foreach (var item in SelectedItems.ToList())
-        {
-            var file = await FileHelper.SaveFileAsync("SaveFile", item.Name, exportTypes);
-            if (file == null) continue;
-            var token = CancellationToken.None;
-            await ComicIoService.Export(file, item, page.DispatcherQueue, token);
-        }
+        var item = SelectedItems.FirstOrDefault();
+        if (item == null) return;
+        var file = await FileHelper.SaveFileAsync("SaveFile", item.Name, exportTypes);
+        if (file == null) return;
+        var token = CancellationToken.None;
+        await ComicIoService.Export(file, item, page.DispatcherQueue, token);
+    }
+
+    /// <summary>
+    /// 导航到书架设置
+    /// </summary>
+    [RelayCommand]
+    private void NavigateSetting()
+    {
+        NavigateService.Navigate(typeof(BookShelfSettingsPage));
     }
 
     /// <summary>
