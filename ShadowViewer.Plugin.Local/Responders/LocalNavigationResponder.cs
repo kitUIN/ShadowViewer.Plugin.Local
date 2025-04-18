@@ -45,7 +45,7 @@ public partial class LocalNavigationResponder : AbstractNavigationResponder
     {
         return item.Id switch
         {
-            "BookShelf" => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/")),
+            "BookShelf" => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/bookshelf"), SelectItemId: "BookShelf"),
             _ => null
         };
     }
@@ -58,7 +58,7 @@ public partial class LocalNavigationResponder : AbstractNavigationResponder
         if (urls.Length == 0) return null;
         return urls[0] switch
         {
-            "bookshelf" => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/bookshelf")),
+            "bookshelf" => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/bookshelf"),SelectItemId: "BookShelf"),
             "settings" => new ShadowNavigation(typeof(BookShelfSettingsPage), new Uri("shadow://local/settings")),
             "pictures" => new ShadowNavigation(typeof(PicPage), new Uri("shadow://local/pictures")),
             _ => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/bookshelf"))
