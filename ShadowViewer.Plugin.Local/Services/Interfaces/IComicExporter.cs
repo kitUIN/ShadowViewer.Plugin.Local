@@ -16,16 +16,15 @@ public interface IComicExporter : IComicIOer
     /// 导出漫画
     /// </summary>
     /// <param name="outputItem"></param>
-    /// <param name="comic">文件</param>
-    /// <param name="exportType"></param>
+    /// <param name="comic">文件</param> 
     /// <param name="dispatcher"></param>
     /// <param name="token"></param>
     /// <returns>导出结果</returns>
-    Task ExportComic(StorageFile outputItem, LocalComic comic, string exportType, DispatcherQueue dispatcher,
+    Task ExportComic(StorageFile outputItem, LocalComic comic, DispatcherQueue dispatcher,
         CancellationToken token);
 
     /// <summary>
     /// 支持的类型
     /// </summary>
-    string[] SupportTypes { get; }
+    Dictionary<string, IList<string>> SupportTypes { get; }
 }

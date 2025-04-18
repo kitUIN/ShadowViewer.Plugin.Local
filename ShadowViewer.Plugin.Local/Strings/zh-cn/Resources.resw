@@ -423,4 +423,7 @@
   <data name="Export" xml:space="preserve">
     <value>导出</value>
   </data>
+  <data name="ExportComic" xml:space="preserve">
+    <value>导出漫画</value>
+  </data>
 </root>

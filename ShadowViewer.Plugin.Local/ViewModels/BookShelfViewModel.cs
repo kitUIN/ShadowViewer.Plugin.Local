@@ -286,19 +286,16 @@ public partial class BookShelfViewModel : ObservableObject
     /// 导出
     /// </summary>=
     [RelayCommand]
-    private async Task ExportCommand(Page page)
+    private async Task Export(Page page)
     {
+        var exportTypes = ComicIoService.GetExportSupportType();
         foreach (var item in SelectedItems.ToList())
         {
-            var file = await FileHelper.SaveFileAsync("SaveFile", item.Name, 
-                new Dictionary<string, IList<string>>
-            {
-                ["Local"] = new List<string> { ".zip" }
-            });
+            var file = await FileHelper.SaveFileAsync("SaveFile", item.Name, exportTypes);
             if (file == null) continue;
             var token = CancellationToken.None;
-            // await ComicIoService.Export(file, CurrentFolder.Id, page.DispatcherQueue, token);
-        } 
+            await ComicIoService.Export(file, item, page.DispatcherQueue, token);
+        }
     }
 
     /// <summary>

@@ -2,6 +2,7 @@
 using ShadowViewer.Plugin.Local.Services.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -43,7 +44,7 @@ public partial class ComicIoService
     /// <exception cref="NotSupportedException"></exception>
     public IComicImporter GetImporter(IStorageItem item)
     {
-        foreach (var importer in Importers)
+        foreach (var importer in Importers.OrderBy(x=>x.Priority))
         {
             if (importer.Check(item)) return importer;
         }
@@ -70,6 +71,14 @@ public partial class ComicIoService
             NotifyService.NotifyTip(this, $"{ex}", InfoBarSeverity.Error);
         }
     }
+    /// <summary>
+    /// 支持的导出格式
+    /// </summary>
+    /// <returns></returns>
+    public Dictionary<string, IList<string>> GetExportSupportType()
+    {
+        return Exporters.SelectMany(exporter => exporter.SupportTypes).ToDictionary(pair => pair.Key, pair => pair.Value);
+    }
 
     /// <summary>
     /// 
@@ -79,7 +88,7 @@ public partial class ComicIoService
     /// <exception cref="NotSupportedException"></exception>
     public IComicExporter GetExporter(IStorageItem item)
     {
-        foreach (var exporter in Exporters)
+        foreach (var exporter in Exporters.OrderBy(x => x.Priority))
         {
             if (exporter.Check(item)) return exporter;
         }
@@ -91,16 +100,15 @@ public partial class ComicIoService
     /// 
     /// </summary>
     /// <param name="item"></param>
-    /// <param name="comic"></param>
-    /// <param name="exportType"></param>
+    /// <param name="comic"></param> 
     /// <param name="dispatcher"></param>
     /// <param name="token"></param>
-    public async Task Import(IStorageItem item, LocalComic comic, string exportType,
+    public async Task Export(IStorageItem item, LocalComic comic,
         DispatcherQueue dispatcher, CancellationToken token)
     {
         try
         {
-            await GetExporter(item).ExportComic((StorageFile)item, comic, exportType, dispatcher, token);
+            await GetExporter(item).ExportComic((StorageFile)item, comic, dispatcher, token);
         }
         catch (Exception ex)
         {

@@ -414,7 +414,8 @@
                                 <MenuFlyoutItem
                                     Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
                                     Command="{x:Bind ViewModel.ExportCommand}"
-                                    Icon="Export"
+                                    CommandParameter="{x:Bind RootPage}"
+                                    Icon="{icons:FluentIcon Icon=ArrowExport}"
                                     Text="{i18N:Locale Key=Export}"
                                     ToolTipService.ToolTip="{i18N:Locale Key=Export}">
                                 </MenuFlyoutItem>

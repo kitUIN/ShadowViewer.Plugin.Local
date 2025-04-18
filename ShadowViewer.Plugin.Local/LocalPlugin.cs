@@ -24,6 +24,8 @@ public partial class LocalPlugin : AShadowViewerPlugin
             made: Parameters.Of.Type(_ => Meta.Id));
         DiFactory.Services.Register<IComicImporter, ZipComicImporter>(Reuse.Singleton,
             made: Parameters.Of.Type(_ => Meta.Id));
+        DiFactory.Services.Register<IComicExporter, ZipComicExporter>(Reuse.Singleton,
+            made: Parameters.Of.Type(_ => Meta.Id));
         DiFactory.Services.Register<ComicIoService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfSettingsViewModel>(Reuse.Transient);
