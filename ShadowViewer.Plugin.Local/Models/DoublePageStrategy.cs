@@ -19,10 +19,8 @@ public class DoublePageStrategy : IReadingModeStrategy
             reader.CurrentLeftPage = reader.Pictures[index - 1].Source;
         }
 
-        if (reader.Pictures.Count >= index + 1)
-        {
-            reader.CurrentRightPage = reader.Pictures[index].Source;
-        }
+        reader.CurrentRightPage = reader.Pictures.Count >= index + 1 ? reader.Pictures[index].Source : null;
+
         reader.CheckCanPage();
     }
 
