@@ -9,7 +9,7 @@ namespace ShadowViewer.Plugin.Local.Services.Interfaces;
 /// 漫画导入的处理器
 /// </summary>
 public interface IComicImporter : IComicIOer
-{ 
+{
     /// <summary>
     /// 导入漫画
     /// </summary>
@@ -21,4 +21,8 @@ public interface IComicImporter : IComicIOer
     Task ImportComic(IStorageItem item, long parentId, DispatcherQueue dispatcher,
         CancellationToken token);
 
+    /// <summary>
+    /// 支持导入的类型
+    /// </summary>
+    string[] SupportTypes { get; }
 }

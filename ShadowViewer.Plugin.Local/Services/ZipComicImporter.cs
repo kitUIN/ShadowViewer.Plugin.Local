@@ -38,15 +38,15 @@ public partial class ZipComicImporter : FolderComicImporter
     /// <summary>
     /// 支持的类型
     /// </summary>
-    protected string[] SupportImportTypes = [".zip", ".rar", ".tar", ".cbr", ".cbz", ".shad"];
+    public override string[] SupportTypes => [".zip", ".rar", ".tar", ".cbr", ".cbz", ".shad"];
 
 
     /// <inheritdoc />
     public override bool Check(IStorageItem item)
     {
-        return item is StorageFile file && SupportImportTypes.Contains(file.FileType);
+        return item is StorageFile file && SupportTypes.ContainsIgnoreCase(file.FileType);
     }
-    
+
 
     /// <inheritdoc />
     public override async Task ImportComic(IStorageItem item, long parentId, DispatcherQueue dispatcher,

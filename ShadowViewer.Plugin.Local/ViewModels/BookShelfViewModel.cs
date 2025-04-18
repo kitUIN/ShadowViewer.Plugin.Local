@@ -1,18 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.WinUI;
 using DryIoc;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Serilog;
 using ShadowPluginLoader.Attributes;
 using ShadowPluginLoader.WinUI;
-using ShadowViewer.Controls.Extensions;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Cache;
-using ShadowViewer.Core.Enums;
 using ShadowViewer.Core.Extensions;
 using ShadowViewer.Core.Helpers;
 using ShadowViewer.Core.Services;
@@ -22,18 +18,14 @@ using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Plugin.Local.Services;
-using SharpCompress.Readers;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Storage;
 using Windows.Storage.Pickers;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
@@ -425,7 +417,7 @@ public partial class BookShelfViewModel : ObservableObject
     private async Task AddComicFromZip(Page page)
     {
         var files = await FileHelper.SelectMultipleFileAsync(
-            "AddComicsFromZip", PickerViewMode.List, "*");
+            "AddComicsFromZip", PickerViewMode.List, ComicIoService.GetImportSupportType());
         if (!files.Any()) return;
         var token = CancellationToken.None;
         foreach (var file in files)

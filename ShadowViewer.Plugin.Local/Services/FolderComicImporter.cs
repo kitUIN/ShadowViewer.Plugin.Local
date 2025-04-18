@@ -158,4 +158,7 @@ public partial class FolderComicImporter : IComicImporter
         await SaveComic(folder.Path, comic.Id, findThumb: true);
         NotifyService.NotifyTip(this, I18N.ImportComicSuccess, InfoBarSeverity.Success);
     }
+
+    /// <inheritdoc />
+    public virtual string[] SupportTypes => [];
 }

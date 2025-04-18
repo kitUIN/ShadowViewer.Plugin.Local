@@ -9,7 +9,6 @@ using ShadowViewer.Core.Enums;
 using ShadowViewer.Core.Services;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Plugin.Local.Models.Interfaces;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
@@ -21,6 +20,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
+using ShadowViewer.Core.Extensions;
 
 namespace ShadowViewer.Plugin.Local.Services;
 
@@ -32,7 +32,7 @@ public partial class ZipComicExporter : IComicExporter
     /// <inheritdoc />
     public bool Check(IStorageItem item)
     {
-        return item is StorageFile file && SupportTypes.SelectMany(x => x.Value).Contains(file.FileType);
+        return item is StorageFile file && SupportTypes.SelectMany(x => x.Value).ToArray().ContainsIgnoreCase(file.FileType);
     }
 
     /// <summary>

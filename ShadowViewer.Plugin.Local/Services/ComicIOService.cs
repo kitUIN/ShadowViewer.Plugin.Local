@@ -44,7 +44,7 @@ public partial class ComicIoService
     /// <exception cref="NotSupportedException"></exception>
     public IComicImporter GetImporter(IStorageItem item)
     {
-        foreach (var importer in Importers.OrderBy(x=>x.Priority))
+        foreach (var importer in Importers.OrderBy(x => x.Priority))
         {
             if (importer.Check(item)) return importer;
         }
@@ -71,13 +71,30 @@ public partial class ComicIoService
             NotifyService.NotifyTip(this, $"{ex}", InfoBarSeverity.Error);
         }
     }
+
+    /// <summary>
+    /// 支持的导入格式
+    /// </summary>
+    /// <returns></returns>
+    public string[] GetImportSupportType()
+    {
+        var result = new List<string>();
+        foreach (var importer in Importers)
+        {
+            result.AddRange(importer.SupportTypes);
+        }
+
+        return result.ToArray();
+    }
+
     /// <summary>
     /// 支持的导出格式
     /// </summary>
     /// <returns></returns>
     public Dictionary<string, IList<string>> GetExportSupportType()
     {
-        return Exporters.SelectMany(exporter => exporter.SupportTypes).ToDictionary(pair => pair.Key, pair => pair.Value);
+        return Exporters.SelectMany(exporter => exporter.SupportTypes)
+            .ToDictionary(pair => pair.Key, pair => pair.Value);
     }
 
     /// <summary>
