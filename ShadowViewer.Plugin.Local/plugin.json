@@ -15,7 +15,7 @@
     "Icon": "fluent://regular/ResizeImage",
     "PluginId": "Local"
   },
-  "CoreVersion": "2025.4.18.5",
+  "CoreVersion": "2025.4.19.1",
   "Id": "Local",
   "Name": "本地阅读器",
   "Version": "1.4.0",

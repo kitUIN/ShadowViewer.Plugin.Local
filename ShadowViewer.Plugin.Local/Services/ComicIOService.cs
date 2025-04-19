@@ -6,8 +6,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
+using DryIoc;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
+using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Services;
 using ShadowViewer.Plugin.Local.Models;
 
@@ -20,15 +22,13 @@ public partial class ComicIoService
 {
     /// <summary>
     /// 导入器
-    /// </summary>
-    [Autowired]
-    private IEnumerable<IComicImporter> Importers { get; }
+    /// </summary> 
+    private IEnumerable<IComicImporter> Importers => DiFactory.Services.ResolveMany<IComicImporter>();
 
     /// <summary>
     /// 导出器
-    /// </summary>
-    [Autowired]
-    private IEnumerable<IComicExporter> Exporters { get; }
+    /// </summary> 
+    private IEnumerable<IComicExporter> Exporters => DiFactory.Services.ResolveMany<IComicExporter>();
 
     /// <summary>
     /// NotifyService
