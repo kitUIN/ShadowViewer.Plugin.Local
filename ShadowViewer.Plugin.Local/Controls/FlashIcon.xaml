@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="ShadowViewer.Plugin.Local.Controls.FlashIcon"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ShadowViewer.Plugin.Local.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:winUi="using:FluentIcons.WinUI"
+    xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Storyboard x:Name="RotateStoryboard">
+            <DoubleAnimation Storyboard.TargetName="IconRotateTransform"
+                             Storyboard.TargetProperty="Angle"
+                             From="0" To="360"
+                             Duration="0:0:1"
+                             RepeatBehavior="Forever" />
+        </Storyboard> 
+    </UserControl.Resources>
+
+    <Grid  >
+        <winUi:FluentIcon x:Name="MainIcon"  Icon="Flash" IconVariant="Filled"
+                          >
+        </winUi:FluentIcon>
+        <winUi:FluentIcon Width="12" Height="12" x:Name="RotatingIcon" VerticalAlignment="Bottom" HorizontalAlignment="Right" IconSize="Resizable" FontSize="10"
+                          Icon="ArrowSync" IconVariant="Filled" >
+            <winUi:FluentIcon.RenderTransform>
+                <RotateTransform x:Name="IconRotateTransform" Angle="0" CenterX="6" CenterY="6" />
+            </winUi:FluentIcon.RenderTransform>
+        </winUi:FluentIcon>
+    </Grid>
+</UserControl>

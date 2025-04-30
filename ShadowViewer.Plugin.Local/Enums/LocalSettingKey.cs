@@ -10,6 +10,17 @@ namespace ShadowViewer.Plugin.Local.Enums;
 public enum LocalSettingKey
 {
     /// <summary>
+    /// 自动翻页
+    /// </summary>
+    [ShadowSetting(typeof(bool), "false", "自动翻页")]
+    PageAutoTurn,
+
+    /// <summary>
+    /// 自动翻页间隔秒数
+    /// </summary>
+    [ShadowSetting(typeof(double), "8", "自动翻页间隔秒数")]
+    PageAutoTurnInterval,
+    /// <summary>
     /// 允许相同文件夹导入
     /// </summary>
     [ShadowSetting(typeof(bool), "false", "允许相同文件夹导入")]

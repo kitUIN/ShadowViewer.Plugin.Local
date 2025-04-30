@@ -426,4 +426,10 @@
   <data name="ExportComic" xml:space="preserve">
     <value>导出漫画</value>
   </data>
+  <data name="AutoPage" xml:space="preserve">
+    <value>自动翻页</value>
+  </data>
+  <data name="AutoPageSpeed" xml:space="preserve">
+    <value>翻页速度(秒/每页)</value>
+  </data>
 </root>

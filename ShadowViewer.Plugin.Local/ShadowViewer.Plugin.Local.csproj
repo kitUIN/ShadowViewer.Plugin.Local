@@ -54,6 +54,7 @@
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 	<ItemGroup>
+	  <None Remove="Controls\FlashIcon.xaml" />
 	  <None Remove="Controls\LocalReader.xaml" />
 	</ItemGroup>
 	<ItemGroup>
@@ -67,6 +68,11 @@
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
 		<PackageReference Include="ShadowViewer.Core" Version="2025.4.19.1" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Controls\FlashIcon.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Controls\LocalReader.xaml">

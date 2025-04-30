@@ -83,8 +83,8 @@ public sealed partial class AttributesPage : Page
     private async void FileNameButton_Click(object sender, RoutedEventArgs e)
     {
         var dialog = XamlHelper.CreateOneTextBoxDialog(XamlRoot,
-            ResourcesHelper.GetString(ResourceKey.Set),
-            ResourcesHelper.GetString(ResourceKey.FileName),
+            I18N.Set,
+            I18N.FileName,
             "", ViewModel.CurrentComic.Name,
             (s, e, t) => { ViewModel.CurrentComic.Name = t; });
         await dialog.ShowAsync();

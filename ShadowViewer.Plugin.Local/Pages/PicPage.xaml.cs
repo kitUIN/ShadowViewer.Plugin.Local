@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using DryIoc;
 using Microsoft.UI.Xaml;
@@ -8,7 +9,9 @@ using ShadowPluginLoader.WinUI;
 using ShadowViewer.Core.Args;
 using ShadowViewer.Plugin.Local.ViewModels;
 using Windows.Storage;
+using Microsoft.UI.Dispatching;
 using ShadowViewer.Plugin.Local.Enums;
+using ShadowPluginLoader.WinUI.Helpers;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -28,8 +31,38 @@ public sealed partial class PicPage : Page
     public PicPage()
     {
         this.InitializeComponent();
+        autoPageTimer = DispatcherQueue.CreateTimer();
+        autoPageTimer.IsRepeating = true;
+        autoPageTimer.Interval = TimeSpan.FromSeconds(LocalPlugin.Settings.PageAutoTurnInterval);
+        autoPageTimer.Tick += ((_, _) =>
+        {
+            if(LocalPlugin.Settings.PageAutoTurn && !ViewModel.IsMenu) MangaReader?.NextPage();
+        });
+        SettingsHelper.SettingChanged += SettingsHelper_SettingChanged;
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    /// <exception cref="System.NotImplementedException"></exception>
+    private void SettingsHelper_SettingChanged(object? sender, ShadowPluginLoader.WinUI.Args.SettingChangedArgs e)
+    {
+        if (e is { Container: "ShadowViewer.Plugin.Local",
+                Key: nameof(LocalSettingKey.PageAutoTurnInterval) })
+        {
+            autoPageTimer.Stop();
+            autoPageTimer.Interval = TimeSpan.FromSeconds((double)e.Value);
+            autoPageTimer.Start();
+        }
     }
 
+    /// <summary>
+    /// 控制翻页的计时器
+    /// </summary>
+    private readonly DispatcherQueueTimer autoPageTimer;
+
+   
     /// <summary>
     /// 导航进入
     /// </summary>
@@ -39,6 +72,7 @@ public sealed partial class PicPage : Page
         if (e.Parameter is not PicViewArg arg) return;
         ViewModel.Affiliation = arg.Affiliation;
         ViewModel.Init(arg);
+        autoPageTimer.Start();
     }
 
     /// <summary>

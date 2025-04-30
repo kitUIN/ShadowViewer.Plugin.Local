@@ -31,7 +31,11 @@
                               IgnoreViewChanged="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
                               Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
         </controls:LocalReader>
-
+        <controls:FlashIcon HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                            Margin="0,0,0,0" 
+                            ToolTipService.ToolTip="{i18N:Locale Key=AutoPage}" 
+                            Status="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=OneWay}" 
+                            Visibility="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=OneWay}" ></controls:FlashIcon>
         <Grid Background="#AA141414" Visibility="{x:Bind ViewModel.IsMenu,Mode=OneWay}">
             <Grid Loaded="InitTappedGridLayout" x:Name="TappedGrid"
                   Visibility="{x:Bind ViewModel.TappedGridSetting,Mode=OneWay}">
@@ -39,35 +43,35 @@
                     <x:Double x:Key="TextFontSize">24</x:Double>
                     <SolidColorBrush x:Key="TextForeground">White</SolidColorBrush>
                 </Grid.Resources>
-                <!-- 5 ÐÐ²¼¾Ö£ºÉÏ¡¢ÖÐ¼ä·Ö¸ôÌõ¡¢ÖÐ¡¢ÏÂ·Ö¸ôÌõ¡¢ÏÂ -->
+                <!-- 5 è¡Œå¸ƒå±€ï¼šä¸Šã€ä¸­é—´åˆ†éš”æ¡ã€ä¸­ã€ä¸‹åˆ†éš”æ¡ã€ä¸‹ -->
                 <Grid.RowDefinitions>
                     <RowDefinition Height="2*" />
-                    <!-- ÉÏ -->
+                    <!-- ä¸Š -->
                     <RowDefinition Height="Auto" />
-                    <!-- ÉÏÏÂ·Ö¸ôÌõ -->
+                    <!-- ä¸Šä¸‹åˆ†éš”æ¡ -->
                     <RowDefinition Height="4*" />
-                    <!-- ÖÐ -->
+                    <!-- ä¸­ -->
                     <RowDefinition Height="Auto" />
-                    <!-- ÉÏÏÂ·Ö¸ôÌõ -->
+                    <!-- ä¸Šä¸‹åˆ†éš”æ¡ -->
                     <RowDefinition Height="2*" />
-                    <!-- ÏÂ -->
+                    <!-- ä¸‹ -->
                 </Grid.RowDefinitions>
 
-                <!-- 5 ÁÐ²¼¾Ö£º×ó¡¢·Ö¸ôÌõ¡¢ÖÐ¡¢·Ö¸ôÌõ¡¢ÓÒ -->
+                <!-- 5 åˆ—å¸ƒå±€ï¼šå·¦ã€åˆ†éš”æ¡ã€ä¸­ã€åˆ†éš”æ¡ã€å³ -->
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
-                    <!-- ×ó -->
+                    <!-- å·¦ -->
                     <ColumnDefinition Width="Auto" />
-                    <!-- ×óÓÒ·Ö¸ôÌõ -->
+                    <!-- å·¦å³åˆ†éš”æ¡ -->
                     <ColumnDefinition Width="3*" />
-                    <!-- ÖÐ -->
+                    <!-- ä¸­ -->
                     <ColumnDefinition Width="Auto" />
-                    <!-- ×óÓÒ·Ö¸ôÌõ -->
+                    <!-- å·¦å³åˆ†éš”æ¡ -->
                     <ColumnDefinition Width="2*" />
-                    <!-- ÓÒ -->
+                    <!-- å³ -->
                 </Grid.ColumnDefinitions>
 
-                <!-- ÉÏ -->
+                <!-- ä¸Š -->
                 <Grid Grid.Row="0" Grid.Column="2">
                     <Rectangle Fill="Transparent" />
                     <TextBlock Text="{i18N:Locale Key=PrevPage}" HorizontalAlignment="Center"
@@ -75,7 +79,7 @@
                                FontSize="{StaticResource TextFontSize}"
                                Foreground="{StaticResource TextForeground}" FontWeight="Bold" />
                 </Grid>
-                <!-- ×ó -->
+                <!-- å·¦ -->
                 <Grid Grid.Row="2" Grid.Column="0">
                     <Rectangle Fill="Transparent" />
                     <TextBlock Text="{i18N:Locale Key=PrevPage}" HorizontalAlignment="Center"
@@ -83,7 +87,7 @@
                                FontSize="{StaticResource TextFontSize}"
                                Foreground="{StaticResource TextForeground}" FontWeight="Bold" />
                 </Grid>
-                <!-- ÏÂ -->
+                <!-- ä¸‹ -->
                 <Grid Grid.Row="4" Grid.Column="2">
                     <Rectangle Fill="Transparent" />
                     <TextBlock Text="{i18N:Locale Key=NextPage}" HorizontalAlignment="Center"
@@ -92,7 +96,7 @@
                                Foreground="{StaticResource TextForeground}"
                                FontWeight="Bold" />
                 </Grid>
-                <!-- ÓÒ -->
+                <!-- å³ -->
                 <Grid Grid.Row="2" Grid.Column="4">
                     <Rectangle Fill="Transparent" />
                     <TextBlock Text="{i18N:Locale Key=NextPage}" HorizontalAlignment="Center"
@@ -101,7 +105,7 @@
                                Foreground="{StaticResource TextForeground}" FontWeight="Bold" />
                 </Grid>
 
-                <!-- ÖÐ -->
+                <!-- ä¸­ -->
                 <Grid Grid.Row="2" Grid.Column="2">
                     <Rectangle Fill="Transparent" />
                     <TextBlock Text="{i18N:Locale Key=Menu}" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -109,27 +113,28 @@
                                Foreground="{StaticResource TextForeground}" FontWeight="Bold" />
                 </Grid>
 
-                <!-- ÉÏÏÂ·Ö¸ôÌõ£¨ÉÏ£© -->
+                <!-- ä¸Šä¸‹åˆ†éš”æ¡ï¼ˆä¸Šï¼‰ -->
                 <controls2:GridSplitter Grid.Row="1" Grid.ColumnSpan="5" Grid.Column="0"
                                         Height="5" HorizontalAlignment="Stretch"
                                         Background="Gray" />
 
-                <!-- ÉÏÏÂ·Ö¸ôÌõ£¨ÏÂ£© -->
+                <!-- ä¸Šä¸‹åˆ†éš”æ¡ï¼ˆä¸‹ï¼‰ -->
                 <controls2:GridSplitter Grid.Row="3" Grid.ColumnSpan="5" Grid.Column="0"
                                         Height="5" HorizontalAlignment="Stretch"
                                         Background="Gray" />
 
-                <!-- ×óÓÒ·Ö¸ôÌõ£¨×ó£© -->
+                <!-- å·¦å³åˆ†éš”æ¡ï¼ˆå·¦ï¼‰ -->
                 <controls2:GridSplitter Grid.Column="1" Grid.Row="0" Grid.RowSpan="5"
                                         Width="5" VerticalAlignment="Stretch"
                                         Background="Gray" />
 
-                <!-- ×óÓÒ·Ö¸ôÌõ£¨ÓÒ£© -->
+                <!-- å·¦å³åˆ†éš”æ¡ï¼ˆå³ï¼‰ -->
                 <controls2:GridSplitter Grid.Column="3" Grid.Row="0" Grid.RowSpan="5"
                                         Width="5" VerticalAlignment="Stretch"
                                         Background="Gray" />
 
             </Grid>
+            
             <Grid Background="{ThemeResource AcrylicBackgroundFillColorBaseBrush}"
                   Opacity="{x:Bind ViewModel.MenuOpacity,Mode=OneWay}" Margin="0,0,0, 10"
                   CornerRadius="5" HorizontalAlignment="Center" VerticalAlignment="Bottom">
@@ -188,6 +193,30 @@
                                     <TextBlock Text="{i18N:Locale Key=ReaderTappedGridSetting}"></TextBlock>
                                 </StackPanel>
                             </ToggleButton>
+                            <Button Style="{StaticResource PointerOverButtonStyle}"
+                                    ToolTipService.ToolTip="{i18N:Locale Key=AutoPage}"
+                                    Grid.Column="3">
+                                <StackPanel Spacing="4" Orientation="Horizontal">
+                                    <controls:FlashIcon Status="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=OneWay}"></controls:FlashIcon>
+                                    <TextBlock Text="{i18N:Locale Key=AutoPage}"></TextBlock>
+                                </StackPanel>
+                                <Button.Flyout>
+                                    <Flyout>
+                                        <StackPanel Width="400" Spacing="20" Orientation="Horizontal">
+                                            <StackPanel Spacing="10" Orientation="Horizontal">
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Text="{i18N:Locale Key=AutoPageSpeed}">
+                                                </TextBlock>
+                                                <NumberBox VerticalAlignment="Center" Value="{x:Bind local:LocalPlugin.Settings.PageAutoTurnInterval,Mode=TwoWay}"
+                                                           SmallChange="1"
+                                                           LargeChange="10">
+                                                </NumberBox>
+                                            </StackPanel>
+                                            <ToggleSwitch IsOn="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=TwoWay}"></ToggleSwitch>
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
                         </Grid>
                         <NavigationViewItemSeparator Visibility="{x:Bind ReaderSettingButton.IsChecked,Mode=OneWay}" />
 
