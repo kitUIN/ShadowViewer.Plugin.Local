@@ -86,7 +86,11 @@ public sealed partial class AttributesPage : Page
             I18N.Set,
             I18N.FileName,
             "", ViewModel.CurrentComic.Name,
-            (s, e, t) => { ViewModel.CurrentComic.Name = t; });
+            (s, e, t) =>
+            {
+                ViewModel.CurrentComic.Name = t;
+
+            });
         await dialog.ShowAsync();
     }
 

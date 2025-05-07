@@ -18,6 +18,6 @@
   "CoreVersion": "2025.5.7.3",
   "Id": "Local",
   "Name": "本地阅读器",
-  "Version": "1.4.1.2",
+  "Version": "1.4.2",
   "Dependencies": []
 }

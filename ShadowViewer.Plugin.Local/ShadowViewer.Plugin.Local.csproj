@@ -11,7 +11,7 @@
 		<PackageId>ShadowViewer.Plugin.Local</PackageId>
 
 		<!--插件版本号(nuget包版本号)-->
-		<Version>1.4.1.2</Version>
+		<Version>1.4.2</Version>
 		<!--插件仓库地址(nuget包仓库地址)-->
 		<RepositoryUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</RepositoryUrl>
 		<!--插件介绍(nuget包介绍)-->
@@ -26,7 +26,7 @@
 		<PackageTags>kitUIN;wasdk;ShadowViewer;plugin;winui</PackageTags>
 		<PackageOutputPath>..\..\..\NugetPackages</PackageOutputPath>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<NoWarn>MSB3277;MVVMTK0045</NoWarn>
+		<NoWarn>MSB3277;MVVMTK0045;NU5118</NoWarn>
 		<!--插件元数据 -->
 		<PluginMeta>
 			<Id>Local</Id>
@@ -66,7 +66,7 @@
 		<!-- <ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Core.csproj"/> -->
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		PackageReference Include="ShadowViewer.Core" Version="2025.5.7.3" />
+		<PackageReference Include="ShadowViewer.Core" Version="2025.5.7.3" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Controls\FlashIcon.xaml">

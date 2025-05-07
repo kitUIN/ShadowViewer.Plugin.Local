@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing"
+  mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework
+  object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AllowOff" xml:space="preserve">
+    <value>Disallow</value>
+  </data>
+  <data name="AllowOn" xml:space="preserve">
+    <value>Allow</value>
+  </data>
+  <data name="BookShelfSettings" xml:space="preserve">
+    <value>Bookshelf Settings</value>
+  </data>
+  <data name="ShowSetting" xml:space="preserve">
+    <value>Display Settings</value>
+  </data>
+  <data name="IsBookShelfInfoBarDescription" xml:space="preserve">
+    <value>Display: Total Items, Current Selection, Size</value>
+  </data>
+  <data name="IsBookShelfInfoBar" xml:space="preserve">
+    <value>Show Bookshelf Info Bar at Bottom Left</value>
+  </data>
+  <data name="ShowOff" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="ShowOn" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="OperationSetting" xml:space="preserve">
+    <value>Operation Settings</value>
+  </data>
+  <data name="RememberDeleteWithFiles" xml:space="preserve">
+    <value>Confirm Before Deleting Comics</value>
+  </data>
+  <data name="RememberDeleteWithFilesDescription" xml:space="preserve">
+    <value>Show a Confirmation Dialog When Deleting Comics</value>
+  </data>
+  <data name="NeedOff" xml:space="preserve">
+    <value>Not Needed</value>
+  </data>
+  <data name="NeedOn" xml:space="preserve">
+    <value>Needed</value>
+  </data>
+  <data name="DeleteWithFiles" xml:space="preserve">
+    <value>Delete Cached Files Along With Comics</value>
+  </data>
+  <data name="DeleteWithFilesDescription" xml:space="preserve">
+    <value>Delete Files Generated from Extracted Archives</value>
+  </data>
+  <data name="IsImportAgainDescription" xml:space="preserve">
+    <value>Enable to Import Comics from the Same Folder Again</value>
+  </data>
+  <data name="IsImportAgain" xml:space="preserve">
+    <value>Allow Duplicate Imports</value>
+  </data>
+  <data name="AddNew" xml:space="preserve">
+    <value>Add New</value>
+  </data>
+  <data name="Group" xml:space="preserve">
+    <value>Translation Group</value>
+  </data>
+  <data name="FileName" xml:space="preserve">
+    <value>Name:</value>
+  </data>
+  <data name="Set" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="Author" xml:space="preserve">
+    <value>Author:</value>
+  </data>
+  <data name="TagName" xml:space="preserve">
+    <value>Tag Name</value>
+  </data>
+  <data name="BackgroundColor" xml:space="preserve">
+    <value>Background Color</value>
+  </data>
+  <data name="Size" xml:space="preserve">
+    <value>Size:</value>
+  </data>
+  <data name="Percent" xml:space="preserve">
+    <value>Progress:</value>
+  </data>
+  <data name="Path" xml:space="preserve">
+    <value>Path:</value>
+  </data>
+  <data name="Link" xml:space="preserve">
+    <value>Target:</value>
+  </data>
+  <data name="ForegroundColor" xml:space="preserve">
+    <value>Font Color</value>
+  </data>
+  <data name="Thumb" xml:space="preserve">
+    <value>Thumbnail:</value>
+  </data>
+  <data name="More" xml:space="preserve">
+    <value>More</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>Identifier:</value>
+  </data>
+  <data name="LastReadTime" xml:space="preserve">
+    <value>Last Viewed:</value>
+  </data>
+  <data name="CreateTime" xml:space="preserve">
+    <value>Created Time:</value>
+  </data>
+  <data name="Page" xml:space="preserve">
+    <value>Page</value>
+  </data>
+  <data name="Pages" xml:space="preserve">
+    <value>Pages:</value>
+  </data>
+  <data name="Episode" xml:space="preserve">
+    <value>Episode</value>
+  </data>
+  <data name="Revise" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Tag" xml:space="preserve">
+    <value>Tag</value>
+  </data>
+  <data name="AddTag" xml:space="preserve">
+    <value>Add Tag</value>
+  </data>
+  <data name="Affiliation" xml:space="preserve">
+    <value>Affiliation</value>
+  </data>
+  <data name="BookShelf" xml:space="preserve">
+    <value>Bookshelf</value>
+  </data>
+  <data name="DeletePlugin" xml:space="preserve">
+    <value>Delete Plugin</value>
+  </data>
+  <data name="DeletePluginMessage" xml:space="preserve">
+    <value>Are You Sure You Want to Delete? This Action Is Irreversible.</value>
+  </data>
+  <data name="Az" xml:space="preserve"> <value>Alphabetical Order A-Z</value> </data>
+  <data name="Ca" xml:space="preserve"> <value>Creation Time: Early to Late</value> </data>
+  <data name="Cz" xml:space="preserve"> <value>Creation Time: Late to Early</value> </data>
+  <data name="Pa" xml:space="preserve"> <value>Reading Progress: Low to High</value> </data>
+  <data name="Pz" xml:space="preserve"> <value>Reading Progress: High to Low</value> </data>
+  <data name="Ra" xml:space="preserve"> <value>Reading Time: Early to Late</value> </data>
+  <data name="Rz" xml:space="preserve"> <value>Reading Time: Late to Early</value> </data>
+  <data name="Za" xml:space="preserve"> <value>Alphabetical Order Z-A</value> </data>
+  <data name="Rename" xml:space="preserve"> <value>Rename</value> </data>
+  <data name="SelectionHeader" xml:space="preserve"> <value>Select</value> </data>
+  <data name="CurrentFolder" xml:space="preserve"> <value>Current Folder</value> </data>
+  <data name="BookShelfEmpty" xml:space="preserve"> <value>Nothing here yet, import a manga now!</value> </data>
+  <data name="Object" xml:space="preserve"> <value>Object</value> </data>
+  <data name="SimpleView" xml:space="preserve"> <value>Simple View</value> </data>
+  <data name="DetailView" xml:space="preserve"> <value>Detailed View</value> </data>
+  <data name="Status" xml:space="preserve"> <value>Attribute</value> </data>
+  <data name="Sort" xml:space="preserve"> <value>Sort</value> </data>
+  <data name="Filter" xml:space="preserve"> <value>Filter</value> </data>
+  <data name="ImportFromFolder" xml:space="preserve"> <value>Import from Folder</value> </data>
+  <data name="ImportFromZip" xml:space="preserve"> <value>Import from Zip File</value> </data>
+  <data name="Refresh" xml:space="preserve"> <value>Refresh</value> </data>
+  <data name="NewFolder" xml:space="preserve"> <value>New Folder</value> </data>
+  <data name="Add" xml:space="preserve"> <value>Add</value> </data>
+  <data name="Settings" xml:space="preserve"> <value>Settings</value> </data>
+  <data name="MoveTo" xml:space="preserve"> <value>Move To</value> </data>
+  <data name="IsDelete" xml:space="preserve"> <value>Are you sure you want to delete?</value> </data>
+  <data name="Remember" xml:space="preserve"> <value>Remember my choice, do not prompt again</value> </data>
+  <data name="DeleteComicFiles" xml:space="preserve"> <value>Delete Cached Manga Files</value> </data>
+  <data name="Cancel" xml:space="preserve"> <value>Cancel</value> </data>
+  <data name="Delete" xml:space="preserve"> <value>Delete</value> </data>
+  <data name="ComicFolder" xml:space="preserve"> <value>Manga Folder</value> </data>
+  <data name="ComicFolderDescription" xml:space="preserve"> <value>Folder for cached manga files</value> </data>
+  <data name="Confirm" xml:space="preserve"> <value>Confirm</value> </data>
+  <data name="ImportComic" xml:space="preserve"> <value>Import Manga</value> </data>
+  <data name="ImportComicSuccess" xml:space="preserve"> <value>Successfully imported manga</value> </data>
+  <data name="Preview" xml:space="preserve"> <value>Preview</value> </data>
+  <data name="NeedPassword" xml:space="preserve"> <value>Password Required</value> </data>
+  <data name="NewFolderName" xml:space="preserve"> <value>New Folder Name</value> </data>
+  <data name="BackFolder" xml:space="preserve"> <value>Back to Previous</value> </data>
+  <data name="DoublePage" xml:space="preserve"> <value>Two-Page Reading</value> </data>
+  <data name="VerticalScrolling" xml:space="preserve"> <value>Vertical Scrolling</value> </data>
+  <data name="PrevEpisode" xml:space="preserve"> <value>Previous Episode</value> </data>
+  <data name="NextEpisode" xml:space="preserve"> <value>Next Episode</value> </data>
+  <data name="DisplayName" xml:space="preserve"> <value>Local Reader</value> </data>
+  <data name="ReaderTappedGridSetting" xml:space="preserve"> <value>Tap Area Settings</value> </data>
+  <data name="Menu" xml:space="preserve"> <value>Menu</value> </data>
+  <data name="NextPage" xml:space="preserve"> <value>Next Page</value> </data>
+  <data name="PrevPage" xml:space="preserve"> <value>Previous Page</value> </data>
+  <data name="LocalReaderModeDescription" xml:space="preserve"> <value>The reading mode used by the reader, affecting how you read</value> </data>
+  <data name="LocalReaderMode" xml:space="preserve"> <value>Reading Mode</value> </data>
+  <data name="LocalReaderSetting" xml:space="preserve"> <value>Reader Settings</value> </data>
+  <data name="SinglePage" xml:space="preserve"> <value>Single-Page Reading</value> </data>
+  <data name="HorizontalScrolling" xml:space="preserve"> <value>Horizontal Scrolling</value> </data>
+  <data name="PasswordError" xml:space="preserve"> <value>Incorrect Password</value> </data>
+  <data name="ZipPasswordPlaceholder" xml:space="preserve"> <value>Please enter the zip file password</value> </data>
+  <data name="Export" xml:space="preserve"> <value>Export</value> </data>
+  <data name="ExportComic" xml:space="preserve"> <value>Export Manga</value> </data>
+  <data name="AutoPage" xml:space="preserve"> <value>Auto Page Flip</value> </data>
+  <data name="AutoPageSpeed" xml:space="preserve"> <value>Page Flip Speed (seconds per page)</value> </data>
+</root>
