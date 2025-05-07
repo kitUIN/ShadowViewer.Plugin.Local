@@ -12,6 +12,7 @@ using Windows.Storage;
 using Microsoft.UI.Dispatching;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowPluginLoader.WinUI.Helpers;
+using ShadowViewer.Core.Responders;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -25,6 +26,7 @@ public sealed partial class PicPage : Page
     /// </summary>
     public PicViewModel ViewModel { get; } = DiFactory.Services.Resolve<PicViewModel>();
 
+
     /// <summary>
     /// 
     /// </summary>
@@ -36,10 +38,11 @@ public sealed partial class PicPage : Page
         autoPageTimer.Interval = TimeSpan.FromSeconds(LocalPlugin.Settings.PageAutoTurnInterval);
         autoPageTimer.Tick += ((_, _) =>
         {
-            if(LocalPlugin.Settings.PageAutoTurn && !ViewModel.IsMenu) MangaReader?.NextPage();
+            if (LocalPlugin.Settings.PageAutoTurn && !ViewModel.IsMenu) MangaReader?.NextPage();
         });
         SettingsHelper.SettingChanged += SettingsHelper_SettingChanged;
     }
+
     /// <summary>
     /// 
     /// </summary>
@@ -48,8 +51,11 @@ public sealed partial class PicPage : Page
     /// <exception cref="System.NotImplementedException"></exception>
     private void SettingsHelper_SettingChanged(object? sender, ShadowPluginLoader.WinUI.Args.SettingChangedArgs e)
     {
-        if (e is { Container: "ShadowViewer.Plugin.Local",
-                Key: nameof(LocalSettingKey.PageAutoTurnInterval) })
+        if (e is
+            {
+                Container: "ShadowViewer.Plugin.Local",
+                Key: nameof(LocalSettingKey.PageAutoTurnInterval)
+            })
         {
             autoPageTimer.Stop();
             autoPageTimer.Interval = TimeSpan.FromSeconds((double)e.Value);
@@ -62,7 +68,7 @@ public sealed partial class PicPage : Page
     /// </summary>
     private readonly DispatcherQueueTimer autoPageTimer;
 
-   
+
     /// <summary>
     /// 导航进入
     /// </summary>
@@ -166,7 +172,8 @@ public sealed partial class PicPage : Page
 
     private void TappedGridSet(object sender, RoutedEventArgs e)
     {
-        ViewModel.ScrollingPaddingEnabled = MangaReader.ReadMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
+        ViewModel.ScrollingPaddingEnabled =
+            MangaReader.ReadMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
         if (ViewModel.TappedGridSetting) return;
         LocalPlugin.Settings.TappedGridLayout = new ApplicationDataCompositeValue
         {
@@ -212,6 +219,7 @@ public sealed partial class PicPage : Page
 
     private void ReadModeClosed(object? sender, object e)
     {
-        ViewModel.ScrollingPaddingEnabled = MangaReader.ReadMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
-    } 
+        ViewModel.ScrollingPaddingEnabled =
+            MangaReader.ReadMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
+    }
 }

@@ -19,7 +19,7 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
     /// <summary>
     /// <inheritdoc />
     /// </summary>
-    public override void CurrentEpisodeIndexChanged(object sender, string affiliation, int oldValue, int newValue)
+    public override void CurrentEpisodeIndexChanged(object sender, PicViewContext ctx, int oldValue, int newValue)
     {
         if (sender is not PicViewModel viewModel) return;
         if (oldValue == newValue) return;
@@ -49,7 +49,7 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
     /// <summary>
     /// <inheritdoc />
     /// </summary>
-    public override void CurrentPageIndexChanged(object sender, string affiliation,
+    public override void CurrentPageIndexChanged(object sender, PicViewContext ctx,
         int oldValue, int newValue)
     {
         if (sender is not PicViewModel viewModel) return;
@@ -76,10 +76,10 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
     /// <summary>
     /// <inheritdoc />
     /// </summary>
-    public override void PicturesLoadStarting(object sender, PicViewArg arg)
+    public override void PicturesLoadStarting(object sender, PicViewContext ctx)
     {
         if (sender is not PicViewModel viewModel) return;
-        if (arg.Affiliation != Id || arg.Parameter is not LocalComic comic) return;
+        if (ctx.Affiliation != Id || ctx.Parameter is not LocalComic comic) return;
         var readingRecord = Db.Queryable<LocalReadingRecord>()
             .Where(x => x.Id == comic.Id)
             .First();

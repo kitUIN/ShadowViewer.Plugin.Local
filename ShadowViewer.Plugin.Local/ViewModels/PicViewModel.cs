@@ -100,6 +100,10 @@ public partial class PicViewModel : ObservableObject
     /// 
     /// </summary>
     private IPicViewResponder? PicViewResponder { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
+    public PicViewContext Context { get; private set; }
 
     /// <summary>
     /// 初始化
@@ -112,8 +116,9 @@ public partial class PicViewModel : ObservableObject
         Images.Clear();
         Episodes.Clear();
         EpisodeCounts.Clear();
+        Context = new PicViewContext(Affiliation, arg.Parameter, new Dictionary<string, object>());
         PicViewResponder = ResponderHelper.GetEnabledResponder<IPicViewResponder>(Affiliation);
-        PicViewResponder?.PicturesLoadStarting(this, arg);
+        PicViewResponder?.PicturesLoadStarting(this, Context);
     }
 
     /// <summary>
@@ -123,7 +128,7 @@ public partial class PicViewModel : ObservableObject
     /// <param name="newValue"></param>
     partial void OnCurrentEpisodeIndexChanged(int oldValue, int newValue)
     {
-        PicViewResponder?.CurrentEpisodeIndexChanged(this, Affiliation, oldValue, newValue);
+        PicViewResponder?.CurrentEpisodeIndexChanged(this, Context, oldValue, newValue);
     }
 
     /// <summary>
@@ -133,7 +138,7 @@ public partial class PicViewModel : ObservableObject
     /// <param name="newValue"></param>
     partial void OnCurrentPageChanged(int oldValue, int newValue)
     {
-        PicViewResponder?.CurrentPageIndexChanged(this, Affiliation, oldValue, newValue);
+        PicViewResponder?.CurrentPageIndexChanged(this, Context, oldValue, newValue);
     }
 
     /// <summary>
