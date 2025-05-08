@@ -5,9 +5,11 @@ using Microsoft.UI.Xaml.Media;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Windows.Foundation;
 
 
@@ -234,6 +236,22 @@ public sealed partial class LocalReader : UserControl
     /// <summary>
     /// 
     /// </summary>
+    public bool SmoothScroll
+    {
+        get => (bool)GetValue(SmoothScrollProperty);
+        set => SetValue(SmoothScrollProperty, value);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public static readonly DependencyProperty SmoothScrollProperty =
+        DependencyProperty.Register(nameof(SmoothScroll), typeof(bool), typeof(LocalReader),
+            new PropertyMetadata(false));
+
+    /// <summary>
+    /// 
+    /// </summary>
     public bool CanPrevPage
     {
         get => (bool)GetValue(CanPrevPageProperty);
@@ -262,6 +280,39 @@ public sealed partial class LocalReader : UserControl
         if (hostScrollViewer == null) return;
         hostScrollViewer.ViewChanged -= ParentScrollViewer_ViewChanged;
         hostScrollViewer.ViewChanged += ParentScrollViewer_ViewChanged;
+    }
+
+    /// <summary>
+    /// Æ½»¬ÒÆ¶¯
+    /// </summary>
+    public async Task StartSmoothScrollAsync(double ms)
+    {
+        if (hostScrollViewer != null && !IgnoreViewChanged && SmoothScroll &&
+            ReadMode == LocalReaderMode.VerticalScrolling)
+        {
+            var intervalMs = 16;
+            var currentOffset = hostScrollViewer.VerticalOffset;
+            var maxOffset = hostScrollViewer.ScrollableHeight;
+            var step = Math.Max(this.ActualHeight / ms * intervalMs, 1);
+            if (currentOffset + this.ActualHeight > maxOffset - step)
+            {
+                await Task.Delay(500);
+                return;
+            }
+
+            var target = Math.Min(currentOffset + this.ActualHeight, maxOffset);
+            while (currentOffset < target && hostScrollViewer != null && !IgnoreViewChanged && SmoothScroll &&
+                   ReadMode == LocalReaderMode.VerticalScrolling)
+            {
+                currentOffset = Math.Min(currentOffset + step, target);
+                hostScrollViewer.ChangeView(null, currentOffset, null);
+                await Task.Delay(intervalMs);
+            }
+        }
+        else
+        {
+            await Task.Delay(500);
+        }
     }
 
     /// <summary>

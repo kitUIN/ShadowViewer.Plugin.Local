@@ -1,18 +1,21 @@
-using System;
-using System.Diagnostics;
 using DryIoc;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using ShadowPluginLoader.WinUI;
-using ShadowViewer.Core.Args;
-using ShadowViewer.Plugin.Local.ViewModels;
-using Windows.Storage;
-using Microsoft.UI.Dispatching;
-using ShadowViewer.Plugin.Local.Enums;
 using ShadowPluginLoader.WinUI.Helpers;
+using ShadowViewer.Core.Args;
 using ShadowViewer.Core.Responders;
+using ShadowViewer.Plugin.Local.Enums;
+using ShadowViewer.Plugin.Local.ViewModels;
+using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using Windows.Storage;
+using Serilog;
+using Serilog.Core;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -79,6 +82,23 @@ public sealed partial class PicPage : Page
         ViewModel.Affiliation = arg.Affiliation;
         ViewModel.Init(arg);
         autoPageTimer.Start();
+        Task.Run(() =>
+        {
+            DispatcherQueue.TryEnqueue(async void () =>
+            {
+                try
+                {
+                    while (true)
+                    {
+                        await MangaReader.StartSmoothScrollAsync(LocalPlugin.Settings.PageAutoTurnInterval * 1000);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error("SmoothScroll Error:{e}", ex);
+                }
+            });
+        });
     }
 
     /// <summary>
