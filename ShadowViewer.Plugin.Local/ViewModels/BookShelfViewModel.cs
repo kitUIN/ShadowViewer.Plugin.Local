@@ -163,7 +163,7 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private async Task CreateNewFolder()
     {
-        var dialog = XamlHelper.CreateOneTextBoxDialog(null, I18N.NewFolder,
+        var dialog = XamlHelper.CreateOneTextBoxDialog( I18N.NewFolder,
             I18N.NewFolderName, "", "",
             (_, _, text) =>
             {
@@ -183,7 +183,7 @@ public partial class BookShelfViewModel : ObservableObject
         if (SelectedItems.Count != 1) return;
         var comic = SelectedItems[0];
         var dialog = XamlHelper.CreateOneTextBoxDialog(null,
-            I18N.Rename, comic.Name,
+            I18N.Rename, text: comic.Name,
             primaryAction: (_, _, name) =>
             {
                 Db.Updateable<LocalComic>()
