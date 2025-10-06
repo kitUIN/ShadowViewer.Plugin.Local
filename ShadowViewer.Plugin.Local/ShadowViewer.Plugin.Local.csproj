@@ -14,7 +14,7 @@
 		<!--插件版本号(nuget包版本号)-->
 		<Version>1.4.4.1</Version>
 		<!--插件仓库地址(nuget包仓库地址)-->
-		<RepositoryUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</PackageProjectUrl>
 		<!--插件介绍(nuget包介绍)-->
 		<Description>✨ ShadowViewer 插件 | 本地阅读器 ✨</Description>
 		<!--插件作者(nuget包作者)-->
@@ -22,7 +22,7 @@
 
 		<!--nuget数据 -->
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+		<RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
 		<Copyright>Copyright 2023-2025</Copyright>
 		<PackageTags>kitUIN;wasdk;ShadowViewer;plugin;winui</PackageTags>
 		<PackageOutputPath>..\..\..\NugetPackages</PackageOutputPath>

@@ -4,7 +4,7 @@
   "Version": "{{ Version }}",
   "Description": "{{ Description }}",
   "Authors": "{{ Authors }}",
-  "WebUri": "{{ RepositoryUrl }}",
+  "WebUri": "{{ PackageProjectUrl }}",
   "Logo": "fluent://regular/ResizeImage",
   "PluginManage": {
     "CanSwitch": false,
