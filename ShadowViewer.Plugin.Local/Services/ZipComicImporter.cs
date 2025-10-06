@@ -131,7 +131,7 @@ public partial class ZipComicImporter : FolderComicImporter
             if (passed) break;
             infoBar.Severity = InfoBarSeverity.Warning;
             infoBar.Title = I18N.NeedPassword + ": " + Path.GetFileNameWithoutExtension(file.Path);
-            var dialog = XamlHelper.CreateOneTextBoxDialog(null,
+            var dialog = XamlHelper.CreateOneTextBoxDialog(
                 I18N.PasswordError,
                 "", I18N.ZipPasswordPlaceholder, "",
                 (_, _, text) => op.Password = text);

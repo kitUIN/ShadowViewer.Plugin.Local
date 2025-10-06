@@ -28,6 +28,7 @@
                               ReadMode="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
                               CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
                               HorizontalAlignment="Center"
+                              SmoothScroll="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=TwoWay}"
                               IgnoreViewChanged="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
                               Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
         </controls:LocalReader>
