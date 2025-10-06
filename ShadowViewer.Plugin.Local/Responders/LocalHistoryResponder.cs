@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Pages;
-using ShadowViewer.Core.Responders;
+using ShadowViewer.Sdk.Responders;
 using SqlSugar;
-using ShadowViewer.Core.Models.Interfaces;
-using ShadowViewer.Core.Services;
-using ShadowViewer.Core.Enums;
-using ShadowViewer.Core.Plugins;
+using ShadowViewer.Sdk.Enums;
+using ShadowViewer.Sdk.Models.Interfaces;
+using ShadowViewer.Sdk.Plugins;
+using ShadowViewer.Sdk.Services;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 

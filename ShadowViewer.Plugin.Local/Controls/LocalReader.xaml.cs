@@ -2,6 +2,7 @@ using CommunityToolkit.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using ShadowViewer.Plugin.Local.Configs;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
@@ -11,7 +12,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Foundation;
-
+using ShadowPluginLoader.WinUI;
+using DryIoc;
 
 namespace ShadowViewer.Plugin.Local.Controls;
 
@@ -20,6 +22,8 @@ namespace ShadowViewer.Plugin.Local.Controls;
 /// </summary>
 public sealed partial class LocalReader : UserControl
 {
+    private LocalPluginConfig LocalPluginConfig { get; } = DiFactory.Services.Resolve<LocalPluginConfig>();
+
     /// <summary>
     /// 
     /// </summary>
@@ -358,7 +362,7 @@ public sealed partial class LocalReader : UserControl
     /// </summary>
     public void ScrollIntoCurrentPage(int toPage)
     {
-        if ((int)LocalPlugin.Settings.LocalReaderMode <= 1 || !IgnoreViewChanged) return;
+        if ((int)LocalPluginConfig.LocalReaderMode <= 1 || !IgnoreViewChanged) return;
         if (PicViewer.Items == null || PicViewer.Items.Count < toPage) return;
         PicViewer.ScrollIntoView(PicViewer.Items[toPage - 1], ScrollIntoViewAlignment.Default);
     }
@@ -368,7 +372,7 @@ public sealed partial class LocalReader : UserControl
     /// </summary>
     public void ScrollIntoOffset(bool next)
     {
-        if ((int)LocalPlugin.Settings.LocalReaderMode <= 1 || hostScrollViewer == null) return;
+        if ((int)LocalPluginConfig.LocalReaderMode <= 1 || hostScrollViewer == null) return;
         var offset = next
             ? hostScrollViewer.VerticalOffset + this.ActualHeight
             : hostScrollViewer.VerticalOffset - this.ActualHeight;

@@ -14,10 +14,11 @@
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:core="using:Microsoft.Xaml.Interactions.Core"
-    xmlns:utils="using:ShadowViewer.Core.Utils"
-    xmlns:extensions="using:ShadowViewer.Core.Extensions"
+    xmlns:utils="using:ShadowViewer.Sdk.Utils"
+    xmlns:extensions="using:ShadowViewer.Sdk.Extensions"
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
     xmlns:controls2="using:ShadowViewer.Controls"
+    xmlns:utils1="using:ShadowViewer.Sdk.Utils"
     x:Name="RootPage"
     mc:Ignorable="d">
     <Page.Resources>
@@ -47,7 +48,7 @@
                                                   CommandParameter="{x:Bind}" />
                     </core:EventTriggerBehavior>
                     <core:EventTriggerBehavior EventName="DragOver">
-                        <utils:InvokeCommandWithArgsAction
+                        <utils1:InvokeCommandWithArgsAction
                             Command="{Binding  ViewModel.ItemDragOverCustomizedCommand, ElementName=RootPage}"
                             CommandParameter="{x:Bind}" />
                     </core:EventTriggerBehavior>
@@ -108,7 +109,7 @@
                                                   CommandParameter="{x:Bind}" />
                     </core:EventTriggerBehavior>
                     <core:EventTriggerBehavior EventName="DragOver">
-                        <utils:InvokeCommandWithArgsAction
+                        <utils1:InvokeCommandWithArgsAction
                             Command="{Binding  ViewModel.ItemDragOverCustomizedCommand, ElementName=RootPage}"
                             CommandParameter="{x:Bind}" />
                     </core:EventTriggerBehavior>
@@ -318,7 +319,7 @@
                     </AppBarButton>
                 </CommandBar>
                 <controls:Segmented
-                    Grid.Column="1" SelectedIndex="{x:Bind ViewModel.StyleIndex,Mode=TwoWay}"
+                    Grid.Column="1" SelectedIndex="{x:Bind ViewModel.LocalPluginConfig.BookShelfStyle,Mode=TwoWay}"
                     HorizontalAlignment="Center"
                     SelectionMode="Single">
                     <controls:SegmentedItem
@@ -375,7 +376,7 @@
                                                  IsItemClickEnabled="False"
                                                  ItemDoubleTappedCommand="{x:Bind ViewModel.DoubleTappedItemCommand}"
                                                  AllowDrop="False"
-                                                 IsDetail="{x:Bind ViewModel.StyleIndex, Mode=OneWay,Converter={StaticResource IntEqOneConverter},ConverterParameter=1}"
+                                                 IsDetail="{x:Bind ViewModel.LocalPluginConfig.BookShelfStyle, Mode=OneWay,Converter={StaticResource IntEqOneConverter},ConverterParameter=1}"
                                                  CanDragItems="True"
                                                  CanReorderItems="False"
                                                  SimpleItemTemplate="{StaticResource SimpleLocalComicItem}"
@@ -444,7 +445,7 @@
 
             <!--#region 左下角信息栏-->
             <Grid
-                Visibility="{x:Bind ViewModel.ShelfInfo,Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.LocalPluginConfig.LocalIsBookShelfInfoBar ,Mode=OneWay}"
                 Grid.Row="2"
                 VerticalAlignment="Bottom">
                 <StackPanel

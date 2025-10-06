@@ -25,18 +25,18 @@
           CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}">
         <controls:LocalReader CurrentEpisodeIndex="{x:Bind ViewModel.CurrentEpisodeIndex,Mode=TwoWay}"
                               x:Name="MangaReader"
-                              ReadMode="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
+                              ReadMode="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}"
                               CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
                               HorizontalAlignment="Center"
-                              SmoothScroll="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=TwoWay}"
+                              SmoothScroll="{x:Bind LocalPluginConfig.PageAutoTurn,Mode=TwoWay}"
                               IgnoreViewChanged="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
                               Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
         </controls:LocalReader>
         <controls:FlashIcon HorizontalAlignment="Right" VerticalAlignment="Bottom" 
                             Margin="0,0,0,0" 
                             ToolTipService.ToolTip="{i18N:Locale Key=AutoPage}" 
-                            Status="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=OneWay}" 
-                            Visibility="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=OneWay}" ></controls:FlashIcon>
+                            Status="{x:Bind LocalPluginConfig.PageAutoTurn,Mode=OneWay}" 
+                            Visibility="{x:Bind LocalPluginConfig.PageAutoTurn,Mode=OneWay}" ></controls:FlashIcon>
         <Grid Background="#AA141414" Visibility="{x:Bind ViewModel.IsMenu,Mode=OneWay}">
             <Grid Loaded="InitTappedGridLayout" x:Name="TappedGrid"
                   Visibility="{x:Bind ViewModel.TappedGridSetting,Mode=OneWay}">
@@ -160,16 +160,16 @@
                                         <ColumnDefinition Width="Auto"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
                                     <winUi:FluentIcon Grid.Column="0"
-                                                      Icon="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}"
-                                                      IconVariant="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
+                                                      Icon="{x:Bind LocalPluginConfig.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}"
+                                                      IconVariant="{x:Bind LocalPluginConfig.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
                                     </winUi:FluentIcon>
                                     <TextBlock Grid.Column="1"
-                                               Text="{x:Bind local:LocalPlugin.Settings.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
+                                               Text="{x:Bind LocalPluginConfig.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
                                     </TextBlock>
                                 </Grid>
                                 <Button.Flyout>
                                     <controls1:EnumMenuFlyout Closed="ReadModeClosed"
-                                                              SelectedValue="{x:Bind local:LocalPlugin.Settings.LocalReaderMode, Mode=TwoWay}"
+                                                              SelectedValue="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}"
                                                               TextConverter="{StaticResource LocalReaderModeConverter}"
                                                               EnumSource="enums:LocalReaderMode"
                                                               Placement="Top">
@@ -198,7 +198,7 @@
                                     ToolTipService.ToolTip="{i18N:Locale Key=AutoPage}"
                                     Grid.Column="3">
                                 <StackPanel Spacing="4" Orientation="Horizontal">
-                                    <controls:FlashIcon Status="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=OneWay}"></controls:FlashIcon>
+                                    <controls:FlashIcon Status="{x:Bind LocalPluginConfig.PageAutoTurn,Mode=OneWay}"></controls:FlashIcon>
                                     <TextBlock Text="{i18N:Locale Key=AutoPage}"></TextBlock>
                                 </StackPanel>
                                 <Button.Flyout>
@@ -208,12 +208,12 @@
                                                 <TextBlock VerticalAlignment="Center"
                                                            Text="{i18N:Locale Key=AutoPageSpeed}">
                                                 </TextBlock>
-                                                <NumberBox VerticalAlignment="Center" Value="{x:Bind local:LocalPlugin.Settings.PageAutoTurnInterval,Mode=TwoWay}"
+                                                <NumberBox VerticalAlignment="Center" Value="{x:Bind LocalPluginConfig.PageAutoTurnInterval,Mode=TwoWay}"
                                                            SmallChange="1"
                                                            LargeChange="10">
                                                 </NumberBox>
                                             </StackPanel>
-                                            <ToggleSwitch IsOn="{x:Bind local:LocalPlugin.Settings.PageAutoTurn,Mode=TwoWay}"></ToggleSwitch>
+                                            <ToggleSwitch IsOn="{x:Bind LocalPluginConfig.PageAutoTurn,Mode=TwoWay}"></ToggleSwitch>
                                         </StackPanel>
                                     </Flyout>
                                 </Button.Flyout>

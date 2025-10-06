@@ -7,12 +7,6 @@ using Microsoft.UI.Xaml.Media.Animation;
 using Serilog;
 using ShadowPluginLoader.Attributes;
 using ShadowPluginLoader.WinUI;
-using ShadowViewer.Core.Args;
-using ShadowViewer.Core.Cache;
-using ShadowViewer.Core.Extensions;
-using ShadowViewer.Core.Helpers;
-using ShadowViewer.Core.Services;
-using ShadowViewer.Core.Utils;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
@@ -27,6 +21,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
+using ShadowViewer.Plugin.Local.Configs;
+using ShadowViewer.Sdk.Args;
+using ShadowViewer.Sdk.Cache;
+using ShadowViewer.Sdk.Extensions;
+using ShadowViewer.Sdk.Helpers;
+using ShadowViewer.Sdk.Services;
+using ShadowViewer.Sdk.Utils;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -46,15 +47,6 @@ public partial class BookShelfViewModel : ObservableObject
     /// </summary>
     public string SortDisplayName => I18n.ResourcesHelper.GetString(Sort.ToString());
 
-    /// <summary>
-    /// 左下角信息栏是否显示
-    /// </summary>
-    [ObservableProperty] private bool shelfInfo = LocalPlugin.Settings.LocalIsBookShelfInfoBar;
-
-    /// <summary>
-    /// 样式
-    /// </summary>
-    [ObservableProperty] private int styleIndex = LocalPlugin.Settings.LocalBookStyleDetail ? 1 : 0;
 
     /// <summary>
     /// 返回上级
@@ -117,6 +109,11 @@ public partial class BookShelfViewModel : ObservableObject
     /// </summary>
     [Autowired]
     private INavigateService NavigateService { get; }
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
+    public LocalPluginConfig LocalPluginConfig { get; }
 
     /// <summary>
     /// 
@@ -214,14 +211,14 @@ public partial class BookShelfViewModel : ObservableObject
         var deleteFiles = new CheckBox()
         {
             Content = I18N.DeleteComicFiles,
-            IsChecked = LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete,
+            IsChecked = LocalPluginConfig.LocalIsDeleteFilesWithComicDelete,
         };
         deleteFiles.Checked += DeleteFilesChecked;
         deleteFiles.Unchecked += DeleteFilesChecked;
         var remember = new CheckBox()
         {
             Content = I18N.Remember,
-            IsChecked = LocalPlugin.Settings.LocalIsRememberDeleteFilesWithComicDelete,
+            IsChecked = LocalPluginConfig.LocalIsRememberDeleteFilesWithComicDelete,
         };
         remember.Checked += RememberChecked;
         remember.Unchecked += RememberChecked;
@@ -245,13 +242,13 @@ public partial class BookShelfViewModel : ObservableObject
 
         void RememberChecked(object sender, RoutedEventArgs e)
         {
-            LocalPlugin.Settings.LocalIsRememberDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ?? false;
+            LocalPluginConfig.LocalIsRememberDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ?? false;
         }
 
         void DeleteFilesChecked(object sender, RoutedEventArgs e)
         {
-            LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ??
-                                                                     false;
+            LocalPluginConfig.LocalIsDeleteFilesWithComicDelete = (sender as CheckBox)?.IsChecked ??
+                                                                  false;
         }
     }
 
@@ -267,7 +264,7 @@ public partial class BookShelfViewModel : ObservableObject
         }
         else
         {
-            if (LocalPlugin.Settings.LocalIsRememberDeleteFilesWithComicDelete)
+            if (LocalPluginConfig.LocalIsRememberDeleteFilesWithComicDelete)
                 DeleteComics();
             else
                 await DeleteMessageDialog();
@@ -306,7 +303,7 @@ public partial class BookShelfViewModel : ObservableObject
         var db = DiFactory.Services.Resolve<ISqlSugarClient>();
         foreach (var comic in SelectedItems.ToArray())
         {
-            if (LocalPlugin.Settings.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder)
+            if (LocalPluginConfig.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder)
             {
                 comic.Link?.DeleteDirectory();
                 db.Updateable<CacheZip>()

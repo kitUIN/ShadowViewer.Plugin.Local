@@ -6,13 +6,15 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Serilog;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Controls.Extensions;
-using ShadowViewer.Core.Cache;
-using ShadowViewer.Core.Enums;
-using ShadowViewer.Core.Extensions;
-using ShadowViewer.Core.Helpers;
 using ShadowViewer.Plugin.Local.Cache;
+using ShadowViewer.Plugin.Local.Configs;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
+using ShadowViewer.Sdk.Cache;
+using ShadowViewer.Sdk.Configs;
+using ShadowViewer.Sdk.Enums;
+using ShadowViewer.Sdk.Extensions;
+using ShadowViewer.Sdk.Helpers;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.IO;
@@ -24,8 +26,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
-using SharpCompress.Archives.Zip;
-using CoreSettings = ShadowViewer.Core.Settings.CoreSettings;
+using ShadowPluginLoader.WinUI.Config;
 
 namespace ShadowViewer.Plugin.Local.Services;
 
@@ -35,6 +36,9 @@ namespace ShadowViewer.Plugin.Local.Services;
 [CheckAutowired]
 public partial class ZipComicImporter : FolderComicImporter
 {
+    [Autowired] private BaseSdkConfig BaseSdkConfig { get; }
+    [Autowired] private LocalPluginConfig LocalPluginConfig { get; }
+
     /// <summary>
     /// 支持的类型
     /// </summary>
@@ -155,7 +159,7 @@ public partial class ZipComicImporter : FolderComicImporter
         progressRingBackground.Visibility = Visibility.Visible;
         progressRingText.Visibility = Visibility.Visible;
         await Task.Run(() => ImportComicFromZipAsync(file.Path,
-            Core.Settings.CoreSettings.Instance.ComicsPath,
+            LocalPluginConfig.ComicFolderPath,
             PluginId, parentId,
             new Progress<MemoryStream>(async void (thumbStream) =>
             {
@@ -303,8 +307,7 @@ public partial class ZipComicImporter : FolderComicImporter
         await using var fStream = File.OpenRead(zip);
         await using var stream = NonDisposingStream.Create(fStream);
         using var archive = ArchiveFactory.Open(stream, readerOptions);
-        var total = archive.Entries.Where(
-                entry => !entry.IsDirectory && (entry.Key?.IsPic() ?? false))
+        var total = archive.Entries.Where(entry => !entry.IsDirectory && (entry.Key?.IsPic() ?? false))
             .OrderBy(x => x.Key).ToList();
         var totalCount = total.Count;
         var ms = new MemoryStream();
@@ -316,7 +319,7 @@ public partial class ZipComicImporter : FolderComicImporter
             }
 
             var bytes = ms.ToArray();
-            CacheImg.CreateImage(CoreSettings.Instance.TempPath, bytes, comicId);
+            CacheImg.CreateImage(BaseSdkConfig.TempFolderPath, bytes, comicId);
             thumbProgress?.Report(new MemoryStream(bytes));
         }
 

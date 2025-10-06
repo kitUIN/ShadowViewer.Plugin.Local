@@ -1,11 +1,11 @@
 using System;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Core.Responders;
+using ShadowViewer.Sdk.Responders;
 using SqlSugar; 
-using ShadowViewer.Core.Services;
+using ShadowViewer.Sdk.Services;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.ViewModels;
-using ShadowViewer.Core.Plugins;
+using ShadowViewer.Sdk.Plugins;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 

@@ -40,10 +40,11 @@
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.1.240916" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
-		<ProjectReference Include="..\..\ShadowViewer.Core\ShadowViewer.Core\ShadowViewer.Sdk.csproj" />
+		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.5" />
+		<!-- <ProjectReference Include="..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj" /> -->
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.1" />
+		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.5" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Controls\FlashIcon.xaml">

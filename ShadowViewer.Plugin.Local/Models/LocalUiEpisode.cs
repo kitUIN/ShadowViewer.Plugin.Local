@@ -1,5 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using ShadowViewer.Core.Models;
+using ShadowViewer.Sdk.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Models;

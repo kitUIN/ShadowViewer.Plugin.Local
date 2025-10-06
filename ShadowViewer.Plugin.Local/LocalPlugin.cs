@@ -28,7 +28,6 @@ public partial class LocalPlugin : AShadowViewerPlugin
             made: Parameters.Of.Type(_ => MetaData.Id));
         DiFactory.Services.Register<ComicIoService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
-        DiFactory.Services.Register<BookShelfSettingsViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
         Db.CodeFirst.InitTables<LocalEpisode>();

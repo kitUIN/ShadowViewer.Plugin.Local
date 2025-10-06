@@ -1,12 +1,26 @@
-﻿using Windows.Storage;
+﻿using System.IO;
 using ShadowObservableConfig.Attributes;
+using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Enums;
+using Windows.Storage;
 
 namespace ShadowViewer.Plugin.Local.Configs;
 
 [ObservableConfig(FileName = "local_plugin_config")]
 public partial class LocalPluginConfig
 {
+
+    /// <summary>
+    /// 漫画缓存文件夹地址
+    /// </summary>
+    [ObservableConfigProperty(Description = "漫画缓存文件夹地址")]
+    private string comicFolder = "comic";
+
+    /// <summary>
+    /// 漫画缓存文件夹地址
+    /// </summary>
+    public string ComicFolderPath => Path.Combine(StaticValues.BaseFolder, comicFolder);
+
     /// <summary>
     /// 自动翻页
     /// </summary>
@@ -47,7 +61,7 @@ public partial class LocalPluginConfig
     /// 书架-样式-详细/简约
     /// </summary>
     [ObservableConfigProperty(Description = "书架-样式-详细/简约")]
-    private bool localBookStyleDetail;
+    private int bookShelfStyle;
 
     /// <summary>
     /// 阅读模式-滑动/双页

@@ -5,8 +5,8 @@ using Microsoft.UI.Xaml.Controls;
 using Serilog;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Controls.Extensions;
-using ShadowViewer.Core.Enums;
-using ShadowViewer.Core.Services;
+using ShadowViewer.Sdk.Enums;
+using ShadowViewer.Sdk.Services;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
@@ -20,7 +20,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
-using ShadowViewer.Core.Extensions;
+using ShadowViewer.Sdk.Extensions;
 
 namespace ShadowViewer.Plugin.Local.Services;
 

@@ -1,6 +1,6 @@
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
-using ShadowViewer.Core.Models.Interfaces;
+using ShadowViewer.Sdk.Models.Interfaces;
 using SqlSugar;
 
 namespace ShadowViewer.Plugin.Local.Models;
@@ -41,5 +41,5 @@ public partial class LocalHistory : ObservableObject, IHistory
     /// <summary>
     /// <inheritdoc cref="IHistory.PluginId"/>
     /// </summary>
-    public virtual string PluginId { get; set; } = LocalPlugin.Meta.Id;
+    public virtual string PluginId { get; set; } = "ShadowViewer.Plugin.Local";
 }

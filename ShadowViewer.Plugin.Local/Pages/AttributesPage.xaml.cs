@@ -12,8 +12,8 @@ using ShadowViewer.Plugin.Local.I18n;
 using ShadowPluginLoader.WinUI;
 using Windows.Storage.Pickers;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Core.Helpers;
-using ShadowViewer.Core.Models;
+using ShadowViewer.Sdk.Helpers;
+using ShadowViewer.Sdk.Models;
 using ShadowViewer.Plugin.Local.ViewModels;
 
 namespace ShadowViewer.Plugin.Local.Pages;

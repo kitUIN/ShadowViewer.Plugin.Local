@@ -6,8 +6,8 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using ShadowPluginLoader.WinUI;
 using ShadowPluginLoader.WinUI.Helpers;
-using ShadowViewer.Core.Args;
-using ShadowViewer.Core.Responders;
+using ShadowViewer.Sdk.Args;
+using ShadowViewer.Sdk.Responders;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.ViewModels;
 using System;
@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using Serilog;
 using Serilog.Core;
+using ShadowViewer.Plugin.Local.Configs;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -28,6 +29,7 @@ public sealed partial class PicPage : Page
     /// ViewModel
     /// </summary>
     public PicViewModel ViewModel { get; } = DiFactory.Services.Resolve<PicViewModel>();
+    public LocalPluginConfig LocalPluginConfig { get; } = DiFactory.Services.Resolve<LocalPluginConfig>();
 
 
     /// <summary>
@@ -38,10 +40,10 @@ public sealed partial class PicPage : Page
         this.InitializeComponent();
         autoPageTimer = DispatcherQueue.CreateTimer();
         autoPageTimer.IsRepeating = true;
-        autoPageTimer.Interval = TimeSpan.FromSeconds(LocalPlugin.Settings.PageAutoTurnInterval);
+        autoPageTimer.Interval = TimeSpan.FromSeconds(LocalPluginConfig.PageAutoTurnInterval);
         autoPageTimer.Tick += ((_, _) =>
         {
-            if (LocalPlugin.Settings.PageAutoTurn && !ViewModel.IsMenu) MangaReader?.NextPage();
+            if (LocalPluginConfig.PageAutoTurn && !ViewModel.IsMenu) MangaReader?.NextPage();
         });
         SettingsHelper.SettingChanged += SettingsHelper_SettingChanged;
     }
@@ -57,7 +59,7 @@ public sealed partial class PicPage : Page
         if (e is
             {
                 Container: "ShadowViewer.Plugin.Local",
-                Key: nameof(LocalSettingKey.PageAutoTurnInterval)
+                Key: nameof(LocalPluginConfig.PageAutoTurnInterval)
             })
         {
             autoPageTimer.Stop();
@@ -90,7 +92,7 @@ public sealed partial class PicPage : Page
                 {
                     while (true)
                     {
-                        await MangaReader.StartSmoothScrollAsync(LocalPlugin.Settings.PageAutoTurnInterval * 1000);
+                        await MangaReader.StartSmoothScrollAsync(LocalPluginConfig.PageAutoTurnInterval * 1000);
                     }
                 }
                 catch (Exception ex)
@@ -113,7 +115,7 @@ public sealed partial class PicPage : Page
         //     if (ctrlState.HasFlag(CoreVirtualKeyStates.Down))
         //         return;
         // }
-        if ((int)LocalPlugin.Settings.LocalReaderMode > 1 || ViewModel.IsMenu) return;
+        if ((int)LocalPluginConfig.LocalReaderMode > 1 || ViewModel.IsMenu) return;
         var point = e.GetCurrentPoint(this);
         var delta = point.Properties.MouseWheelDelta;
         var scrollSteps = delta / 120;
@@ -195,7 +197,7 @@ public sealed partial class PicPage : Page
         ViewModel.ScrollingPaddingEnabled =
             MangaReader.ReadMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
         if (ViewModel.TappedGridSetting) return;
-        LocalPlugin.Settings.TappedGridLayout = new ApplicationDataCompositeValue
+        LocalPluginConfig.TappedGridLayout = new ApplicationDataCompositeValue
         {
             ["Row0"] = TappedGrid.RowDefinitions[0].Height.Value,
             ["Row0_Unit"] = (int)TappedGrid.RowDefinitions[0].Height.GridUnitType,
@@ -216,7 +218,7 @@ public sealed partial class PicPage : Page
 
     private void InitTappedGridLayout(object sender, RoutedEventArgs e)
     {
-        var layout = LocalPlugin.Settings.TappedGridLayout;
+        var layout = LocalPluginConfig.TappedGridLayout;
 
         if (layout.TryGetValue("Row0", out var row0) && layout.TryGetValue("Row0_Unit", out var row0Unit))
             TappedGrid.RowDefinitions[0].Height = new GridLength((double)row0, (GridUnitType)(int)row0Unit);

@@ -6,11 +6,11 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:models="using:ShadowViewer.Core.Models"
+    xmlns:models="using:ShadowViewer.Sdk.Models"
     x:Name="ThisPage"
     xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
     xmlns:models1="using:ShadowViewer.Plugin.Local.Models"
-    xmlns:interfaces="using:ShadowViewer.Core.Models.Interfaces"
+    xmlns:interfaces="using:ShadowViewer.Sdk.Models.Interfaces"
     xmlns:icons="using:FluentIcons.WinUI"
     mc:Ignorable="d">
     <Page.Resources>

@@ -10,7 +10,7 @@ using DryIoc;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
 using ShadowPluginLoader.WinUI;
-using ShadowViewer.Core.Services;
+using ShadowViewer.Sdk.Services;
 using ShadowViewer.Plugin.Local.Models;
 
 namespace ShadowViewer.Plugin.Local.Services;

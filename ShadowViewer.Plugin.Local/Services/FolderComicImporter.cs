@@ -2,7 +2,7 @@
 using Microsoft.UI.Xaml.Controls;
 using Serilog;
 using ShadowPluginLoader.Attributes;
-using ShadowViewer.Core.Models;
+using ShadowViewer.Sdk.Models;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
 using SqlSugar;
@@ -12,7 +12,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
-using ShadowViewer.Core.Services;
+using ShadowViewer.Sdk.Services;
 using ShadowViewer.Plugin.Local.I18n;
 
 namespace ShadowViewer.Plugin.Local.Services;
