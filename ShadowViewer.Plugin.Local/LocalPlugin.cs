@@ -7,7 +7,9 @@ using ShadowViewer.Core.Plugins;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Services;
 using ShadowViewer.Plugin.Local.Cache;
+using ShadowViewer.Plugin.Local.Helpers;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
+using ShadowViewer.Plugins;
 
 namespace ShadowViewer.Plugin.Local;
 

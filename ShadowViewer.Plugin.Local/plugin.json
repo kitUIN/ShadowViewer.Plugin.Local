@@ -1,5 +1,7 @@
 {
-  "DllName": "ShadowViewer.Plugin.Local",
+  "Id": "{{ PackageId }}",
+  "Name": "{{ PluginName }}",
+  "Version": "{{ Version }}",
   "Description": "ShadowViewer本地阅读插件",
   "Authors": "kitUIN",
   "WebUri": "https://github.com/kitUIN/ShadowViewer.Plugin.Local",
@@ -14,10 +16,5 @@
     "ForegroundHex": "#000000",
     "Icon": "fluent://regular/ResizeImage",
     "PluginId": "Local"
-  },
-  "CoreVersion": "2025.5.7.3",
-  "Id": "Local",
-  "Name": "本地阅读器",
-  "Version": "1.4.1.2",
-  "Dependencies": []
+  }
 }
