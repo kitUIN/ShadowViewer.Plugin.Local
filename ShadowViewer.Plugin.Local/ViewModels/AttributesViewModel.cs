@@ -1,19 +1,13 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.WinUI.Helpers;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Serilog;
 using ShadowPluginLoader.Attributes;
-using ShadowViewer.Core;
-using ShadowViewer.Core.Helpers;
-using ShadowViewer.Core.Models;
-using ShadowViewer.Core.Models.Interfaces;
-using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
+using ShadowViewer.Sdk;
+using ShadowViewer.Sdk.Models;
 using SqlSugar;
 using LocalEpisode = ShadowViewer.Plugin.Local.Models.LocalEpisode;
 

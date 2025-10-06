@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DryIoc;
-using Serilog;
 using ShadowPluginLoader.WinUI;
-using ShadowViewer.Core.Models;
 using ShadowViewer.Plugin.Local.I18n;
-using ShadowViewer.Plugin.Local.Models.Interfaces;
+using ShadowViewer.Sdk.Models;
 using SqlSugar;
 
 namespace ShadowViewer.Plugin.Local.Models;
@@ -170,7 +168,7 @@ public partial class LocalComic : ObservableObject
             Id = (long)id,
             Name = name,
             Thumb = "ms-appx:///Assets/Default/folder.png",
-            Affiliation = LocalPlugin.Meta.Id,
+            Affiliation = "ShadowViewer.Plugin.Local",
             ParentId = parentId,
             IsFolder = true,
             ReadingRecord = new LocalReadingRecord()

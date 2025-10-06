@@ -2,9 +2,9 @@
   "Id": "{{ PackageId }}",
   "Name": "{{ PluginName }}",
   "Version": "{{ Version }}",
-  "Description": "ShadowViewer本地阅读插件",
-  "Authors": "kitUIN",
-  "WebUri": "https://github.com/kitUIN/ShadowViewer.Plugin.Local",
+  "Description": "{{ Description }}",
+  "Authors": "{{ Authors }}",
+  "WebUri": "{{ RepositoryUrl }}",
   "Logo": "fluent://regular/ResizeImage",
   "PluginManage": {
     "CanSwitch": false,

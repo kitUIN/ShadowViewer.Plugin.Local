@@ -3,13 +3,11 @@ using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Core.Plugins;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Services;
 using ShadowViewer.Plugin.Local.Cache;
-using ShadowViewer.Plugin.Local.Helpers;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
-using ShadowViewer.Plugins;
+using ShadowViewer.Sdk.Plugins;
 
 namespace ShadowViewer.Plugin.Local;
 
@@ -23,11 +21,11 @@ public partial class LocalPlugin : AShadowViewerPlugin
     partial void ConstructorInit()
     {
         DiFactory.Services.Register<IComicImporter, FolderComicImporter>(Reuse.Singleton,
-            made: Parameters.Of.Type(_ => Meta.Id));
+            made: Parameters.Of.Type(_ => MetaData.Id));
         DiFactory.Services.Register<IComicImporter, ZipComicImporter>(Reuse.Singleton,
-            made: Parameters.Of.Type(_ => Meta.Id));
+            made: Parameters.Of.Type(_ => MetaData.Id));
         DiFactory.Services.Register<IComicExporter, ZipComicExporter>(Reuse.Singleton,
-            made: Parameters.Of.Type(_ => Meta.Id));
+            made: Parameters.Of.Type(_ => MetaData.Id));
         DiFactory.Services.Register<ComicIoService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfSettingsViewModel>(Reuse.Transient);
