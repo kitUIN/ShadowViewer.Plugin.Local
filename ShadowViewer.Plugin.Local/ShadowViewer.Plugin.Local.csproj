@@ -5,14 +5,15 @@
 		<RootNamespace>ShadowViewer.Plugin.Local</RootNamespace>
 		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
 		<PlatformTarget>AnyCPU</PlatformTarget>
+		<UseWinUI>true</UseWinUI>
 		<Nullable>enable</Nullable>
 		<LangVersion>12</LangVersion>
-		<EnableMsixTooling>true</EnableMsixTooling>
-		<PackageId>ShadowViewer.Plugin.Local</PackageId>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 
+		<PackageId>ShadowViewer.Plugin.Local</PackageId> 
 		<PluginName>本地阅读器</PluginName>
 		<!--插件版本号(nuget包版本号)-->
-		<Version>1.4.4.1</Version>
+		<Version>1.4.4.5</Version>
 		<!--插件仓库地址(nuget包仓库地址)-->
 		<PackageProjectUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</PackageProjectUrl>
 		<!--插件介绍(nuget包介绍)-->
@@ -27,8 +28,9 @@
 		<PackageTags>kitUIN;wasdk;ShadowViewer;plugin;winui</PackageTags>
 		<PackageOutputPath>..\..\..\NugetPackages</PackageOutputPath>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<NoWarn>MSB3277;MVVMTK0045</NoWarn>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<NoWarn>MSB3277</NoWarn>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
 		<!-- <PackageReference Include="ShadowPluginLoader.SourceGenerator" Version="2.1.0.20" /> -->
@@ -40,7 +42,12 @@
 		<ProjectReference Include="..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.5" />
+		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.7" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(OutputDir)\$(MSBuildProjectName)\plugin.json" Pack="true" PackagePath="contentTransitive\$(MSBuildProjectName)\" />
+	</ItemGroup>
+ 
 
 </Project>

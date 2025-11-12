@@ -21,7 +21,7 @@
     },
     "SdkVersion": {
       "type": "string",
-      "default": "3.0.0.5"
+      "default": "3.0.0.7"
     },
     "Priority": {
       "type": "integer",
