@@ -73,5 +73,5 @@ public partial class LocalPluginConfig
     /// 阅读器点击区域设置
     /// </summary>
     [ObservableConfigProperty(Description = "阅读器点击区域设置")]
-    private ApplicationDataCompositeValue tappedGridLayout;
+    private ApplicationDataCompositeValue? tappedGridLayout;
 }

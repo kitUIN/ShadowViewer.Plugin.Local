@@ -42,12 +42,7 @@
 		<ProjectReference Include="..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.7" />
+		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.8" />
 	</ItemGroup>
-
-	<ItemGroup>
-		<None Include="$(OutputDir)\$(MSBuildProjectName)\plugin.json" Pack="true" PackagePath="contentTransitive\$(MSBuildProjectName)\" />
-	</ItemGroup>
- 
 
 </Project>

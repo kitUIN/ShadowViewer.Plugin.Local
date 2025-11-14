@@ -219,6 +219,7 @@ public sealed partial class PicPage : Page
     private void InitTappedGridLayout(object sender, RoutedEventArgs e)
     {
         var layout = LocalPluginConfig.TappedGridLayout;
+        if (layout is null) return;
 
         if (layout.TryGetValue("Row0", out var row0) && layout.TryGetValue("Row0_Unit", out var row0Unit))
             TappedGrid.RowDefinitions[0].Height = new GridLength((double)row0, (GridUnitType)(int)row0Unit);
