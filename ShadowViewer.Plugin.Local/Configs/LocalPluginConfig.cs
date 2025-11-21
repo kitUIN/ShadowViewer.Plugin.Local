@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Text.Json.Nodes;
 using ShadowObservableConfig.Attributes;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Enums;
@@ -9,7 +11,6 @@ namespace ShadowViewer.Plugin.Local.Configs;
 [ObservableConfig(FileName = "local_plugin_config")]
 public partial class LocalPluginConfig
 {
-
     /// <summary>
     /// 漫画缓存文件夹地址
     /// </summary>
@@ -73,5 +74,5 @@ public partial class LocalPluginConfig
     /// 阅读器点击区域设置
     /// </summary>
     [ObservableConfigProperty(Description = "阅读器点击区域设置")]
-    private ApplicationDataCompositeValue? tappedGridLayout;
+    private Dictionary<string, double>? tappedGridLayout;
 }

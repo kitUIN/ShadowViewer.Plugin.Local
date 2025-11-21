@@ -219,8 +219,7 @@ public partial class ZipComicImporter : FolderComicImporter
         try
         {
             await using var fStream = File.OpenRead(zip);
-            await using var stream = NonDisposingStream.Create(fStream);
-            using var archive = ArchiveFactory.Open(stream, readerOptions);
+            using var archive = ArchiveFactory.Open(fStream, readerOptions);
             await using var entryStream = archive.Entries.First(entry => !entry.IsDirectory).OpenEntryStream();
             // 密码正确添加压缩包密码存档
             // 能正常打开一个entry就代表正确,所以这个循环只走了一次
@@ -305,8 +304,7 @@ public partial class ZipComicImporter : FolderComicImporter
             .Include(z1 => z1.ReadingRecord)
             .ExecuteCommandAsync();
         await using var fStream = File.OpenRead(zip);
-        await using var stream = NonDisposingStream.Create(fStream);
-        using var archive = ArchiveFactory.Open(stream, readerOptions);
+        using var archive = ArchiveFactory.Open(zip, readerOptions);
         var total = archive.Entries.Where(entry => !entry.IsDirectory && (entry.Key?.IsPic() ?? false))
             .OrderBy(x => x.Key).ToList();
         var totalCount = total.Count;

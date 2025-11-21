@@ -4,19 +4,22 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using ShadowPluginLoader.WinUI;
-using ShadowPluginLoader.WinUI.Helpers;
-using ShadowViewer.Sdk.Args;
-using ShadowViewer.Sdk.Responders;
-using ShadowViewer.Plugin.Local.Enums;
-using ShadowViewer.Plugin.Local.ViewModels;
-using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Windows.Storage;
 using Serilog;
 using Serilog.Core;
+using ShadowPluginLoader.WinUI;
+using ShadowPluginLoader.WinUI.Helpers;
 using ShadowViewer.Plugin.Local.Configs;
+using ShadowViewer.Plugin.Local.Constants;
+using ShadowViewer.Plugin.Local.Enums;
+using ShadowViewer.Plugin.Local.ViewModels;
+using ShadowViewer.Sdk.Args;
+using ShadowViewer.Sdk.Responders;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+using Windows.Storage;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -29,6 +32,10 @@ public sealed partial class PicPage : Page
     /// ViewModel
     /// </summary>
     public PicViewModel ViewModel { get; } = DiFactory.Services.Resolve<PicViewModel>();
+
+    /// <summary>
+    /// 
+    /// </summary>
     public LocalPluginConfig LocalPluginConfig { get; } = DiFactory.Services.Resolve<LocalPluginConfig>();
 
 
@@ -58,7 +65,7 @@ public sealed partial class PicPage : Page
     {
         if (e is
             {
-                Container: "ShadowViewer.Plugin.Local",
+                Container: PluginConstants.PluginId,
                 Key: nameof(LocalPluginConfig.PageAutoTurnInterval)
             })
         {
@@ -197,7 +204,7 @@ public sealed partial class PicPage : Page
         ViewModel.ScrollingPaddingEnabled =
             MangaReader.ReadMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
         if (ViewModel.TappedGridSetting) return;
-        LocalPluginConfig.TappedGridLayout = new ApplicationDataCompositeValue
+        LocalPluginConfig.TappedGridLayout = new Dictionary<string, double>()
         {
             ["Row0"] = TappedGrid.RowDefinitions[0].Height.Value,
             ["Row0_Unit"] = (int)TappedGrid.RowDefinitions[0].Height.GridUnitType,
@@ -221,23 +228,29 @@ public sealed partial class PicPage : Page
         var layout = LocalPluginConfig.TappedGridLayout;
         if (layout is null) return;
 
-        if (layout.TryGetValue("Row0", out var row0) && layout.TryGetValue("Row0_Unit", out var row0Unit))
-            TappedGrid.RowDefinitions[0].Height = new GridLength((double)row0, (GridUnitType)(int)row0Unit);
+        if (layout.TryGetValue("Row0", out var row0) &&
+            layout.TryGetValue("Row0_Unit", out var row0Unit))
+            TappedGrid.RowDefinitions[0].Height = new GridLength(row0, (GridUnitType)(int)row0Unit);
 
-        if (layout.TryGetValue("Row2", out var row2) && layout.TryGetValue("Row2_Unit", out var row2Unit))
-            TappedGrid.RowDefinitions[2].Height = new GridLength((double)row2, (GridUnitType)(int)row2Unit);
+        if (layout.TryGetValue("Row2", out var row2) &&
+            layout.TryGetValue("Row2_Unit", out var row2Unit))
+            TappedGrid.RowDefinitions[2].Height = new GridLength(row2, (GridUnitType)(int)row2Unit);
 
-        if (layout.TryGetValue("Row4", out var row4) && layout.TryGetValue("Row4_Unit", out var row4Unit))
-            TappedGrid.RowDefinitions[4].Height = new GridLength((double)row4, (GridUnitType)(int)row4Unit);
+        if (layout.TryGetValue("Row4", out var row4) &&
+            layout.TryGetValue("Row4_Unit", out var row4Unit))
+            TappedGrid.RowDefinitions[4].Height = new GridLength(row4, (GridUnitType)(int)row4Unit);
 
-        if (layout.TryGetValue("Col0", out var col0) && layout.TryGetValue("Col0_Unit", out var col0Unit))
-            TappedGrid.ColumnDefinitions[0].Width = new GridLength((double)col0, (GridUnitType)(int)col0Unit);
+        if (layout.TryGetValue("Col0", out var col0) &&
+            layout.TryGetValue("Col0_Unit", out var col0Unit))
+            TappedGrid.ColumnDefinitions[0].Width = new GridLength(col0, (GridUnitType)(int)col0Unit);
 
-        if (layout.TryGetValue("Col2", out var col2) && layout.TryGetValue("Col2_Unit", out var col2Unit))
-            TappedGrid.ColumnDefinitions[2].Width = new GridLength((double)col2, (GridUnitType)(int)col2Unit);
+        if (layout.TryGetValue("Col2", out var col2) &&
+            layout.TryGetValue("Col2_Unit", out var col2Unit))
+            TappedGrid.ColumnDefinitions[2].Width = new GridLength(col2, (GridUnitType)(int)col2Unit);
 
-        if (layout.TryGetValue("Col4", out var col4) && layout.TryGetValue("Col4_Unit", out var col4Unit))
-            TappedGrid.ColumnDefinitions[4].Width = new GridLength((double)col4, (GridUnitType)(int)col4Unit);
+        if (layout.TryGetValue("Col4", out var col4) &&
+            layout.TryGetValue("Col4_Unit", out var col4Unit))
+            TappedGrid.ColumnDefinitions[4].Width = new GridLength(col4, (GridUnitType)(int)col4Unit);
     }
 
     private void ReadModeClosed(object? sender, object e)

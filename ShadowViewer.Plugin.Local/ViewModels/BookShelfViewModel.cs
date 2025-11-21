@@ -7,11 +7,19 @@ using Microsoft.UI.Xaml.Media.Animation;
 using Serilog;
 using ShadowPluginLoader.Attributes;
 using ShadowPluginLoader.WinUI;
+using ShadowViewer.Plugin.Local.Configs;
+using ShadowViewer.Plugin.Local.Constants;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Pages;
 using ShadowViewer.Plugin.Local.Services;
+using ShadowViewer.Sdk.Args;
+using ShadowViewer.Sdk.Cache;
+using ShadowViewer.Sdk.Extensions;
+using ShadowViewer.Sdk.Helpers;
+using ShadowViewer.Sdk.Services;
+using ShadowViewer.Sdk.Utils;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
@@ -21,13 +29,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
-using ShadowViewer.Plugin.Local.Configs;
-using ShadowViewer.Sdk.Args;
-using ShadowViewer.Sdk.Cache;
-using ShadowViewer.Sdk.Extensions;
-using ShadowViewer.Sdk.Helpers;
-using ShadowViewer.Sdk.Services;
-using ShadowViewer.Sdk.Utils;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -401,7 +402,7 @@ public partial class BookShelfViewModel : ObservableObject
                 Thumb = comic.Thumb,
                 Title = comic.Name,
             }).ExecuteCommand();
-            NavigateService.Navigate(typeof(PicPage), new PicViewArg("Local", comic),
+            NavigateService.Navigate(typeof(PicPage), new PicViewArg(PluginConstants.PluginId, comic),
                 new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
         }
     }

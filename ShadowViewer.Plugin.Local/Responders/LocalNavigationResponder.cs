@@ -1,14 +1,15 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
 using ShadowPluginLoader.Attributes;
-using ShadowViewer.Sdk.Models;
-using ShadowViewer.Sdk.Models.Interfaces;
+using ShadowViewer.Plugin.Local.Constants;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Pages;
+using ShadowViewer.Sdk.Models;
+using ShadowViewer.Sdk.Models.Interfaces;
+using ShadowViewer.Sdk.Plugins;
 using ShadowViewer.Sdk.Responders;
 using ShadowViewer.Sdk.Utils;
-using ShadowViewer.Sdk.Plugins;
+using System;
+using System.Collections.Generic;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
@@ -32,7 +33,7 @@ public partial class LocalNavigationResponder : AbstractNavigationResponder
         new List<IShadowNavigationItem>
         {
             new ShadowNavigationItem(
-                pluginId: "ShadowViewer.Plugin.Local",
+                pluginId: PluginConstants.PluginId,
                 id: "BookShelf",
                 icon: new SymbolIcon(Symbol.Home),
                 content: I18N.BookShelf)

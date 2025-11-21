@@ -59,7 +59,7 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 当前页
     /// </summary>
-    [ObservableProperty] private int currentPage  ;
+    [ObservableProperty] private int currentPage;
 
     /// <summary>
     /// 菜单可见性
@@ -70,18 +70,18 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 点击区域设定模式
     /// </summary>
-    [NotifyPropertyChangedFor(nameof(MenuOpacity))]
-    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MenuOpacity))] [ObservableProperty]
     private bool tappedGridSetting;
 
     /// <summary>
     /// 
     /// </summary>
     [ObservableProperty] private bool scrollingPaddingSetting;
+
     /// <summary>
     /// 
     /// </summary>
-    [ObservableProperty] private bool scrollingPaddingEnabled; 
+    [ObservableProperty] private bool scrollingPaddingEnabled;
 
     /// <summary>
     /// 菜单透明度
@@ -97,6 +97,7 @@ public partial class PicViewModel : ObservableObject
     /// 
     /// </summary>
     private IPicViewResponder? PicViewResponder { get; set; }
+
     /// <summary>
     /// 
     /// </summary>
@@ -115,6 +116,11 @@ public partial class PicViewModel : ObservableObject
         EpisodeCounts.Clear();
         Context = new PicViewContext(Affiliation, arg.Parameter, new Dictionary<string, object>());
         PicViewResponder = ResponderHelper.GetEnabledResponder<IPicViewResponder>(Affiliation);
+        if (PicViewResponder is null)
+        {
+            Logger.Error("IPicViewResponder[{T}] not existed", Affiliation);
+        }
+
         PicViewResponder?.PicturesLoadStarting(this, Context);
     }
 
