@@ -13,9 +13,6 @@
     xmlns:controls1="using:ShadowViewer.Plugin.Local.Controls"
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
-    xmlns:core="using:Microsoft.Xaml.Interactions.Core"
-    xmlns:utils="using:ShadowViewer.Sdk.Utils"
-    xmlns:extensions="using:ShadowViewer.Sdk.Extensions"
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
     xmlns:controls2="using:ShadowViewer.Controls"
     xmlns:utils1="using:ShadowViewer.Sdk.Utils"
@@ -43,15 +40,15 @@
                 CornerRadius="{StaticResource BookShelfItemBorderCornerRadius}"
                 Tag="{x:Bind}">
                 <interactivity:Interaction.Behaviors>
-                    <core:EventTriggerBehavior EventName="Drop">
-                        <core:InvokeCommandAction Command="{Binding  ViewModel.ItemDropCommand, ElementName=RootPage}"
+                    <interactivity:EventTriggerBehavior EventName="Drop">
+                        <interactivity:InvokeCommandAction Command="{Binding  ViewModel.ItemDropCommand, ElementName=RootPage}"
                                                   CommandParameter="{x:Bind}" />
-                    </core:EventTriggerBehavior>
-                    <core:EventTriggerBehavior EventName="DragOver">
+                    </interactivity:EventTriggerBehavior>
+                    <interactivity:EventTriggerBehavior EventName="DragOver">
                         <utils1:InvokeCommandWithArgsAction
                             Command="{Binding  ViewModel.ItemDragOverCustomizedCommand, ElementName=RootPage}"
                             CommandParameter="{x:Bind}" />
-                    </core:EventTriggerBehavior>
+                    </interactivity:EventTriggerBehavior>
                 </interactivity:Interaction.Behaviors>
 
                 <Grid
@@ -104,15 +101,15 @@
                 CornerRadius="{StaticResource BookShelfItemBorderCornerRadius}"
                 Tag="{x:Bind}">
                 <interactivity:Interaction.Behaviors>
-                    <core:EventTriggerBehavior EventName="Drop">
-                        <core:InvokeCommandAction Command="{Binding  ViewModel.ItemDropCommand, ElementName=RootPage}"
+                    <interactivity:EventTriggerBehavior EventName="Drop">
+                        <interactivity:InvokeCommandAction Command="{Binding  ViewModel.ItemDropCommand, ElementName=RootPage}"
                                                   CommandParameter="{x:Bind}" />
-                    </core:EventTriggerBehavior>
-                    <core:EventTriggerBehavior EventName="DragOver">
+                    </interactivity:EventTriggerBehavior>
+                    <interactivity:EventTriggerBehavior EventName="DragOver">
                         <utils1:InvokeCommandWithArgsAction
                             Command="{Binding  ViewModel.ItemDragOverCustomizedCommand, ElementName=RootPage}"
                             CommandParameter="{x:Bind}" />
-                    </core:EventTriggerBehavior>
+                    </interactivity:EventTriggerBehavior>
                 </interactivity:Interaction.Behaviors>
                 <Grid
                     Width="400"
