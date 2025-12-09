@@ -15,7 +15,7 @@
 		<PackageId>ShadowViewer.Plugin.Local</PackageId> 
 		<PluginName>本地阅读器</PluginName>
 		<!--插件版本号(nuget包版本号)-->
-		<Version>1.4.4.5</Version>
+		<Version>1.4.4.6</Version>
 		<!--插件仓库地址(nuget包仓库地址)-->
 		<PackageProjectUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</PackageProjectUrl>
 		<!--插件介绍(nuget包介绍)-->
@@ -44,7 +44,7 @@
 		<ProjectReference Include="..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.8" />
+		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.9" />
 	</ItemGroup>
 
 </Project>
