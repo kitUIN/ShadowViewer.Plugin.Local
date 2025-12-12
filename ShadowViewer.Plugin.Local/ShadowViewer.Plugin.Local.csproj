@@ -9,8 +9,6 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>12</LangVersion>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<EnableCoreMrtTooling Condition=" '$(BuildingInsideVisualStudio)' != 'true' ">false</EnableCoreMrtTooling>
-
 
 		<PackageId>ShadowViewer.Plugin.Local</PackageId> 
 		<PluginName>本地阅读器</PluginName>
@@ -46,5 +44,4 @@
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
 		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.9" />
 	</ItemGroup>
-
 </Project>
