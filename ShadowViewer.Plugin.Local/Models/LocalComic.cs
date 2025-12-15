@@ -25,103 +25,102 @@ public partial class LocalComic : ObservableObject
     /// <summary>
     /// Id
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(IsPrimaryKey = true)]
-    private long id;
+    [ObservableProperty] [SugarColumn(IsPrimaryKey = true)]
+    public partial long Id { get; set; }
 
     /// <summary>
     /// 父Id
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDescription = "父Id")]
-    private long parentId;
+    [ObservableProperty] [SugarColumn(ColumnDescription = "父Id")]
+    public partial long ParentId { get; set; }
 
     /// <summary>
     /// 漫画Id
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(IsNullable = true, ColumnDescription = "漫画Id")]
-    private string? comicId;
+    [ObservableProperty] [SugarColumn(IsNullable = true, ColumnDescription = "漫画Id")]
+    public partial string? ComicId { get; set; }
 
     /// <summary>
     /// 漫画名称
     /// </summary>
     [ObservableProperty]
-    [property: SugarColumn(ColumnDataType = "Nvarchar(255)", ColumnDescription = "漫画名称", IsNullable = false)]
-    private string name = null!;
+    [SugarColumn(ColumnDataType = "Nvarchar(255)", ColumnDescription = "漫画名称", IsNullable = false)]
+    public partial string Name { get; set; } = null!;
 
     /// <summary>
     /// 漫画缩略图
     /// </summary>
     [ObservableProperty]
-    [property: SugarColumn(ColumnDataType = "TEXT", DefaultValue = "mx-appx:///default.png",
+    [SugarColumn(ColumnDataType = "TEXT", DefaultValue = "mx-appx:///default.png",
         ColumnDescription = "漫画缩略图")]
-    private string thumb = "mx-appx:///default.png";
+    public partial string Thumb { get; set; } = "mx-appx:///default.png";
 
     /// <summary>
     /// 漫画备注
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDataType = "TEXT", IsNullable = true, ColumnDescription = "漫画备注")]
-    private string? remark;
+    [ObservableProperty] [SugarColumn(ColumnDataType = "TEXT", IsNullable = true, ColumnDescription = "漫画备注")]
+    public partial string? Remark { get; set; }
 
     /// <summary>
     /// 路径链接
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDataType = "TEXT", IsNullable = true, ColumnDescription = "路径链接")]
-    private string? link;
+    [ObservableProperty] [SugarColumn(ColumnDataType = "TEXT", IsNullable = true, ColumnDescription = "路径链接")]
+    public partial string? Link { get; set; }
 
     /// <summary>
     /// 创建时间
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(InsertServerTime = true, ColumnDescription = "创建时间")]
-    private DateTime createdDateTime;
+    [ObservableProperty] [SugarColumn(InsertServerTime = true, ColumnDescription = "创建时间")]
+    public partial DateTime CreatedDateTime { get; set; }
 
     /// <summary>
     /// 更新时间
     /// </summary>
-    [ObservableProperty]
-    [property: SugarColumn(InsertServerTime = true, UpdateServerTime = true, ColumnDescription = "更新时间")]
-    private DateTime updatedDateTime;
+    [ObservableProperty] [SugarColumn(InsertServerTime = true, UpdateServerTime = true, ColumnDescription = "更新时间")]
+    public partial DateTime UpdatedDateTime { get; set; }
 
     /// <summary>
     /// 分类
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDescription = "分类", IsNullable = false)]
-    private string affiliation = null!;
+    [ObservableProperty] [SugarColumn(ColumnDescription = "分类", IsNullable = false)]
+    public partial string Affiliation { get; set; } = null!;
 
 
     /// <summary>
     /// 存储空间
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDescription = "存储空间")]
-    private long size;
+    [ObservableProperty] [SugarColumn(ColumnDescription = "存储空间")]
+    public partial long Size { get; set; }
 
     /// <summary>
     /// 话-数量
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDescription = "话-数量")]
-    private int episodeCount;
+    [ObservableProperty] [SugarColumn(ColumnDescription = "话-数量")]
+    public partial int EpisodeCount { get; set; }
 
     /// <summary>
     /// 页-数量
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDescription = "页-数量")]
-    private int count;
+    [ObservableProperty] [SugarColumn(ColumnDescription = "页-数量")]
+    public partial int Count { get; set; }
 
     /// <summary>
     /// 是否是文件夹
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDescription = "是否是文件夹")]
-    private bool isFolder;
+    [ObservableProperty] [SugarColumn(ColumnDescription = "是否是文件夹")]
+    public partial bool IsFolder { get; set; }
 
     /// <summary>
     /// 是否删除
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDescription = "是否删除")]
-    private bool isDelete;
+    [ObservableProperty] [SugarColumn(ColumnDescription = "是否删除")]
+    public partial bool IsDelete { get; set; }
 
     /// <summary>
     /// 是否损坏
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDescription = "是否损坏")]
-    private bool isBroken;
+    [ObservableProperty] [SugarColumn(ColumnDescription = "是否损坏")]
+    public partial bool IsBroken { get; set; }
 
     /// <summary>
     /// 作者

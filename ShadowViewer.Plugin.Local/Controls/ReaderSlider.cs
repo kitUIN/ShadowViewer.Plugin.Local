@@ -1,10 +1,7 @@
 using System;
-using CommunityToolkit.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Serilog;
-using ShadowViewer.Sdk.Args;
 
 namespace ShadowViewer.Plugin.Local.Controls;
 
@@ -21,7 +18,7 @@ public class ReaderSlider: Slider
     /// <summary>
     /// 
     /// </summary>
-    public ReaderSlider() : base()
+    public ReaderSlider()
     {
         this.DefaultStyleKey = typeof(ReaderSlider);
         Loaded += PageSlider_OnLoaded;

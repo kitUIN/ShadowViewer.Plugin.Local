@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using Serilog;
-using Serilog.Core;
 using ShadowPluginLoader.WinUI;
 using ShadowPluginLoader.WinUI.Helpers;
 using ShadowViewer.Plugin.Local.Configs;
@@ -13,20 +12,16 @@ using ShadowViewer.Plugin.Local.Constants;
 using ShadowViewer.Plugin.Local.Enums;
 using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.Sdk.Args;
-using ShadowViewer.Sdk.Responders;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using Windows.Storage;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
 /// <summary>
 /// 
 /// </summary>
-public sealed partial class PicPage : Page
+public sealed partial class PicPage
 {
     /// <summary>
     /// ViewModel
@@ -64,15 +59,14 @@ public sealed partial class PicPage : Page
     private void SettingsHelper_SettingChanged(object? sender, ShadowPluginLoader.WinUI.Args.SettingChangedArgs e)
     {
         if (e is
+            not
             {
                 Container: PluginConstants.PluginId,
                 Key: nameof(LocalPluginConfig.PageAutoTurnInterval)
-            })
-        {
-            autoPageTimer.Stop();
-            autoPageTimer.Interval = TimeSpan.FromSeconds((double)e.Value);
-            autoPageTimer.Start();
-        }
+            }) return;
+        autoPageTimer.Stop();
+        autoPageTimer.Interval = TimeSpan.FromSeconds((double)e.Value);
+        autoPageTimer.Start();
     }
 
     /// <summary>

@@ -9,7 +9,6 @@ using ShadowViewer.Plugin.Local.Models.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using ShadowPluginLoader.WinUI;
@@ -20,7 +19,7 @@ namespace ShadowViewer.Plugin.Local.Controls;
 /// <summary>
 /// ±¾µØÔÄ¶ÁÆ÷
 /// </summary>
-public sealed partial class LocalReader : UserControl
+public sealed partial class LocalReader
 {
     private LocalPluginConfig LocalPluginConfig { get; } = DiFactory.Services.Resolve<LocalPluginConfig>();
 
@@ -30,7 +29,7 @@ public sealed partial class LocalReader : UserControl
     public LocalReader()
     {
         this.InitializeComponent();
-        Loaded += (sender, args) =>
+        Loaded += (_, _) =>
         {
             CheckScrollViewerEvent();
             ReadMode = ReadMode;

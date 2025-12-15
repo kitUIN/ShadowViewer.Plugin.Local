@@ -1,5 +1,4 @@
 ﻿using ShadowViewer.Plugin.Local.Controls;
-using ShadowViewer.Plugin.Local.Enums;
 
 namespace ShadowViewer.Plugin.Local.Models.Interfaces;
 

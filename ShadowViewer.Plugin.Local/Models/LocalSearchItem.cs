@@ -13,7 +13,7 @@ public class LocalSearchItem : IShadowSearchItem
     public string Title { get; set; }
 
     /// <inheritdoc />
-    public string SubTitle { get; set; }
+    public string SubTitle { get; set; } = null!;
 
     /// <inheritdoc />
     public string Id { get; set; }
@@ -23,7 +23,8 @@ public class LocalSearchItem : IShadowSearchItem
     public string ComicId { get; set; }
 
     /// <inheritdoc />
-    public IconSource Icon { get; set; }
+    public IconSource Icon { get; set; } = null!;
+
     /// <summary>
     /// 
     /// </summary>
@@ -48,8 +49,6 @@ public class LocalSearchItem : IShadowSearchItem
                 break;
             case LocalSearchMode.SearchTag:
                 SubTitle = "本地标签";
-                break;
-            default:
                 break;
         }
 

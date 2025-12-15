@@ -14,31 +14,31 @@ public partial class LocalHistory : ObservableObject, IHistory
     /// <summary>
     /// <inheritdoc cref="IHistory.Id"/>
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(IsPrimaryKey = true)]
-    private long id;
+    [ObservableProperty] [SugarColumn(IsPrimaryKey = true)]
+    public partial long Id { get; set; }
 
     /// <summary>
     /// <inheritdoc cref="IHistory.Title"/>
     /// </summary>
-    [ObservableProperty] private string title = null!;
+    [ObservableProperty]
+    public partial string Title { get; set; } = null!;
 
     /// <summary>
     /// <inheritdoc cref="IHistory.Thumb"/>
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(ColumnDataType = "TEXT")]
-    private string thumb = null!;
+    [ObservableProperty] [SugarColumn(ColumnDataType = "TEXT")]
+    public partial string Thumb { get; set; } = null!;
 
     /// <summary>
     /// <inheritdoc cref="IHistory.LastReadDateTime"/>
     /// </summary>
-    [ObservableProperty] private DateTime lastReadDateTime;
+    [ObservableProperty] public partial DateTime LastReadDateTime { get; set; }
 
     /// <summary>
     /// <inheritdoc cref="IHistory.Extra"/>
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(IsNullable = true)]
-    private string? extra;
-
+    [ObservableProperty] [SugarColumn(IsNullable = true)]
+    public partial string? Extra { get; set; }
     /// <summary>
     /// <inheritdoc cref="IHistory.PluginId"/>
     /// </summary>

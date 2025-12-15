@@ -11,13 +11,11 @@ using ShadowViewer.Plugin.Local.Configs;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Sdk.Cache;
-using ShadowViewer.Sdk.Configs;
 using ShadowViewer.Sdk.Enums;
 using ShadowViewer.Sdk.Extensions;
 using ShadowViewer.Sdk.Helpers;
 using SharpCompress.Archives;
 using SharpCompress.Common;
-using SharpCompress.IO;
 using SharpCompress.Readers;
 using SqlSugar;
 using System;
@@ -276,7 +274,7 @@ public partial class ZipComicImporter : FolderComicImporter
             // 缓存文件未被删除
             if (Directory.Exists(cacheZip.CachePath))
             {
-                var updateComicId = await Db.Updateable<LocalComic>()
+                await Db.Updateable<LocalComic>()
                     .SetColumns(x => x.IsDelete == false)
                     .Where(x => x.Id == comicId)
                     .ExecuteCommandAsync();
@@ -333,7 +331,7 @@ public partial class ZipComicImporter : FolderComicImporter
             progress?.Report(Math.Round(result * 100, 2) - 0.01D);
         }
 
-        var node = await SaveComic(path, comicId);
+        await SaveComic(path, comicId);
 
         progress?.Report(100D);
         var stop = DateTime.Now;

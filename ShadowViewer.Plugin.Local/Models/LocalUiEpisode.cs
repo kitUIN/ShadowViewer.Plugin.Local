@@ -1,8 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using ShadowViewer.Sdk.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Models;
+
 /// <summary>
 /// 
 /// </summary>
@@ -13,7 +13,7 @@ public partial class LocalUiEpisode : ObservableObject, IUiEpisode
     /// </summary>
     public LocalEpisode Source { get; set; }
 
-    [ObservableProperty] private string title;
+    [ObservableProperty] public partial string Title { get; set; }
 
     /// <summary>
     /// 

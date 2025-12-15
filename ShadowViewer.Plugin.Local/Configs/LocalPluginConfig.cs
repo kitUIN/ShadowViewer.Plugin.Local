@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Text.Json.Nodes;
 using ShadowObservableConfig.Attributes;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Enums;
-using Windows.Storage;
 
 namespace ShadowViewer.Plugin.Local.Configs;
 

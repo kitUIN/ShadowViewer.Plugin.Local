@@ -40,25 +40,27 @@ public partial class BookShelfViewModel : ObservableObject
     /// <summary>
     /// 排序-<see cref="LocalSort"/>
     /// </summary>
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(SortDisplayName))]
-    private LocalSort sort = LocalSort.Rz;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SortDisplayName))]
+    public partial LocalSort Sort { get; set; } = LocalSort.Rz;
 
     /// <summary>
     /// 排序显示
     /// </summary>
-    public string SortDisplayName => I18n.ResourcesHelper.GetString(Sort.ToString());
+    public string SortDisplayName => ResourcesHelper.GetString(Sort.ToString());
 
 
     /// <summary>
     /// 返回上级
     /// </summary>
-    public bool CanBackFolder => CurrentFolder?.Id != -1;
+    public bool CanBackFolder => CurrentFolder.Id != -1;
 
     /// <summary>
     /// 当前文件夹
     /// </summary>
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanBackFolder))]
-    private LocalComic currentFolder;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanBackFolder))]
+    public partial LocalComic CurrentFolder { get; set; }
 
     /// <summary>
     /// 原始地址
@@ -87,11 +89,6 @@ public partial class BookShelfViewModel : ObservableObject
     [Autowired]
     private ISqlSugarClient Db { get; }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    [Autowired]
-    private INotifyService NotifyService { get; }
 
     /// <summary>
     /// 
@@ -110,17 +107,13 @@ public partial class BookShelfViewModel : ObservableObject
     /// </summary>
     [Autowired]
     private INavigateService NavigateService { get; }
+
     /// <summary>
     /// 
     /// </summary>
     [Autowired]
     public LocalPluginConfig LocalPluginConfig { get; }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    [Autowired]
-    private ICallableService Caller { get; }
 
     /// <summary>
     /// ConstructorInit
@@ -161,11 +154,11 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private async Task CreateNewFolder()
     {
-        var dialog = XamlHelper.CreateOneTextBoxDialog( I18N.NewFolder,
+        var dialog = XamlHelper.CreateOneTextBoxDialog(I18N.NewFolder,
             I18N.NewFolderName, "", "",
             (_, _, text) =>
             {
-                LocalComic.CreateFolder(text, CurrentFolder!.Id);
+                LocalComic.CreateFolder(text, CurrentFolder.Id);
                 RefreshLocalComic();
             });
 
@@ -180,7 +173,7 @@ public partial class BookShelfViewModel : ObservableObject
     {
         if (SelectedItems.Count != 1) return;
         var comic = SelectedItems[0];
-        var dialog = XamlHelper.CreateOneTextBoxDialog(null,
+        var dialog = XamlHelper.CreateOneTextBoxDialog("",
             I18N.Rename, text: comic.Name,
             primaryAction: (_, _, name) =>
             {
@@ -201,7 +194,7 @@ public partial class BookShelfViewModel : ObservableObject
     {
         if (SelectedItems.Count != 1) return;
         var comic = SelectedItems[0];
-        NavigateService.Navigate(typeof(AttributesPage), comic?.Id);
+        NavigateService.Navigate(typeof(AttributesPage), comic.Id);
     }
 
     /// <summary>   
@@ -413,7 +406,7 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private void BackFolder()
     {
-        if (CurrentFolder!.Id != -1) NavigateTo(new Uri($"shadow://local/bookshelf/{CurrentFolder.ParentId}"));
+        if (CurrentFolder.Id != -1) NavigateTo(new Uri($"shadow://local/bookshelf/{CurrentFolder.ParentId}"));
     }
 
     /// <summary>

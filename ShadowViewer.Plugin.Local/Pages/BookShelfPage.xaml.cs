@@ -13,7 +13,7 @@ namespace ShadowViewer.Plugin.Local.Pages;
 /// <summary>
 /// 书架页面
 /// </summary>
-public sealed partial class BookShelfPage : Page
+public sealed partial class BookShelfPage
 {
     /// <summary>
     /// ViewModel

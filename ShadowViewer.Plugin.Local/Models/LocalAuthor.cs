@@ -12,12 +12,14 @@ public partial class LocalAuthor : ObservableObject, IAuthor
     /// <summary>
     /// <inheritdoc cref="IAuthor.Id"/>
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(IsPrimaryKey = true, IsNullable = false, ColumnDescription = "Id")]
-    private long id;
+    [ObservableProperty]
+    [SugarColumn(IsPrimaryKey = true, IsNullable = false, ColumnDescription = "Id")]
+    public partial long Id { get; set; }
 
     /// <summary>
     /// <inheritdoc cref="IAuthor.Name"/>
     /// </summary>
-    [ObservableProperty] [property: SugarColumn(IsNullable = false, ColumnDescription = "作者名称")]
-    private string name = null!;
+    [ObservableProperty]
+    [SugarColumn(IsNullable = false, ColumnDescription = "作者名称")]
+    public partial string Name { get; set; }
 }

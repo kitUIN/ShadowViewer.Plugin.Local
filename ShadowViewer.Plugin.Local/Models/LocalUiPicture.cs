@@ -8,8 +8,8 @@ namespace ShadowViewer.Plugin.Local.Models;
 
 public partial class LocalUiPicture : ObservableObject, IUiPicture
 {
-    [ObservableProperty] private int index;
-    [ObservableProperty] private ImageSource source;
+    [ObservableProperty] public partial int Index { get; set; }
+    [ObservableProperty] public partial ImageSource Source { get; set; }
 
     /// <summary>
     /// 

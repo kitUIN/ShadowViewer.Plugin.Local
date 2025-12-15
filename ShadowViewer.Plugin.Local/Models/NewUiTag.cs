@@ -13,14 +13,16 @@ public partial class NewUiTag : ObservableObject
     /// <summary>
     /// 字体颜色
     /// </summary>
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(Foreground))]
-    private Color foregroundColor = "#000000".ToColor();
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Foreground))]
+    public partial Color ForegroundColor { get; set; } = "#000000".ToColor();
 
     /// <summary>
     /// 背景颜色
     /// </summary>
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(Background))]
-    private Color backgroundColor = "#ffd657".ToColor();
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Background))]
+    public partial Color BackgroundColor { get; set; } = "#ffd657".ToColor();
 
     /// <summary>
     /// 背景颜色
@@ -35,12 +37,14 @@ public partial class NewUiTag : ObservableObject
     /// <summary>
     /// 图标
     /// </summary>
-    [ObservableProperty] private string? icon;
+    [ObservableProperty]
+    public partial string? Icon { get; set; }
 
     /// <summary>
     /// 名称
     /// </summary>
-    [ObservableProperty] private string name = "";
+    [ObservableProperty]
+    public partial string Name { get; set; } = "";
 
     /// <summary>
     /// 清理

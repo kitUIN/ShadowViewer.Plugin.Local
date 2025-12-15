@@ -1,27 +1,25 @@
 using System;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.System;
 using DryIoc;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowPluginLoader.WinUI;
 using Windows.Storage.Pickers;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Sdk.Helpers;
-using ShadowViewer.Sdk.Models;
 using ShadowViewer.Plugin.Local.ViewModels;
+using ShadowViewer.Sdk.Extensions;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
 /// <summary>
 /// 漫画属性页
 /// </summary>
-public sealed partial class AttributesPage : Page
+public sealed partial class AttributesPage
 {
     /// <summary>
     /// 
@@ -60,7 +58,8 @@ public sealed partial class AttributesPage : Page
     {
         var file = await FileHelper.SelectFileAsync("ShadowViewer_PicImageTapped", PickerViewMode.Thumbnail,
             FileHelper.Pngs);
-        // if (file != null) ViewModel.CurrentComic.Img = file.DecodePath();
+        if (file == null) return;
+        ViewModel.CurrentComic.Thumb = file.DecodePath();
     }
 
     /// <summary>
@@ -86,7 +85,7 @@ public sealed partial class AttributesPage : Page
             I18N.Set,
             I18N.FileName,
             "", ViewModel.CurrentComic.Name,
-            (s, e, t) =>
+            (_, _, t) =>
             {
                 ViewModel.CurrentComic.Name = t;
 

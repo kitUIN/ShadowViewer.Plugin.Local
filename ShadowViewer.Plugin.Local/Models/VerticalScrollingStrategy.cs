@@ -1,5 +1,4 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using ShadowViewer.Plugin.Local.Controls;
+﻿using ShadowViewer.Plugin.Local.Controls;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Models;

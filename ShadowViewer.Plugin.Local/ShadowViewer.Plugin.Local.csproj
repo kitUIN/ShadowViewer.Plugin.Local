@@ -7,7 +7,7 @@
 		<PlatformTarget>AnyCPU</PlatformTarget>
 		<UseWinUI>true</UseWinUI>
 		<Nullable>enable</Nullable>
-		<LangVersion>12</LangVersion>
+		<LangVersion>preview</LangVersion>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 
 		<PackageId>ShadowViewer.Plugin.Local</PackageId> 

@@ -12,7 +12,7 @@ namespace ShadowViewer.Plugin.Local.Controls;
 /// <summary>
 /// 自动翻页Icon
 /// </summary>
-public sealed partial class FlashIcon : UserControl
+public sealed partial class FlashIcon
 { 
     /// <summary>
     /// 动画控制器

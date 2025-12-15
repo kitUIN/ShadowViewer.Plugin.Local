@@ -1,6 +1,4 @@
 using System;
-using DryIoc;
-using ShadowPluginLoader.WinUI;
 using SqlSugar;
 
 namespace ShadowViewer.Plugin.Local.Models;
@@ -53,8 +51,6 @@ public class LocalEpisode
     /// <returns></returns>
     public static LocalEpisode Create(string name, int order, long comicId, int counts, long size)
     {
-        var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-
         var time = DateTime.Now;
         return new LocalEpisode()
         {

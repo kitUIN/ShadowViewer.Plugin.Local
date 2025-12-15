@@ -4,7 +4,6 @@ using Serilog;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
-using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -22,11 +21,6 @@ public partial class PicViewModel : ObservableObject
     [Autowired]
     private ILogger Logger { get; }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    [Autowired]
-    private ISqlSugarClient Db { get; }
 
     /// <summary>
     /// 图片
@@ -44,7 +38,7 @@ public partial class PicViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(NextEpisodeCommand))]
     [NotifyCanExecuteChangedFor(nameof(PrevEpisodeCommand))]
     [ObservableProperty]
-    private int currentEpisodeIndex = -1;
+    public partial int CurrentEpisodeIndex { get; set; } = -1;
 
     /// <summary>
     /// 话
@@ -59,29 +53,30 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 当前页
     /// </summary>
-    [ObservableProperty] private int currentPage;
+    [ObservableProperty]
+    public partial int CurrentPage { get; set; }
 
     /// <summary>
     /// 菜单可见性
     /// </summary>
-    [ObservableProperty] private bool isMenu;
+    [ObservableProperty] public partial bool IsMenu { get; set; }
 
 
     /// <summary>
     /// 点击区域设定模式
     /// </summary>
     [NotifyPropertyChangedFor(nameof(MenuOpacity))] [ObservableProperty]
-    private bool tappedGridSetting;
+    public partial bool TappedGridSetting { get; set; }
 
     /// <summary>
-    /// 
+    /// 滚动填充设置
     /// </summary>
-    [ObservableProperty] private bool scrollingPaddingSetting;
+    [ObservableProperty] public partial bool ScrollingPaddingSetting { get; set; }
 
     /// <summary>
-    /// 
+    /// 滚动填充启用状态
     /// </summary>
-    [ObservableProperty] private bool scrollingPaddingEnabled;
+    [ObservableProperty] public partial bool ScrollingPaddingEnabled { get; set; }
 
     /// <summary>
     /// 菜单透明度
@@ -147,7 +142,7 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 加载上次阅读事件
     /// </summary>
-    public event EventHandler LastPicturePositionLoadedEvent;
+    public event EventHandler? LastPicturePositionLoadedEvent;
 
     /// <summary>
     /// 加载上次阅读

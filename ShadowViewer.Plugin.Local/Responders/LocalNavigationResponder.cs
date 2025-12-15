@@ -17,7 +17,7 @@ namespace ShadowViewer.Plugin.Local.Responders;
 /// 本地阅读器导航响应器
 /// </summary>
 [EntryPoint(Name = nameof(PluginResponder.NavigationResponder))]
-public partial class LocalNavigationResponder : AbstractNavigationResponder
+public class LocalNavigationResponder : AbstractNavigationResponder
 {
     /// <summary>
     /// 

@@ -18,7 +18,8 @@ public partial class AttributesViewModel : ObservableObject
     /// <summary>
     /// 最大文本宽度
     /// </summary>
-    [ObservableProperty] private double textBlockMaxWidth;
+    [ObservableProperty]
+    public partial double TextBlockMaxWidth { get; set; }
 
     /// <summary>
     /// 当前漫画
@@ -33,17 +34,18 @@ public partial class AttributesViewModel : ObservableObject
     /// <summary>
     /// 新增tagUI显示
     /// </summary>
-    [ObservableProperty] private bool newUiTagVisible = false;
+    [ObservableProperty]
+    public partial bool NewUiTagVisible { get; set; }
 
     /// <summary>
     /// 标签
     /// </summary>
-    public ObservableCollection<ShadowTag> Tags = [];
+    public ObservableCollection<ShadowTag> Tags { get; } = [];
 
     /// <summary>
     /// 话
     /// </summary>
-    public ObservableCollection<LocalEpisode> Episodes = [];
+    public ObservableCollection<LocalEpisode> Episodes { get; } = [];
 
     /// <summary>
     /// 是否有话
