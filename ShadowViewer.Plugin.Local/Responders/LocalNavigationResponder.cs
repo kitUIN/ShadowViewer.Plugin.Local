@@ -10,6 +10,7 @@ using ShadowViewer.Sdk.Responders;
 using ShadowViewer.Sdk.Utils;
 using System;
 using System.Collections.Generic;
+using ShadowViewer.Sdk.Navigation;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
@@ -35,6 +36,7 @@ public class LocalNavigationResponder : AbstractNavigationResponder
             new ShadowNavigationItem(
                 pluginId: PluginConstants.PluginId,
                 id: "BookShelf",
+                uri: ShadowUri.Parse("shadow://local/bookshelf"),
                 icon: new SymbolIcon(Symbol.Home),
                 content: I18N.BookShelf)
         };
@@ -42,27 +44,13 @@ public class LocalNavigationResponder : AbstractNavigationResponder
     /// <summary>
     /// <inheritdoc/>
     /// </summary>
-    public override ShadowNavigation? NavigationViewItemInvokedHandler(IShadowNavigationItem item)
+    public override void Register()
     {
-        return item.Id switch
-        {
-            "BookShelf" => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/bookshelf"), SelectItemId: "BookShelf"),
-            _ => null
-        };
-    }
-
-    /// <summary>
-    /// <inheritdoc/>
-    /// </summary>
-    public override ShadowNavigation? Navigate(Uri uri, string[] urls)
-    {
-        if (urls.Length == 0) return null;
-        return urls[0] switch
-        {
-            "bookshelf" => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/bookshelf"), SelectItemId: "BookShelf"),
-            "settings" => new ShadowNavigation(typeof(BookShelfSettingsPage), new Uri("shadow://local/settings"), SelectItemId: "BookShelf"),
-            "pictures" => new ShadowNavigation(typeof(PicPage), new Uri("shadow://local/pictures"), SelectItemId: "BookShelf"),
-            _ => new ShadowNavigation(typeof(BookShelfPage), new Uri("shadow://local/bookshelf"), SelectItemId: "BookShelf")
-        };
+        ShadowRouteRegistry.RegisterPage(new ShadowNavigation(typeof(BookShelfPage), SelectItemId: "BookShelf"),
+            "local", "bookshelf");
+        ShadowRouteRegistry.RegisterPage(new ShadowNavigation(typeof(BookShelfSettingsPage), SelectItemId: "BookShelf"),
+            "local", "settings");
+        ShadowRouteRegistry.RegisterPage(new ShadowNavigation(typeof(PicPage), SelectItemId: "BookShelf"), "local",
+            "pictures");
     }
 }

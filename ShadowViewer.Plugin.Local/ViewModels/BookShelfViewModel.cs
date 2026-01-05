@@ -18,6 +18,7 @@ using ShadowViewer.Sdk.Args;
 using ShadowViewer.Sdk.Cache;
 using ShadowViewer.Sdk.Extensions;
 using ShadowViewer.Sdk.Helpers;
+using ShadowViewer.Sdk.Navigation;
 using ShadowViewer.Sdk.Services;
 using ShadowViewer.Sdk.Utils;
 using SqlSugar;
@@ -65,7 +66,7 @@ public partial class BookShelfViewModel : ObservableObject
     /// <summary>
     /// 原始地址
     /// </summary>
-    public Uri OriginPath { get; private set; }
+    public ShadowUri OriginPath { get; private set; }
 
 
     /// <summary>
@@ -126,17 +127,19 @@ public partial class BookShelfViewModel : ObservableObject
     /// <summary>
     /// 导航
     /// </summary>
-    public void NavigateTo(Uri uri)
+    public void NavigateTo(ShadowUri uri)
     {
-        var splitUri = uri.AbsolutePath.Split(['/',], StringSplitOptions.RemoveEmptyEntries);
-        var path = splitUri.LastOrDefault();
         var toId = -1L;
-        try
+        if (uri.Query.ContainsKey("bookId"))
         {
-            toId = long.Parse(path ?? "-1"); // 无参数默认顶级
-        }
-        catch (FormatException)
-        {
+            var path = uri.Query["bookId"][0];
+            try
+            {
+                toId = long.Parse(path ?? "-1"); // 无参数默认顶级
+            }
+            catch (FormatException)
+            {
+            }
         }
 
         Logger.Information("导航到{Path},Path={P}", uri, toId);
@@ -383,7 +386,7 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private void DoubleTappedItem(LocalComic item)
     {
-        if (item.IsFolder) NavigateTo(new Uri($"shadow://local/bookshelf/{item.Id}"));
+        if (item.IsFolder) NavigateTo(ShadowUri.Parse($"shadow://local/bookshelf?bookId={item.Id}"));
         else
         {
             if (SelectedItems.Count != 1) return;
@@ -406,7 +409,7 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private void BackFolder()
     {
-        if (CurrentFolder.Id != -1) NavigateTo(new Uri($"shadow://local/bookshelf/{CurrentFolder.ParentId}"));
+        if (CurrentFolder.Id != -1) NavigateTo(ShadowUri.Parse($"shadow://local/bookshelf?bookId={CurrentFolder.ParentId}"));
     }
 
     /// <summary>
