@@ -8,7 +8,8 @@
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     xmlns:icons="using:FluentIcons.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:winUi="using:CommunityToolkit.WinUI"
+    xmlns:winUi="using:CommunityToolkit.WinUI" 
+    xmlns:icx="using:FluentIcons.WinUI.Markup"
     NavigationCacheMode="Required"
     xmlns:controls1="using:ShadowViewer.Plugin.Local.Controls"
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
@@ -413,7 +414,7 @@
                                     Visibility="{x:Bind ContentGridView.IsSingle,Mode=OneWay}"
                                     Command="{x:Bind ViewModel.ExportCommand}"
                                     CommandParameter="{x:Bind RootPage}"
-                                    Icon="{icons:FluentIcon Icon=ArrowExport}"
+                                    Icon="{icx:FluentIcon Icon=ArrowExport}"
                                     Text="{i18N:Locale Key=Export}"
                                     ToolTipService.ToolTip="{i18N:Locale Key=Export}">
                                 </MenuFlyoutItem>

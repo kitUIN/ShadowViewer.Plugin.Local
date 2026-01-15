@@ -7,7 +7,8 @@
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     xmlns:icons="using:FluentIcons.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:local="using:ShadowViewer.Plugin.Local"
+    xmlns:local="using:ShadowViewer.Plugin.Local" 
+    xmlns:icx="using:FluentIcons.WinUI.Markup"
     xmlns:controls1="using:ShadowViewer.Controls"
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
@@ -40,7 +41,7 @@
                 </StackPanel.ChildrenTransitions>
                 <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="{i18N:Locale Key=ShowSetting}" />
-                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=CalendarInfo}"
+                <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=CalendarInfo}"
                                        Description="{i18N:Locale Key=IsBookShelfInfoBarDescription}"
                                        Header="{i18N:Locale Key=IsBookShelfInfoBar}">
                     <ToggleSwitch
@@ -51,7 +52,7 @@
 
                 <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="{i18N:Locale Key=OperationSetting}" />
-                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=Checkbox2}"
+                <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=Checkbox2}"
                                        Description="{i18N:Locale Key=RememberDeleteWithFilesDescription}"
                                        Header="{i18N:Locale Key=RememberDeleteWithFiles}">
                     <ToggleSwitch
@@ -59,13 +60,13 @@
                         OffContent="{i18N:Locale Key=NeedOff}"
                         OnContent="{i18N:Locale Key=NeedOn}" />
                 </controls:SettingsCard>
-                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=DeleteLines}"
+                <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=DeleteLines}"
                                        Description="{i18N:Locale Key=DeleteWithFilesDescription}"
                                        Header="{i18N:Locale Key=DeleteWithFiles}">
 
                     <ToggleSwitch IsOn="{x:Bind Config.LocalIsDeleteFilesWithComicDelete, Mode=TwoWay}" />
                 </controls:SettingsCard>
-                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=CubeArrowCurveDown}"
+                <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=CubeArrowCurveDown}"
                                        Description="{i18N:Locale Key=IsImportAgainDescription}"
                                        Header="{i18N:Locale Key=IsImportAgain}">
                     <ToggleSwitch
@@ -75,7 +76,7 @@
                 </controls:SettingsCard>
                 <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="{i18N:Locale Key=LocalReaderSetting}" />
-                <controls:SettingsCard HeaderIcon="{icons:FluentIcon Icon=BookTemplate}"
+                <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=BookTemplate}"
                                        Description="{i18N:Locale Key=LocalReaderModeDescription}"
                                        Header="{i18N:Locale Key=LocalReaderMode}">
                     <Button>
