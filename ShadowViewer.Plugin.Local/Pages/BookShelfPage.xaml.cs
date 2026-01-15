@@ -7,6 +7,7 @@ using ShadowViewer.Plugin.Local.Models;
 using System;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.ViewModels;
+using ShadowViewer.Sdk.Navigation;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -35,7 +36,7 @@ public sealed partial class BookShelfPage
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         ViewModel = DiFactory.Services.Resolve<BookShelfViewModel>();
-        if (e.Parameter is Uri uri) ViewModel.NavigateTo(uri);
+        if (e.Parameter is ShadowUri uri) ViewModel.NavigateTo(uri);
     }
 
      
