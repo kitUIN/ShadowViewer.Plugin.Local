@@ -19,11 +19,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create GitHub release
-        uses: marvinpinto/action-automatic-releases@latest
+        uses: softprops/action-gh-release@v2
         with:
-          repo_token: "${{ secrets.RELEASE_TOKEN }}"
-          # automatic_release_tag: ${{ github.ref_name }}
-          title: ${{ github.ref_name }}
-          prerelease: false
-          # files: |
-          #   build/libs/*
+          tag_name: ${{ env.RELEASE_TAG }}
+          token: "${{ secrets.RELEASE_TOKEN }}"
