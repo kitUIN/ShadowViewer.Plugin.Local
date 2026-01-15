@@ -9,6 +9,7 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>preview</LangVersion>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<EnableCoreMrtTooling Condition=" '$(BuildingInsideVisualStudio)' != 'true' ">false</EnableCoreMrtTooling>
 
 		<PackageId>ShadowViewer.Plugin.Local</PackageId> 
 		<PluginName>本地阅读器</PluginName>
