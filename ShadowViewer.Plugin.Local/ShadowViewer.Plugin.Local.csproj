@@ -9,7 +9,6 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>preview</LangVersion>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<EnableCoreMrtTooling Condition=" '$(BuildingInsideVisualStudio)' != 'true' ">false</EnableCoreMrtTooling>
 
 		<PackageId>ShadowViewer.Plugin.Local</PackageId> 
 		<PluginName>本地阅读器</PluginName>
@@ -38,11 +37,11 @@
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240916" />
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.1.240916" />
 	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+	<ItemGroup Condition="'$(Configuration)' == 'Debug' and '$(GithubAction)' != 'true'">
 		<!-- <PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.5" /> -->
 		<ProjectReference Include="..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj" />
 	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' == 'Release'">
+	<ItemGroup Condition="'$(Configuration)' == 'Release' or '$(GithubAction)' == 'true'">
 		<PackageReference Include="ShadowViewer.Sdk" Version="3.0.1" />
 	</ItemGroup>
 </Project>
