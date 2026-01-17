@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Serilog;
 using ShadowPluginLoader.Attributes;
+using ShadowPluginLoader.WinUI.Config;
 using ShadowViewer.Controls.Extensions;
 using ShadowViewer.Plugin.Local.Cache;
 using ShadowViewer.Plugin.Local.Configs;
@@ -14,6 +15,7 @@ using ShadowViewer.Sdk.Cache;
 using ShadowViewer.Sdk.Enums;
 using ShadowViewer.Sdk.Extensions;
 using ShadowViewer.Sdk.Helpers;
+using ShadowViewer.Sdk.Services;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Readers;
@@ -24,7 +26,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
-using ShadowPluginLoader.WinUI.Config;
 
 namespace ShadowViewer.Plugin.Local.Services;
 
@@ -137,7 +138,7 @@ public partial class ZipComicImporter : FolderComicImporter
                 I18N.PasswordError,
                 "", I18N.ZipPasswordPlaceholder, "",
                 (_, _, text) => op.Password = text);
-            var res = await DialogHelper.ShowDialog(dialog);
+            var res = await NotifyService.ShowDialog(this, dialog);
             if (res == ContentDialogResult.None) break;
         }
 

@@ -113,6 +113,12 @@ public partial class BookShelfViewModel : ObservableObject
     /// 
     /// </summary>
     [Autowired]
+    private INotifyService NotifyService { get; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
     public LocalPluginConfig LocalPluginConfig { get; }
 
 
@@ -165,7 +171,7 @@ public partial class BookShelfViewModel : ObservableObject
                 RefreshLocalComic();
             });
 
-        await DialogHelper.ShowDialog(dialog);
+        await NotifyService.ShowDialog(this, dialog);
     }
 
     /// <summary>
@@ -186,7 +192,7 @@ public partial class BookShelfViewModel : ObservableObject
                     .ExecuteCommand();
                 RefreshLocalComic();
             });
-        await DialogHelper.ShowDialog(dialog);
+        await NotifyService.ShowDialog(this, dialog);
     }
 
     /// <summary>
@@ -234,7 +240,7 @@ public partial class BookShelfViewModel : ObservableObject
         };
         dialog.PrimaryButtonClick += (_, _) => DeleteComics();
         dialog.Focus(FocusState.Programmatic);
-        await DialogHelper.ShowDialog(dialog);
+        await NotifyService.ShowDialog(this, dialog);
         return;
 
         void RememberChecked(object sender, RoutedEventArgs e)
@@ -409,7 +415,8 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private void BackFolder()
     {
-        if (CurrentFolder.Id != -1) NavigateTo(ShadowUri.Parse($"shadow://local/bookshelf?bookId={CurrentFolder.ParentId}"));
+        if (CurrentFolder.Id != -1)
+            NavigateTo(ShadowUri.Parse($"shadow://local/bookshelf?bookId={CurrentFolder.ParentId}"));
     }
 
     /// <summary>
