@@ -67,13 +67,13 @@ public sealed partial class AttributesPage
     /// </summary>
     private async void AuthorButton_Click(object sender, RoutedEventArgs e)
     {
-        // var dialog = XamlHelper.CreateOneTextBoxDialog(XamlRoot,
+        // var dialog = XamlHelper.CreateOneTextBoxDialog( 
         //     ResourcesHelper.GetString(ResourceKey.Set),
         //     ResourcesHelper.GetString(ResourceKey.Author),
         //     "", 
-        //     ViewModel.CurrentComic.Author,
-        //     (s, e, t) => { ViewModel.CurrentComic.Author = t; });
-        // await dialog.ShowAsync();
+        //     ViewModel.CurrentComic.Authors,
+        //     (s, e, t) => { ViewModel.CurrentComic.Authors = t; });
+        // await ViewModel.NotifyService.ShowDialog(this, dialog);
     }
 
     /// <summary>
@@ -85,12 +85,8 @@ public sealed partial class AttributesPage
             I18N.Set,
             I18N.FileName,
             "", ViewModel.CurrentComic.Name,
-            (_, _, t) =>
-            {
-                ViewModel.CurrentComic.Name = t;
-
-            });
-        await dialog.ShowAsync();
+            (_, _, t) => { ViewModel.CurrentComic.Name = t; });
+        await ViewModel.NotifyService.ShowDialog(this, dialog);
     }
 
     /// <summary>
@@ -98,12 +94,12 @@ public sealed partial class AttributesPage
     /// </summary>
     private async void GrouprButton_Click(object sender, RoutedEventArgs e)
     {
-        // var dialog = XamlHelper.CreateOneTextBoxDialog(XamlRoot,
+        // var dialog = XamlHelper.CreateOneTextBoxDialog(
         //     ResourcesHelper.GetString(ResourceKey.Set),
         //     ResourcesHelper.GetString(ResourceKey.Group),
-        //     "", ViewModel.CurrentComic.Group,
+        //     "", ViewModel.CurrentComic.,
         //     (s, e, t) => { ViewModel.CurrentComic.Group = t; });
-        // await dialog.ShowAsync();
+        // await ViewModel.NotifyService.ShowDialog(this, dialog);
     }
 
 

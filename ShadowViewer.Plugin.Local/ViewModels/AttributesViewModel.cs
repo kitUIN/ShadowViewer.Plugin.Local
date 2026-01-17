@@ -8,6 +8,7 @@ using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Sdk;
 using ShadowViewer.Sdk.Models;
+using ShadowViewer.Sdk.Services;
 using SqlSugar;
 using LocalEpisode = ShadowViewer.Plugin.Local.Models.LocalEpisode;
 
@@ -15,6 +16,12 @@ namespace ShadowViewer.Plugin.Local.ViewModels;
 
 public partial class AttributesViewModel : ObservableObject
 {
+    /// <summary>
+    /// Gets the notify service.
+    /// </summary>
+    [Autowired]
+    public INotifyService NotifyService { get; }
+
     /// <summary>
     /// 最大文本宽度
     /// </summary>

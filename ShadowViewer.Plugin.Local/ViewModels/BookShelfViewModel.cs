@@ -119,6 +119,12 @@ public partial class BookShelfViewModel : ObservableObject
     /// 
     /// </summary>
     [Autowired]
+    private IFilePickerService FilePickerService { get; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [Autowired]
     public LocalPluginConfig LocalPluginConfig { get; }
 
 
@@ -283,7 +289,11 @@ public partial class BookShelfViewModel : ObservableObject
         var exportTypes = ComicIoService.GetExportSupportType();
         var item = SelectedItems.FirstOrDefault();
         if (item == null) return;
-        var file = await FileHelper.SaveFileAsync("SaveFile", item.Name, exportTypes);
+        var file = await FilePickerService.PickSaveFileAsync(
+            item.Name, 
+            exportTypes, 
+            PickerLocationId.Downloads, 
+            "SaveFile");
         if (file == null) return;
         var token = CancellationToken.None;
         await ComicIoService.Export(file, item, page.DispatcherQueue, token);
@@ -378,7 +388,10 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private async Task AddComicFromFolder(Page page)
     {
-        var folder = await FileHelper.SelectFolderAsync("AddNewComic");
+        var folder = await FilePickerService.PickFolderAsync(
+            PickerLocationId.Downloads, 
+            PickerViewMode.List, 
+            "AddNewComic");
         if (folder == null) return;
         var token = CancellationToken.None;
         await ComicIoService
@@ -425,8 +438,11 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private async Task AddComicFromZip(Page page)
     {
-        var files = await FileHelper.SelectMultipleFileAsync(
-            "AddComicsFromZip", PickerViewMode.List, ComicIoService.GetImportSupportType());
+        var files = await FilePickerService.PickMultipleFilesAsync(
+            ComicIoService.GetImportSupportType(), 
+            PickerLocationId.Downloads, 
+            PickerViewMode.List,
+            "AddComicsFromZip");
         if (!files.Any()) return;
         var token = CancellationToken.None;
         foreach (var file in files)
