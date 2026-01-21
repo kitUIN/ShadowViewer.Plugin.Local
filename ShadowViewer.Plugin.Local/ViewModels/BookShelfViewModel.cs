@@ -80,6 +80,11 @@ public partial class BookShelfViewModel : ObservableObject
     public ObservableCollection<LocalComic> SelectedItems { get; set; } = [];
 
     /// <summary>
+    /// 文件夹树形结构
+    /// </summary>
+    public ObservableCollection<ShadowPath> FolderTree { get; } = [];
+
+    /// <summary>
     /// 选中项的大小
     /// </summary>
     public long SelectedItemsSize => SelectedItems.Sum(x => x.Size);
@@ -160,6 +165,7 @@ public partial class BookShelfViewModel : ObservableObject
         OriginPath = uri;
         CurrentFolder = current ?? throw new Exception("跳转失败");
         RefreshLocalComic();
+        LoadFolderTree();
     }
 
 
@@ -380,6 +386,7 @@ public partial class BookShelfViewModel : ObservableObject
         {
             LocalComics.Add(item);
         }
+        LoadFolderTree();
     }
 
     /// <summary>
@@ -467,6 +474,46 @@ public partial class BookShelfViewModel : ObservableObject
             .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
             .Where(x => ids.Contains(x.Id))
             .ExecuteCommandAsync();
+    }
+
+    /// <summary>
+    /// 加载文件夹树
+    /// </summary>
+    public void LoadFolderTree()
+    {
+        FolderTree.Clear();
+        var selectedIds = SelectedItems.Select(x => x.Id).ToHashSet();
+        var allFolders = Db.Queryable<LocalComic>()
+            .Where(x => x.IsFolder && !x.IsDelete)
+            .ToList();
+
+        // 构建根节点（虚拟根目录）
+        var rootComic = new LocalComic
+        {
+            Id = -1,
+            Name = "Root",
+            Thumb = "ms-appx:///Assets/Default/folder.png",
+            IsFolder = true
+        };
+        var root = new ShadowPath(rootComic);
+        BuildFolderTree(root, allFolders, selectedIds);
+        FolderTree.Add(root);
+    }
+
+    /// <summary>
+    /// 递归构建文件夹树
+    /// </summary>
+    private static void BuildFolderTree(ShadowPath parent, List<LocalComic> allFolders, HashSet<long> excludeIds)
+    {
+        var children = allFolders
+            .Where(x => x.ParentId == parent.Id && !excludeIds.Contains(x.Id))
+            .ToList();
+
+        foreach (var childPath in children.Select(child => new ShadowPath(child)))
+        {
+            BuildFolderTree(childPath, allFolders, excludeIds);
+            parent.Children.Add(childPath);
+        }
     }
 
     #region 拖拽响应

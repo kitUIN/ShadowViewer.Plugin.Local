@@ -5,6 +5,8 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using ShadowViewer.Plugin.Local.Models;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.Sdk.Navigation;
@@ -41,15 +43,12 @@ public sealed partial class BookShelfPage
 
      
     /// <summary>
-    /// 
+    ///
     /// </summary>
     private void ShadowCommandMove_Click(object sender, RoutedEventArgs e)
     {
         HomeCommandBarFlyout.Hide();
-        // MoveTreeView.ItemsSource = new List<ShadowPath>
-        // {
-        //     new(ContentGridView.SelectedItems.Cast<LocalComic>().ToList().Select(c => c.Id))
-        // };
+        ViewModel.LoadFolderTree();
         MoveTeachingTip.IsOpen = true;
     }
  
@@ -58,9 +57,9 @@ public sealed partial class BookShelfPage
     /// <summary>
     /// 路径树-双击
     /// </summary>
-    private void TreeViewItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    private async void TreeViewItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
-        // MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
+        await MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
     }
 
     /// <summary>
@@ -68,28 +67,24 @@ public sealed partial class BookShelfPage
     /// </summary>
     /// <param name="sender">The sender.</param>
     /// <param name="args">The arguments.</param>
-    private void MoveTeachingTip_ActionButtonClick(TeachingTip sender, object args)
+    private async void MoveTeachingTip_ActionButtonClick(TeachingTip sender, object args)
     {
-        // MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
+        await MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
     }
 
     /// <summary>
     /// 移动到路径树
     /// </summary>
     /// <param name="path">The path.</param>
-    private void MoveToPath(ShadowPath path)
+    private async Task MoveToPath(ShadowPath path)
     {
-        // if (path == null) return;
-        // foreach (var comic in ContentGridView.SelectedItems.Cast<LocalComic>().ToList())
-        //     if (comic.Id != path.Id && path.IsFolder)
-        //         comic.Parent = path.Id;
-        // long size = 0;
-        // var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-        // db.Queryable<LocalComic>().Where(x => x.Parent == path.Id).ToList().ForEach(x => size += x.Size);
-        // path.SetSize(size);
-        // MoveTeachingTip.IsOpen = false;
-        // ViewModel.RefreshLocalComic();
-        
+        if (path == null) return;
+
+        var selectedComics = ViewModel.SelectedItems.ToList();
+        await ViewModel.MoveTo(path.Id, selectedComics);
+
+        MoveTeachingTip.IsOpen = false;
+        ViewModel.RefreshLocalComic();
     }
 
 

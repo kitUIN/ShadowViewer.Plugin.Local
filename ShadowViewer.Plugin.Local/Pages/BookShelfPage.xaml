@@ -220,28 +220,36 @@
         <TeachingTip
             x:Name="MoveTeachingTip"
             Title="{i18N:Locale Key=MoveTo}"
+            ActionButtonContent="{i18N:Locale Key=Confirm}"
+            CloseButtonContent="{i18N:Locale Key=Cancel}"
             ActionButtonClick="MoveTeachingTip_ActionButtonClick"
             IsLightDismissEnabled="True"
             PlacementMargin="20"
             PreferredPlacement="Center">
-            <!-- <TreeView x:Name="MoveTreeView" Margin="0,10,0,0"> -->
-            <!--     <TreeView.ItemTemplate> -->
-            <!--         <DataTemplate x:DataType="model:ShadowPath"> -->
-            <!--  <TreeViewItem  -->
-            <!--  DoubleTapped="TreeViewItem_DoubleTapped"  -->
-            <!--  IsDoubleTapEnabled="True"  -->
-            <!--  ItemsSource="{x:Bind Children}">  -->
-            <!--  <StackPanel  -->
-            <!--  Orientation="Horizontal"  -->
-            <!--  Spacing="5"  -->
-            <!--  ToolTipService.ToolTip="{x:Bind Name}">  -->
-            <!--                     <Image Width="20" Source="{x:Bind Img}" /> -->
-            <!--                     <TextBlock Text="{x:Bind Name}" /> -->
-            <!--                 </StackPanel> -->
-            <!--             </TreeViewItem> -->
-            <!--         </DataTemplate> -->
-            <!--     </TreeView.ItemTemplate> -->
-            <!-- </TreeView> -->
+            <TreeView x:Name="MoveTreeView" 
+                      Margin="0,10,0,0"
+                      MinWidth="250"
+                      MinHeight="200"
+                      MaxHeight="400"
+                      SelectionMode="Single"
+                      ItemsSource="{x:Bind ViewModel.FolderTree, Mode=OneWay}">
+                <TreeView.ItemTemplate>
+                    <DataTemplate x:DataType="dv:ShadowPath">
+                        <TreeViewItem 
+                            DoubleTapped="TreeViewItem_DoubleTapped"
+                            IsDoubleTapEnabled="True"
+                            ItemsSource="{x:Bind Children}">
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                ToolTipService.ToolTip="{x:Bind Name}">
+                                <Image Width="20" Height="20" Source="{x:Bind Thumb}" />
+                                <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </TreeViewItem>
+                    </DataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
         </TeachingTip>
         <!--#endregion-->
 
@@ -393,6 +401,7 @@
                                     Text="{i18N:Locale Key=Rename}"
                                     ToolTipService.ToolTip="{i18N:Locale Key=Rename}" />
                                 <MenuFlyoutItem
+                                    Click="ShadowCommandMove_Click"
                                     Icon="MoveToFolder"
                                     Visibility="{x:Bind ContentGridView.AnySelect,Mode=OneWay}"
                                     Text="{i18N:Locale Key=MoveTo}"
