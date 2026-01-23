@@ -295,9 +295,8 @@ public partial class BookShelfViewModel : ObservableObject
         var exportTypes = ComicIoService.GetExportSupportType();
         var item = SelectedItems.FirstOrDefault();
         if (item == null) return;
-        var file = await FilePickerService.PickSaveFileAsync(
-            item.Name, 
-            exportTypes, 
+        var file = await FilePickerService.PickSaveFileAsync(exportTypes,
+            item.Name,  
             PickerLocationId.Downloads, 
             "SaveFile");
         if (file == null) return;
