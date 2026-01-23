@@ -37,6 +37,7 @@ public partial class PicViewModel : ObservableObject
     /// </summary>
     [NotifyCanExecuteChangedFor(nameof(NextEpisodeCommand))]
     [NotifyCanExecuteChangedFor(nameof(PrevEpisodeCommand))]
+    [NotifyPropertyChangedFor(nameof(NextEpisodeTip))]
     [ObservableProperty]
     public partial int CurrentEpisodeIndex { get; set; } = -1;
 
@@ -54,29 +55,39 @@ public partial class PicViewModel : ObservableObject
     /// 当前页
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NextEpisodeTip))]
     public partial int CurrentPage { get; set; }
+
+    /// <summary>
+    ///  下一页显示
+    /// </summary> 
+    public bool NextEpisodeTip => CurrentPage == Images.Count && CanNextEpisode;
 
     /// <summary>
     /// 菜单可见性
     /// </summary>
-    [ObservableProperty] public partial bool IsMenu { get; set; }
+    [ObservableProperty]
+    public partial bool IsMenu { get; set; }
 
 
     /// <summary>
     /// 点击区域设定模式
     /// </summary>
-    [NotifyPropertyChangedFor(nameof(MenuOpacity))] [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MenuOpacity))]
+    [ObservableProperty]
     public partial bool TappedGridSetting { get; set; }
 
     /// <summary>
     /// 滚动填充设置
     /// </summary>
-    [ObservableProperty] public partial bool ScrollingPaddingSetting { get; set; }
+    [ObservableProperty]
+    public partial bool ScrollingPaddingSetting { get; set; }
 
     /// <summary>
     /// 滚动填充启用状态
     /// </summary>
-    [ObservableProperty] public partial bool ScrollingPaddingEnabled { get; set; }
+    [ObservableProperty]
+    public partial bool ScrollingPaddingEnabled { get; set; }
 
     /// <summary>
     /// 菜单透明度

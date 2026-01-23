@@ -432,4 +432,10 @@
   <data name="AutoPageSpeed" xml:space="preserve">
     <value>翻页速度(秒/每页)</value>
   </data>
+  <data name="NextEpisodeTipTitle" xml:space="preserve">
+    <value>已读完本话</value>
+  </data>
+  <data name="NextEpisodeTipSubTitle" xml:space="preserve">
+    <value>是否跳转到下一话？</value>
+  </data>
 </root>

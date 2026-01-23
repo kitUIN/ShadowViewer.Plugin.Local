@@ -32,11 +32,22 @@
                               IgnoreViewChanged="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
                               Pictures="{x:Bind ViewModel.Images, Mode=OneWay}">
         </controls:LocalReader>
-        <controls:FlashIcon HorizontalAlignment="Right" VerticalAlignment="Bottom" 
-                            Margin="0,0,0,0" 
-                            ToolTipService.ToolTip="{i18N:Locale Key=AutoPage}" 
-                            Status="{x:Bind LocalPluginConfig.PageAutoTurn,Mode=OneWay}" 
-                            Visibility="{x:Bind LocalPluginConfig.PageAutoTurn,Mode=OneWay}" ></controls:FlashIcon>
+        <controls:FlashIcon HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                            Margin="0,0,0,0"
+                            ToolTipService.ToolTip="{i18N:Locale Key=AutoPage}"
+                            Status="{x:Bind LocalPluginConfig.PageAutoTurn,Mode=OneWay}"
+                            Visibility="{x:Bind LocalPluginConfig.PageAutoTurn,Mode=OneWay}" />
+
+        <TeachingTip 
+             Title="{i18N:Locale Key=NextEpisodeTipTitle}"
+            IsOpen="{x:Bind ViewModel.NextEpisodeTip, Mode=OneWay}"
+            Subtitle="{i18N:Locale Key=NextEpisodeTipSubTitle}"
+            ActionButtonContent="{i18N:Locale Key=NextEpisode}"
+            CloseButtonContent="{i18N:Locale Key=Cancel}"
+            ActionButtonCommand="{x:Bind ViewModel.NextEpisodeCommand}"
+            PreferredPlacement="Auto"
+            IsLightDismissEnabled="True" />
+
         <Grid Background="#AA141414" Visibility="{x:Bind ViewModel.IsMenu,Mode=OneWay}">
             <Grid Loaded="InitTappedGridLayout" x:Name="TappedGrid"
                   Visibility="{x:Bind ViewModel.TappedGridSetting,Mode=OneWay}">
@@ -135,7 +146,15 @@
                                         Background="Gray" />
 
             </Grid>
-            
+            <!-- 顶部中央悬浮的当前章节选择器 -->
+            <ComboBox HorizontalAlignment="Center"
+                      VerticalAlignment="Top"
+                      Margin="0,10,0,0"
+                      DisplayMemberPath="Title"
+                      Visibility="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
+                      ItemsSource="{x:Bind ViewModel.Episodes, Mode=OneWay}"
+                      SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" />
+
             <Grid Background="{ThemeResource AcrylicBackgroundFillColorBaseBrush}"
                   Opacity="{x:Bind ViewModel.MenuOpacity,Mode=OneWay}" Margin="0,0,0, 10"
                   CornerRadius="5" HorizontalAlignment="Center" VerticalAlignment="Bottom">
@@ -208,7 +227,8 @@
                                                 <TextBlock VerticalAlignment="Center"
                                                            Text="{i18N:Locale Key=AutoPageSpeed}">
                                                 </TextBlock>
-                                                <NumberBox VerticalAlignment="Center" Value="{x:Bind LocalPluginConfig.PageAutoTurnInterval,Mode=TwoWay}"
+                                                <NumberBox VerticalAlignment="Center"
+                                                           Value="{x:Bind LocalPluginConfig.PageAutoTurnInterval,Mode=TwoWay}"
                                                            SmallChange="1"
                                                            LargeChange="10">
                                                 </NumberBox>
@@ -236,12 +256,6 @@
                                     Grid.Column="0">
                                 <winUi:FluentIcon Icon="ChevronDoubleLeft"></winUi:FluentIcon>
                             </Button>
-                            <!-- <ComboBox Grid.Column="0" -->
-                            <!--           VerticalAlignment="Center" -->
-                            <!--           DisplayMemberPath="Title" -->
-                            <!--           ItemsSource="{x:Bind ViewModel.Episodes}" -->
-                            <!--           SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}" /> -->
-
                             <TextBlock TextAlignment="Right"
                                        Grid.Column="1"
                                        VerticalAlignment="Center" Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" />
