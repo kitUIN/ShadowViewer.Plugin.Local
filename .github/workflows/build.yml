@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: kitUIN/ShadowViewer.Sdk
-          path: D:\ShadowViewer.Sdk
+          path: ShadowViewer.Sdk
 
       - name: Install .NET
         uses: actions/setup-dotnet@v4
