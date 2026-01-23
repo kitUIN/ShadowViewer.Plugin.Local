@@ -24,11 +24,11 @@
 		<!--nuget数据 -->
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
-		<Copyright>Copyright 2023-2025</Copyright>
+		<Copyright>Copyright 2023-2026</Copyright>
 		<PackageTags>kitUIN;wasdk;ShadowViewer;plugin;winui</PackageTags>
 		<PackageOutputPath>..\..\..\NugetPackages</PackageOutputPath>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<NoWarn>MSB3277</NoWarn>
+		<NoWarn>MSB3277;NU5118</NoWarn>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
@@ -37,11 +37,11 @@
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240916" />
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.1.240916" />
 	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' == 'Debug' Or '$(MainGithubAction)' == 'true'">
-		<!-- <PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.5" /> -->
+	<ItemGroup Condition="'$(Configuration)' == 'Debug' Or '$(DepsUseNuget)' != 'true'">
 		<ProjectReference Include="..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj" />
 	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<PackageReference Include="ShadowViewer.Sdk" Version="3.1.0" />
+
+	<ItemGroup Condition="'$(Configuration)' == 'Release' And '$(DepsUseNuget)' == 'true'">
+		<PackageReference Include="ShadowViewer.Sdk" Version="3.1.2" />
 	</ItemGroup>
 </Project>
