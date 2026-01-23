@@ -37,7 +37,7 @@
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240916" />
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.1.240916" />
 	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+	<ItemGroup Condition="'$(Configuration)' == 'Debug' Or '$(MainGithubAction)' == 'true'">
 		<!-- <PackageReference Include="ShadowViewer.Sdk" Version="3.0.0.5" /> -->
 		<ProjectReference Include="..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj" />
 	</ItemGroup>
