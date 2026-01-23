@@ -6,10 +6,6 @@
   "Authors": "{{ Authors }}",
   "WebUri": "{{ PackageProjectUrl }}",
   "Logo": "fluent://regular/ResizeImage",
-  "PluginManage": {
-    "CanSwitch": false,
-    "CanOpenFolder": false
-  },
   "AffiliationTag": {
     "Name": "Local",
     "BackgroundHex": "#ffd657",

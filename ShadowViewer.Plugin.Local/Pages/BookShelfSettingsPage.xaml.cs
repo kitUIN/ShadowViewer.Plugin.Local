@@ -4,15 +4,13 @@ using Microsoft.UI.Xaml.Navigation;
 using ShadowPluginLoader.Attributes;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Configs;
-using ShadowViewer.Plugin.Local.ViewModels;
-using ShadowViewer.Sdk.Plugins;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
 /// <summary>
 /// 
 /// </summary>
-[EntryPoint(Name = nameof(PluginManage.SettingsPage))]
+[EntryPoint(Name = "SettingsPage")]
 public sealed partial class BookShelfSettingsPage : Page
 {
     /// <summary>
