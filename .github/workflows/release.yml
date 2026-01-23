@@ -23,7 +23,12 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-
+      - name: Checkout sdk repo
+        uses: actions/checkout@v4
+        with:
+          repository: kitUIN/ShadowViewer.Sdk
+          path: ShadowViewer.Sdk
+          
       - name: Install .NET
         uses: actions/setup-dotnet@v4
         with:
