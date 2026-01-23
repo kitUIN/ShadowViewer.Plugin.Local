@@ -5,10 +5,14 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using ShadowViewer.Plugin.Local.Models;
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.System;
+using Windows.UI.Core;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.ViewModels;
+using ShadowViewer.Sdk.Helpers;
 using ShadowViewer.Sdk.Navigation;
 
 namespace ShadowViewer.Plugin.Local.Pages;
@@ -93,14 +97,22 @@ public sealed partial class BookShelfPage
     /// </summary>
     private void GridViewOnKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        // var view = sender as GridView;
-        // if (e.Key == VirtualKey.A &&
-        //     WindowHelper.GetWindow(XamlRoot)
-        //         !.CoreWindow.GetKeyState(VirtualKey.Shift)
-        //         .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down))
-        //     foreach (var comic in (ObservableCollection<LocalComic>)view!.ItemsSource)
-        //         view.SelectedItems.Add(comic);
-        // else if (e.Key == VirtualKey.Delete) Delete();
+        var view = sender as GridView;
+        switch (e.Key)
+        {
+            case VirtualKey.A when
+                WindowHelper.GetWindow(XamlRoot)
+                    !.CoreWindow.GetKeyState(VirtualKey.Shift)
+                    .HasFlag(CoreVirtualKeyStates.Down):
+            {
+                foreach (var comic in (ObservableCollection<LocalComic>)view!.ItemsSource)
+                    view.SelectedItems.Add(comic);
+                break;
+            }
+            case VirtualKey.Delete:
+                ViewModel.DeleteCommand.Execute(null);
+                break;
+        }
     }
 
     /// <summary>

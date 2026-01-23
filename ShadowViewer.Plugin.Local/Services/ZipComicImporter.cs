@@ -41,7 +41,7 @@ public partial class ZipComicImporter : FolderComicImporter
     /// <summary>
     /// 支持的类型
     /// </summary>
-    public override string[] SupportTypes => [".zip", ".rar", ".tar", ".cbr", ".cbz", ".shad"];
+    public override string[] SupportTypes => [".zip", ".rar", ".tar", ".cbr", ".cbz", ".shad", ".7z"];
 
 
     /// <inheritdoc />

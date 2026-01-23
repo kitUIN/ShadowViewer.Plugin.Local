@@ -271,7 +271,7 @@ public partial class BookShelfViewModel : ObservableObject
     /// 删除
     /// </summary>
     [RelayCommand]
-    private async Task Delete(Page page)
+    private async Task Delete()
     {
         if (SelectedItems.All(x => x.IsFolder))
         {
