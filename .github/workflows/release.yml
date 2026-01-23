@@ -64,7 +64,6 @@ jobs:
           path: |
             NugetPackages/*
             ${{ env.Solution_Name }}/bin/**/plugin.json
-            ${{ env.Solution_Name }}/Packages/${{ env.Solution_Name }}*.sdow
 
   release:
     runs-on: windows-latest
@@ -83,7 +82,6 @@ jobs:
           title: ${{ env.RELEASE_TAG }}
           prerelease: false
           files: |
-            ./output/**/${{ env.Solution_Name }}*.sdow
             ./output/**/plugin.json
             ./output/**/*.nupkg
             ./output/**/*.snupkg
