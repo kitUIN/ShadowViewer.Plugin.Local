@@ -80,7 +80,7 @@ public sealed partial class BookShelfPage
     /// 移动到路径树
     /// </summary>
     /// <param name="path">The path.</param>
-    private async Task MoveToPath(ShadowPath path)
+    private async Task MoveToPath(ShadowPath? path)
     {
         if (path == null) return;
 

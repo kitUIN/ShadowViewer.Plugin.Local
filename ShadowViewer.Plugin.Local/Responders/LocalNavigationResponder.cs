@@ -37,7 +37,7 @@ public class LocalNavigationResponder : AbstractNavigationResponder
                 pluginId: PluginConstants.PluginId,
                 id: "BookShelf",
                 uri: ShadowUri.Parse("shadow://local/bookshelf"),
-                icon: new SymbolIcon(Symbol.Home),
+                icon: "symbol://Home",
                 content: I18N.BookShelf)
         };
 
