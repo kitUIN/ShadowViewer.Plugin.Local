@@ -7,6 +7,7 @@ using ShadowViewer.Plugin.Local.Models.Interfaces;
 using ShadowViewer.Sdk.Models;
 using SqlSugar;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace ShadowViewer.Plugin.Local.Models;
@@ -134,6 +135,11 @@ public partial class LocalComic : ObservableObject, IComicNode
     /// 阅读记录
     /// </summary>
     public LocalReadingRecord ReadingRecord { get; set; } = null!;
+
+    /// <summary>
+    /// Gets the children.
+    /// </summary>
+    public ICollection<IComicNode> Children { get; } = [];
 
     #endregion
 

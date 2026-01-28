@@ -473,7 +473,7 @@ public partial class BookShelfViewModel : ObservableObject
     {
         var ids = comics.Select(x => x.Id).ToList();
         if (ids.Contains(newFolderId)) return;
-        await Db.Updateable<LocalComic>()
+        await Db.Updateable<ComicNode>()
             .SetColumns(x => x.ParentId == newFolderId)
             .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
             .Where(x => ids.Contains(x.Id))
@@ -490,14 +490,7 @@ public partial class BookShelfViewModel : ObservableObject
         var allFolders = Db.Queryable<ComicNode>()
             .Where(x => x.NodeType == "Folder" && !x.IsDelete)
             .ToList();
-
-        // 构建根节点（虚拟根目录）
-        var rootComic = new ComicNode
-        {
-            Id = -1,
-            Name = "Root",
-            NodeType = "Folder"
-        };
+        var rootComic = allFolders.First(x => x.Id == -1);
         BuildFolderTree(rootComic, allFolders, selectedIds);
         FolderTree.Add(rootComic);
     }

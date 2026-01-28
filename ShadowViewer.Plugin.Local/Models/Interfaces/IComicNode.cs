@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ShadowViewer.Plugin.Local.Models.Interfaces
 {
@@ -46,6 +48,11 @@ namespace ShadowViewer.Plugin.Local.Models.Interfaces
         /// 获取或设置当前用户的本地阅读进度/记录。
         /// </summary>
         LocalReadingRecord ReadingRecord { get; set; }
+
+        /// <summary>
+        /// Gets the children.
+        /// </summary>
+        ICollection<IComicNode> Children { get; }
 
         #region 排序
 

@@ -4,14 +4,15 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:entities="using:ShadowViewer.Plugin.Local.Entities"
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
+    xmlns:icons="using:FluentIcons.WinUI"
+    xmlns:interfaces="using:ShadowViewer.Sdk.Models.Interfaces"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:ShadowViewer.Sdk.Models"
-    x:Name="ThisPage"
-    xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
     xmlns:models1="using:ShadowViewer.Plugin.Local.Models"
-    xmlns:interfaces="using:ShadowViewer.Sdk.Models.Interfaces"
-    xmlns:icons="using:FluentIcons.WinUI"
+    xmlns:winuiConverters="using:CommunityToolkit.WinUI.Converters"
+    x:Name="ThisPage"
     mc:Ignorable="d">
     <Page.Resources>
         <x:Double x:Key="AttributesFontSize">16</x:Double>
@@ -79,7 +80,10 @@
                                                     VerticalAlignment="Bottom"
                                                     Click="FileNameButton_Click"
                                                     ToolTipService.ToolTip="{i18N:Locale Key=Revise}">
-                                                    <icons:FluentIcon FontSize="15" Icon="Edit" IconVariant="Filled" />
+                                                    <icons:FluentIcon
+                                                        FontSize="15"
+                                                        Icon="Edit"
+                                                        IconVariant="Filled" />
                                                 </HyperlinkButton>
                                             </StackPanel>
                                             <!--#endregion-->
@@ -102,7 +106,10 @@
                                                     VerticalAlignment="Bottom"
                                                     Click="AuthorButton_Click"
                                                     ToolTipService.ToolTip="{i18N:Locale Key=Revise}">
-                                                    <icons:FluentIcon FontSize="15" Icon="Edit" IconVariant="Filled" />
+                                                    <icons:FluentIcon
+                                                        FontSize="15"
+                                                        Icon="Edit"
+                                                        IconVariant="Filled" />
                                                 </HyperlinkButton>
                                             </StackPanel>
                                             <!--#endregion-->
@@ -125,7 +132,10 @@
                                                     VerticalAlignment="Bottom"
                                                     Click="GrouprButton_Click"
                                                     ToolTipService.ToolTip="{i18N:Locale Key=Revise}">
-                                                    <icons:FluentIcon IconVariant="Filled" FontSize="15" Icon="Edit" />
+                                                    <icons:FluentIcon
+                                                        FontSize="15"
+                                                        Icon="Edit"
+                                                        IconVariant="Filled" />
                                                 </HyperlinkButton>
                                             </StackPanel>
                                             <!--#endregion-->
@@ -283,8 +293,10 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Id, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentIcon FontSize="15"
-                                                                    Icon="Copy" IconVariant="Regular" />
+                                                                <icons:FluentIcon
+                                                                    FontSize="15"
+                                                                    Icon="Copy"
+                                                                    IconVariant="Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -315,8 +327,10 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Thumb, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentIcon FontSize="15"
-                                                                    Icon="Copy" IconVariant="Regular" />
+                                                                <icons:FluentIcon
+                                                                    FontSize="15"
+                                                                    Icon="Copy"
+                                                                    IconVariant="Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -347,8 +361,10 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Link, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentIcon FontSize="15"
-                                                                    Icon="Copy" IconVariant="Regular" />
+                                                                <icons:FluentIcon
+                                                                    FontSize="15"
+                                                                    Icon="Copy"
+                                                                    IconVariant="Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -379,8 +395,10 @@
                                                                 Click="CopyButton_Click"
                                                                 Tag="{x:Bind ViewModel.CurrentComic.Link, Mode=OneWay}"
                                                                 ToolTipService.ToolTip="{i18N:Locale Key=Copy}">
-                                                                <icons:FluentIcon FontSize="15"
-                                                                    Icon="Copy" IconVariant="Regular" />
+                                                                <icons:FluentIcon
+                                                                    FontSize="15"
+                                                                    Icon="Copy"
+                                                                    IconVariant="Regular" />
                                                             </HyperlinkButton>
                                                         </Grid>
                                                         <!--#endregion-->
@@ -408,25 +426,26 @@
                         CornerRadius="10">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"></ColumnDefinition>
-                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
                             <ItemsRepeater Grid.Column="0" ItemsSource="{x:Bind ViewModel.Tags, Mode=OneWay}">
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate x:DataType="interfaces:IShadowTag">
-                                        <Button Height="34"
-                                                Background="{x:Bind Background}"
-                                                CornerRadius="10"
-                                                Foreground="{x:Bind Foreground}"
-                                                Style="{ThemeResource NoOverButton}">
+                                        <Button
+                                            Height="34"
+                                            Background="{x:Bind Background}"
+                                            CornerRadius="10"
+                                            Foreground="{x:Bind Foreground}"
+                                            Style="{ThemeResource NoOverButton}">
                                             <StackPanel Orientation="Horizontal">
                                                 <icons:FluentIcon
                                                     Margin="0,1,5,0"
                                                     FontSize="18"
+                                                    Glyph="{x:Bind Icon}"
                                                     IconVariant="Regular"
-                                                    Visibility="{x:Bind Icon, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}"
-                                                    Glyph="{x:Bind Icon}" />
+                                                    Visibility="{x:Bind Icon, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}" />
                                                 <TextBlock VerticalAlignment="Center" Text="{x:Bind Name}" />
                                             </StackPanel>
                                         </Button>
@@ -436,13 +455,17 @@
                                     <controls:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
                                 </ItemsRepeater.Layout>
                             </ItemsRepeater>
-                            <HyperlinkButton Grid.Column="1" Height="34" Width="34" VerticalAlignment="Center"
-                                             Padding="3" Command="{x:Bind ViewModel.TagClickCommand}"
-
-                                             ToolTipService.ToolTip="{i18N:Locale Key=AddTag}">
+                            <HyperlinkButton
+                                Grid.Column="1"
+                                Width="34"
+                                Height="34"
+                                Padding="3"
+                                VerticalAlignment="Center"
+                                Command="{x:Bind ViewModel.TagClickCommand}"
+                                ToolTipService.ToolTip="{i18N:Locale Key=AddTag}">
                                 <icons:FluentIcon
                                     HorizontalAlignment="Center"
-                                    FontSize="18" 
+                                    FontSize="18"
                                     Icon="AddSquareMultiple" />
                             </HyperlinkButton>
                         </Grid>
@@ -463,7 +486,7 @@
                         Visibility="{x:Bind ViewModel.IsHaveEpisodes}">
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.Episodes, Mode=OneWay}">
                             <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="models1:ComicChapter">
+                                <DataTemplate x:DataType="entities:ComicChapter">
                                     <Button
                                         Click="Episode_Click"
                                         CornerRadius="10"
@@ -472,9 +495,7 @@
                                         <ToolTipService.ToolTip>
                                             <ToolTip>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <icons:FluentIcon
-                                                        FontSize="14"
-                                                        Icon="DocumentOnePage" />
+                                                    <icons:FluentIcon FontSize="14" Icon="DocumentOnePage" />
                                                     <TextBlock FontSize="12" Text="{x:Bind PageCount}" />
                                                     <TextBlock FontSize="12" Text="P" />
                                                 </StackPanel>
@@ -502,32 +523,41 @@
                 </StackPanel>
             </Grid>
         </ScrollViewer>
-        <TeachingTip Title="{i18N:Locale Key=AddTag}"
-                     PreferredPlacement="Center" IsLightDismissEnabled="False"
-                     ActionButtonContent="{i18N:Locale Key=Confirm}"
-                     IsOpen="{x:Bind ViewModel.NewUiTagVisible,Mode=TwoWay}"
-                     ActionButtonCommand="{x:Bind ViewModel.AddNewTagCommand}"
-                     CloseButtonContent="{i18N:Locale Key=Cancel}">
+        <TeachingTip
+            Title="{i18N:Locale Key=AddTag}"
+            ActionButtonCommand="{x:Bind ViewModel.AddNewTagCommand}"
+            ActionButtonContent="{i18N:Locale Key=Confirm}"
+            CloseButtonContent="{i18N:Locale Key=Cancel}"
+            IsLightDismissEnabled="False"
+            IsOpen="{x:Bind ViewModel.NewUiTagVisible, Mode=TwoWay}"
+            PreferredPlacement="Center">
             <Grid RowSpacing="10">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid Grid.Row="0" ColumnSpacing="10">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"></ColumnDefinition>
-                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{i18N:Locale Key=TagName}" />
-                    <AutoSuggestBox Grid.Column="1" x:Name="TagName"
-                                    Text="{x:Bind ViewModel.NewUiTag.Name,Mode=TwoWay}" />
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Text="{i18N:Locale Key=TagName}" />
+                    <AutoSuggestBox
+                        x:Name="TagName"
+                        Grid.Column="1"
+                        Text="{x:Bind ViewModel.NewUiTag.Name, Mode=TwoWay}" />
                 </Grid>
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10">
+                <StackPanel
+                    Grid.Row="1"
+                    Orientation="Horizontal"
+                    Spacing="10">
                     <TextBlock VerticalAlignment="Center" Text="{i18N:Locale Key=BackgroundColor}" />
-                    <controls:ColorPickerButton x:Name="BackgroundColorPicker"
-                                                SelectedColor="{x:Bind ViewModel.NewUiTag.BackgroundColor,Mode=TwoWay}">
+                    <controls:ColorPickerButton x:Name="BackgroundColorPicker" SelectedColor="{x:Bind ViewModel.NewUiTag.BackgroundColor, Mode=TwoWay}">
                         <controls:ColorPickerButton.ColorPickerStyle>
                             <Style TargetType="controls:ColorPicker">
                                 <Setter Property="ColorSpectrumShape" Value="Box" />
@@ -537,10 +567,12 @@
                         </controls:ColorPickerButton.ColorPickerStyle>
                     </controls:ColorPickerButton>
                 </StackPanel>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                <StackPanel
+                    Grid.Row="2"
+                    Orientation="Horizontal"
+                    Spacing="10">
                     <TextBlock VerticalAlignment="Center" Text="{i18N:Locale Key=ForegroundColor}" />
-                    <controls:ColorPickerButton x:Name="ForegroundColorPicker"
-                                                SelectedColor="{x:Bind ViewModel.NewUiTag.ForegroundColor,Mode=TwoWay}">
+                    <controls:ColorPickerButton x:Name="ForegroundColorPicker" SelectedColor="{x:Bind ViewModel.NewUiTag.ForegroundColor, Mode=TwoWay}">
                         <controls:ColorPickerButton.ColorPickerStyle>
                             <Style TargetType="controls:ColorPicker">
                                 <Setter Property="ColorSpectrumShape" Value="Box" />
@@ -550,20 +582,24 @@
                         </controls:ColorPickerButton.ColorPickerStyle>
                     </controls:ColorPickerButton>
                 </StackPanel>
-                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="10">
+                <StackPanel
+                    Grid.Row="3"
+                    Orientation="Horizontal"
+                    Spacing="10">
                     <TextBlock VerticalAlignment="Center" Text="{i18N:Locale Key=Preview}" />
-                    <Button Height="34"
-                            Background="{x:Bind ViewModel.NewUiTag.Background,Mode=OneWay}"
-                            CornerRadius="10"
-                            Foreground="{x:Bind ViewModel.NewUiTag.Foreground,Mode=OneWay}"
-                            Style="{ThemeResource NoOverButton}">
+                    <Button
+                        Height="34"
+                        Background="{x:Bind ViewModel.NewUiTag.Background, Mode=OneWay}"
+                        CornerRadius="10"
+                        Foreground="{x:Bind ViewModel.NewUiTag.Foreground, Mode=OneWay}"
+                        Style="{ThemeResource NoOverButton}">
                         <StackPanel Orientation="Horizontal">
                             <icons:FluentIcon
                                 Margin="0,1,5,0"
                                 FontSize="18"
                                 Glyph="{x:Bind ViewModel.NewUiTag.Icon}"
                                 Visibility="{x:Bind ViewModel.NewUiTag.Icon, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}" />
-                            <TextBlock VerticalAlignment="Center" Text="{x:Bind ViewModel.NewUiTag.Name,Mode=OneWay}" />
+                            <TextBlock VerticalAlignment="Center" Text="{x:Bind ViewModel.NewUiTag.Name, Mode=OneWay}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>

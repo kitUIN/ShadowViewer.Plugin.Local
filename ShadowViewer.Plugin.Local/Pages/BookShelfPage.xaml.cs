@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using Windows.System;
 using Windows.UI.Core;
 using ShadowPluginLoader.WinUI;
+using ShadowViewer.Plugin.Local.Entities;
+using ShadowViewer.Plugin.Local.Models.Interfaces;
 using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.Sdk.Helpers;
 using ShadowViewer.Sdk.Navigation;
@@ -63,7 +65,7 @@ public sealed partial class BookShelfPage
     /// </summary>
     private async void TreeViewItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
-        await MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
+        await MoveToPath(MoveTreeView.SelectedItem as IComicNode);
     }
 
     /// <summary>
@@ -73,14 +75,14 @@ public sealed partial class BookShelfPage
     /// <param name="args">The arguments.</param>
     private async void MoveTeachingTip_ActionButtonClick(TeachingTip sender, object args)
     {
-        await MoveToPath(MoveTreeView.SelectedItem as ShadowPath);
+        await MoveToPath(MoveTreeView.SelectedItem as IComicNode);
     }
 
     /// <summary>
     /// 移动到路径树
     /// </summary>
     /// <param name="path">The path.</param>
-    private async Task MoveToPath(ShadowPath? path)
+    private async Task MoveToPath(IComicNode? path)
     {
         if (path == null) return;
 

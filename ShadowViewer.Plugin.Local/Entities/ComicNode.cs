@@ -6,6 +6,7 @@ using ShadowViewer.Plugin.Local.Models.Interfaces;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ShadowViewer.Plugin.Local.Entities;
 
@@ -128,7 +129,7 @@ public class ComicNode : IComicNode
     /// 
     /// </summary>
     [SugarColumn(IsIgnore = true)]
-    public List<ComicNode> Children { get; } = [];
+    public ICollection<IComicNode> Children { get; } = new ObservableCollection<IComicNode>();
 
     /// <summary>
     /// 新建文件夹

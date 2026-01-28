@@ -17,6 +17,7 @@
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
     xmlns:controls2="using:ShadowViewer.Controls"
     xmlns:utils1="using:ShadowViewer.Sdk.Utils"
+    xmlns:interfaces="using:ShadowViewer.Plugin.Local.Models.Interfaces"
     x:Name="RootPage"
     mc:Ignorable="d">
     <Page.Resources>
@@ -234,7 +235,7 @@
                       SelectionMode="Single"
                       ItemsSource="{x:Bind ViewModel.FolderTree, Mode=OneWay}">
                 <TreeView.ItemTemplate>
-                    <DataTemplate x:DataType="dv:ShadowPath">
+                    <DataTemplate x:DataType="interfaces:IComicNode">
                         <TreeViewItem 
                             DoubleTapped="TreeViewItem_DoubleTapped"
                             IsDoubleTapEnabled="True"
