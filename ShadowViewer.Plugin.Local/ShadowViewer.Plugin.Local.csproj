@@ -43,14 +43,18 @@
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.1.240916" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'Debug' Or '$(DepsUseNuget)' != 'true'">
-		<ProjectReference Include="..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj"
-		                  Condition="Exists('..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj')" />
-		<ProjectReference Include="..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj"
-		                  Condition="Exists('..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj')" />
+		<ProjectReference Include="..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj" Condition="Exists('..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj')" />
+		<ProjectReference Include="..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj" Condition="Exists('..\..\ShadowViewer.Sdk\ShadowViewer.Sdk\ShadowViewer.Sdk.csproj')" />
 	</ItemGroup>
 
 
 	<ItemGroup Condition="'$(Configuration)' == 'Release' And '$(DepsUseNuget)' == 'true'">
 		<PackageReference Include="ShadowViewer.Sdk" Version="3.2" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+	  <Folder Include="Extensions\" />
+	  <Folder Include="Helpers\" />
 	</ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Models;
@@ -11,7 +12,7 @@ public partial class LocalUiEpisode : ObservableObject, IUiEpisode
     /// <summary>
     /// 
     /// </summary>
-    public LocalEpisode Source { get; set; }
+    public ComicChapter Source { get; set; }
 
     [ObservableProperty] public partial string Title { get; set; }
 
@@ -19,7 +20,7 @@ public partial class LocalUiEpisode : ObservableObject, IUiEpisode
     /// 
     /// </summary>
     /// <param name="episode"></param>
-    public LocalUiEpisode(LocalEpisode episode)
+    public LocalUiEpisode(ComicChapter episode)
     {
         Source = episode;
         Title = episode.Name;

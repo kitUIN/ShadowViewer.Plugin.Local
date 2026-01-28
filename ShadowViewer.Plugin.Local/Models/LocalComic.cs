@@ -2,220 +2,196 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using DryIoc;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Constants;
-using ShadowViewer.Plugin.Local.I18n;
+using ShadowViewer.Plugin.Local.Entities;
+using ShadowViewer.Plugin.Local.Models.Interfaces;
 using ShadowViewer.Sdk.Models;
 using SqlSugar;
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ShadowViewer.Plugin.Local.Models;
 
 /// <summary>
 /// 本地漫画
 /// </summary>
-[SugarIndex("index_local_comic_affiliation", nameof(Affiliation), OrderByType.Asc)]
-[SugarIndex("index_local_comic_createdDateTime", nameof(CreatedDateTime), OrderByType.Asc)]
-[SugarIndex("index_local_comic_updatedDateTime", nameof(UpdatedDateTime), OrderByType.Asc)]
-[SugarIndex("index_local_comic_name", nameof(Name), OrderByType.Asc)]
-[SugarIndex("index_local_comic_is_delete", nameof(IsDelete), OrderByType.Asc)]
-public partial class LocalComic : ObservableObject
+[SugarTable(IsDisabledDelete = true)]
+public partial class LocalComic : ObservableObject, IComicNode
 {
     #region Field
 
     /// <summary>
     /// Id
     /// </summary>
-    [ObservableProperty] [SugarColumn(IsPrimaryKey = true)]
+    [ObservableProperty]
     public partial long Id { get; set; }
 
     /// <summary>
     /// 父Id
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDescription = "父Id")]
+    [ObservableProperty]
     public partial long ParentId { get; set; }
+
+    /// <summary>
+    /// <inheritdoc/>
+    /// </summary>
+    [ObservableProperty]
+    public partial string NodeType { get; set; } = null!;
 
     /// <summary>
     /// 漫画Id
     /// </summary>
-    [ObservableProperty] [SugarColumn(IsNullable = true, ColumnDescription = "漫画Id")]
+    [ObservableProperty]
     public partial string? ComicId { get; set; }
 
     /// <summary>
     /// 漫画名称
     /// </summary>
     [ObservableProperty]
-    [SugarColumn(ColumnDataType = "Nvarchar(255)", ColumnDescription = "漫画名称", IsNullable = false)]
     public partial string Name { get; set; } = null!;
 
     /// <summary>
     /// 漫画缩略图
     /// </summary>
     [ObservableProperty]
-    [SugarColumn(ColumnDataType = "TEXT", DefaultValue = "mx-appx:///default.png",
-        ColumnDescription = "漫画缩略图")]
-    public partial string Thumb { get; set; } = "mx-appx:///default.png";
+    public partial string? Thumb { get; set; }
 
     /// <summary>
     /// 漫画备注
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDataType = "TEXT", IsNullable = true, ColumnDescription = "漫画备注")]
+    [ObservableProperty]
     public partial string? Remark { get; set; }
 
     /// <summary>
     /// 路径链接
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDataType = "TEXT", IsNullable = true, ColumnDescription = "路径链接")]
+    [ObservableProperty]
     public partial string? Link { get; set; }
 
     /// <summary>
     /// 创建时间
     /// </summary>
-    [ObservableProperty] [SugarColumn(InsertServerTime = true, ColumnDescription = "创建时间")]
+    [ObservableProperty]
     public partial DateTime CreatedDateTime { get; set; }
 
     /// <summary>
     /// 更新时间
     /// </summary>
-    [ObservableProperty] [SugarColumn(InsertServerTime = true, UpdateServerTime = true, ColumnDescription = "更新时间")]
+    [ObservableProperty]
     public partial DateTime UpdatedDateTime { get; set; }
 
     /// <summary>
     /// 分类
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDescription = "分类", IsNullable = false)]
-    public partial string Affiliation { get; set; } = null!;
+    public string Affiliation { get; set; } = null!;
 
 
     /// <summary>
     /// 存储空间
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDescription = "存储空间")]
+    [ObservableProperty]
     public partial long Size { get; set; }
 
     /// <summary>
     /// 话-数量
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDescription = "话-数量")]
+    [ObservableProperty]
     public partial int EpisodeCount { get; set; }
 
     /// <summary>
     /// 页-数量
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDescription = "页-数量")]
+    [ObservableProperty]
     public partial int Count { get; set; }
 
     /// <summary>
     /// 是否是文件夹
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDescription = "是否是文件夹")]
-    public partial bool IsFolder { get; set; }
+    public bool IsFolder => NodeType == "Folder";
 
     /// <summary>
     /// 是否删除
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDescription = "是否删除")]
+    [ObservableProperty]
     public partial bool IsDelete { get; set; }
 
     /// <summary>
     /// 是否损坏
     /// </summary>
-    [ObservableProperty] [SugarColumn(ColumnDescription = "是否损坏")]
+    [ObservableProperty]
     public partial bool IsBroken { get; set; }
 
     /// <summary>
     /// 作者
     /// </summary>
-    [Navigate(typeof(LocalComicAuthorMapping), nameof(LocalComicAuthorMapping.ComicId),
-        nameof(LocalComicAuthorMapping.AuthorId))]
-    public List<LocalAuthor> Authors { get; set; } = null!;
+    public ObservableCollection<LocalAuthor> Authors { get; set; } = null!;
 
     /// <summary>
     /// 标签
     /// </summary>
-    [Navigate(typeof(LocalComicTagMapping), nameof(LocalComicTagMapping.ComicId),
-        nameof(LocalComicTagMapping.TagId))]
-    public List<ShadowTag> Tags { get; set; } = null!;
-
+    public ObservableCollection<ShadowTag> Tags { get; set; } = null!;
 
     /// <summary>
     /// 阅读记录
     /// </summary>
-    [Navigate(NavigateType.OneToOne, nameof(Id))]
     public LocalReadingRecord ReadingRecord { get; set; } = null!;
 
     #endregion
 
-    /// <summary>
-    /// 新建文件夹
-    /// </summary>
-    /// <param name="name">文件夹名称</param>
-    /// <param name="parentId">父级Id</param>
-    /// <param name="id"></param>
-    public static void CreateFolder(string? name, long parentId = -1, long? id = null)
-    {
-        if (string.IsNullOrEmpty(name)) name = I18N.NewFolder;
-        var i = 1;
-        var db = DiFactory.Services.Resolve<ISqlSugarClient>();
-        // ReSharper disable once AccessToModifiedClosure
-        while (db.Queryable<LocalComic>().Any(x => x.Name == name && x.ParentId == parentId))
-        {
-            name = $"{name}({i++})";
-        }
+    #region Constructors
 
-        id ??= SnowFlakeSingle.Instance.NextId();
-        db.InsertNav(new LocalComic()
-        {
-            Id = (long)id,
-            Name = name,
-            Thumb = "ms-appx:///Assets/Default/folder.png",
-            Affiliation = PluginConstants.PluginId,
-            ParentId = parentId,
-            IsFolder = true,
-            ReadingRecord = new LocalReadingRecord()
-        }).Include(x => x.ReadingRecord).ExecuteCommand();
+    /// <summary>
+    /// 默认构造函数
+    /// </summary>
+    public LocalComic()
+    {
     }
 
-    #region 排序
-
     /// <summary>
-    /// 字母顺序A-Z
+    /// 从 ComicNode 和 ComicDetail 构造 LocalComic（用于向后兼容）
     /// </summary>
-    public static int AzSort(LocalComic x, LocalComic y) => x.Name?.CompareTo(y.Name) ?? 1;
+    /// <param name="node">漫画节点</param>
+    /// <param name="dbClient">数据库</param>
+    public LocalComic(ComicNode node, ISqlSugarClient? dbClient = null)
+    {
+        dbClient ??= DiFactory.Services.Resolve<ISqlSugarClient>();
 
-    /// <summary>
-    /// 字母顺序Z-A
-    /// </summary>
-    public static int ZaSort(LocalComic x, LocalComic y) => y.Name?.CompareTo(x.Name) ?? 1;
+        Id = node.Id;
+        ParentId = node.ParentId;
+        Name = node.Name;
+        Thumb = node.Thumb;
+        NodeType = node.NodeType;
+        Size = node.Size;
+        CreatedDateTime = node.CreatedDateTime;
+        UpdatedDateTime = node.UpdatedDateTime;
+        ReadingRecord = node.ReadingRecord;
+        IsBroken = node.IsBroken;
+        IsDelete = node.IsDelete;
+        Affiliation = node.SourcePluginData?.PluginId ?? "";
 
-    /// <summary>
-    /// 阅读时间早-晚
-    /// </summary>
-    public static int RaSort(LocalComic x, LocalComic y) => x.UpdatedDateTime.CompareTo(y.UpdatedDateTime);
-
-    /// <summary>
-    /// 阅读时间晚-早(默认)
-    /// </summary>
-    public static int RzSort(LocalComic x, LocalComic y) => y.UpdatedDateTime.CompareTo(x.UpdatedDateTime);
-
-    /// <summary>
-    /// 创建时间早-晚
-    /// </summary>
-    public static int CaSort(LocalComic x, LocalComic y) => x.CreatedDateTime.CompareTo(y.CreatedDateTime);
-
-    /// <summary>
-    /// 创建时间晚-早
-    /// </summary>
-    public static int CzSort(LocalComic x, LocalComic y) => y.CreatedDateTime.CompareTo(x.CreatedDateTime);
-
-    /// <summary>
-    /// 阅读进度小-大
-    /// </summary>
-    public static int PaSort(LocalComic x, LocalComic y) => x.ReadingRecord.Percent.CompareTo(y.ReadingRecord.Percent);
-
-    /// <summary>
-    /// 阅读进度大-小
-    /// </summary>
-    public static int PzSort(LocalComic x, LocalComic y) => y.ReadingRecord.Percent.CompareTo(x.ReadingRecord.Percent);
+        if (!IsFolder && NodeType == "Comic")
+        {
+            var detail = dbClient.Queryable<ComicDetail>()
+                .Includes(x => x.Authors)
+                .Includes(x => x.Tags)
+                .Where(x => x.ComicId == Id)
+                .First();
+            if (detail == null) return;
+            ComicId = detail.ExtendId ?? Id.ToString();
+            EpisodeCount = detail.ChapterCount;
+            Count = detail.PageCount;
+            Link = detail.StoragePath;
+            Remark = detail.Remark;
+            Authors = new ObservableCollection<LocalAuthor>(detail.Authors ?? []);
+            Tags = new ObservableCollection<ShadowTag>(detail.Tags ?? []);
+        }
+        else if (IsFolder)
+        {
+            // 文件夹默认值
+            Affiliation = PluginConstants.PluginId;
+            Authors = [];
+            Tags = [];
+        }
+    }
 
     #endregion
 }

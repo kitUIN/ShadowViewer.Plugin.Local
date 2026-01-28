@@ -6,6 +6,7 @@ using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Services;
 using ShadowViewer.Plugin.Local.Cache;
+using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
 using ShadowViewer.Sdk.Plugins;
 
@@ -30,15 +31,17 @@ public partial class LocalPlugin : AShadowViewerPlugin
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
-        Db.CodeFirst.InitTables<LocalEpisode>();
-        Db.CodeFirst.InitTables<LocalPicture>();
-        Db.CodeFirst.InitTables<CacheImg>(); 
+        Db.CodeFirst.InitTables<ComicChapter>();
+        Db.CodeFirst.InitTables<ComicPicture>();
+        Db.CodeFirst.InitTables<CacheImg>();
         Db.CodeFirst
-            .InitTables<LocalAuthor, LocalComic, LocalReadingRecord, LocalComicAuthorMapping, LocalComicTagMapping>();
+            .InitTables<ComicNode, SourcePluginData, LocalReadingRecord>();
+        Db.CodeFirst
+            .InitTables<LocalAuthor, ComicDetail, LocalComicAuthorMapping, LocalComicTagMapping>();
         Db.CodeFirst.InitTables<LocalHistory>();
-        if (!Db.Queryable<LocalComic>().Any(x => x.Id == -1L))
+        if (!Db.Queryable<ComicNode>().Any(x => x.Id == -1L))
         {
-            LocalComic.CreateFolder("root", -2, -1);
+            ComicNode.CreateFolder("root", -2, -1);
         }
     }
 

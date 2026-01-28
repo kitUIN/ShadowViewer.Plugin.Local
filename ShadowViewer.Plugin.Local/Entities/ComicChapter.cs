@@ -1,11 +1,11 @@
 using System;
 using SqlSugar;
 
-namespace ShadowViewer.Plugin.Local.Models;
+namespace ShadowViewer.Plugin.Local.Entities;
 /// <summary>
 /// 本地漫画-话
 /// </summary>
-public class LocalEpisode
+public class ComicChapter
 {
     /// <summary>
     /// ID
@@ -38,28 +38,6 @@ public class LocalEpisode
     /// <summary>
     /// 创建时间
     /// </summary>
-    public DateTime CreateTime { get; set; }
+    public DateTime CreatedDateTime { get; set; }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="name"></param>
-    /// <param name="order"></param>
-    /// <param name="comicId"></param>
-    /// <param name="counts"></param>
-    /// <param name="size"></param>
-    /// <returns></returns>
-    public static LocalEpisode Create(string name, int order, long comicId, int counts, long size)
-    {
-        var time = DateTime.Now;
-        return new LocalEpisode()
-        {
-            Name = name,
-            Order = order,
-            ComicId = comicId,
-            PageCount = counts,
-            Size = size,
-            CreateTime = time,
-        };
-    }
 }

@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.WinUI;
+using CommunityToolkit.WinUI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -26,6 +26,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
+using ShadowViewer.Plugin.Local.Entities;
 
 namespace ShadowViewer.Plugin.Local.Services;
 
@@ -285,23 +286,28 @@ public partial class ZipComicImporter : FolderComicImporter
             }
         }
 
-        await Db.InsertNav(new LocalComic()
+        await Db.InsertNav(new ComicNode()
             {
                 Name = Path.GetFileNameWithoutExtension(zip),
                 Thumb = "mx-appx:///default.png",
-                Affiliation = affiliation,
                 ParentId = parentId,
-                IsFolder = false,
-                Link = path,
+                NodeType = "Comic",
                 Id = comicId,
                 ReadingRecord = new LocalReadingRecord()
                 {
                     CreatedDateTime = DateTime.Now,
                     UpdatedDateTime = DateTime.Now,
                 },
-            })
+                ComicDetail = new ComicDetail()
+                {
+                    ComicId = comicId,
+                    StoragePath = path
+                }
+        })
             .Include(z1 => z1.ReadingRecord)
+            .Include(z1 => z1.ComicDetail)
             .ExecuteCommandAsync();
+        
         await using var fStream = File.OpenRead(zip);
         using var archive = ArchiveFactory.Open(zip, readerOptions);
         var total = archive.Entries.Where(entry => !entry.IsDirectory && (entry.Key?.IsPic() ?? false))

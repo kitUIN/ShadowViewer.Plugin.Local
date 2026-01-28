@@ -6,6 +6,7 @@ using ShadowViewer.Sdk.Services;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.Sdk.Plugins;
+using ShadowViewer.Plugin.Local.Entities;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
@@ -27,10 +28,10 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
         var index = 0;
         if (viewModel.Episodes.Count <= 0 || viewModel.Episodes[newValue] is not LocalUiEpisode episode) return;
 
-        foreach (var item in Db.Queryable<LocalPicture>().Where(x => x.EpisodeId == episode.Source.Id)
+        foreach (var item in Db.Queryable<ComicPicture>().Where(x => x.ChapterId == episode.Source.Id)
                      .OrderBy(x => x.Name)
                      .ToList())
-            viewModel.Images.Add(new LocalUiPicture(++index, item.Img));
+            viewModel.Images.Add(new LocalUiPicture(++index, item.StoragePath));
         var readingRecord = Db.Queryable<LocalReadingRecord>()
             .Where(x => x.Id == episode.Source.ComicId)
             .Where(x => x.LastEpisode == episode.Source.Order)
@@ -84,7 +85,7 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
             .First();
         var index = 0;
         var count = 0;
-        Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comic.Id).OrderBy(x => x.Order).ForEach(x =>
+        Db.Queryable<ComicChapter>().Where(x => x.ComicId == comic.Id).OrderBy(x => x.Order).ForEach(x =>
         {
             viewModel.Episodes.Add(new LocalUiEpisode(x));
             viewModel.EpisodeCounts.Add(count);

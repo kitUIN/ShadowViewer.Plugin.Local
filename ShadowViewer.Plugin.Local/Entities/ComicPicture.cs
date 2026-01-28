@@ -1,12 +1,12 @@
 using System;
 using SqlSugar;
 
-namespace ShadowViewer.Plugin.Local.Models;
+namespace ShadowViewer.Plugin.Local.Entities;
 
 /// <summary>
 /// 本地漫画-页
 /// </summary>
-public class LocalPicture
+public class ComicPicture
 {
     /// <summary>
     /// ID
@@ -22,7 +22,7 @@ public class LocalPicture
     /// 所属的漫画-话
     /// </summary>
     [SugarColumn()]
-    public long EpisodeId { get; set; }
+    public long ChapterId { get; set; }
     /// <summary>
     /// 名称
     /// </summary>
@@ -31,8 +31,8 @@ public class LocalPicture
     /// <summary>
     /// 图片地址
     /// </summary>
-    [SugarColumn(ColumnDataType = "Nvarchar(2048)")]
-    public string Img { get; set; } = null!;
+    [SugarColumn(ColumnDataType = "TEXT", IsNullable = true, ColumnDescription = "存储路径")]
+    public string StoragePath { get; set; } = null!;
     /// <summary>
     /// 大小
     /// </summary>
@@ -40,6 +40,6 @@ public class LocalPicture
     /// <summary>
     /// 创建时间
     /// </summary>
-    public DateTime CreateTime { get; set; }
+    public DateTime CreatedDateTime { get; set; }
 
 }

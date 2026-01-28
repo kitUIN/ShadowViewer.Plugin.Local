@@ -5,12 +5,12 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.WinUI.Helpers;
 using Serilog;
 using ShadowPluginLoader.Attributes;
+using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Sdk;
 using ShadowViewer.Sdk.Models;
 using ShadowViewer.Sdk.Services;
 using SqlSugar;
-using LocalEpisode = ShadowViewer.Plugin.Local.Models.LocalEpisode;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -52,7 +52,7 @@ public partial class AttributesViewModel : ObservableObject
     /// <summary>
     /// 话
     /// </summary>
-    public ObservableCollection<LocalEpisode> Episodes { get; } = [];
+    public ObservableCollection<ComicChapter> Episodes { get; } = [];
 
     /// <summary>
     /// 是否有话
@@ -69,11 +69,10 @@ public partial class AttributesViewModel : ObservableObject
     /// <param name="comicId"></param>
     public void Init(long comicId)
     {
-        CurrentComic = Db.Queryable<LocalComic>()
+        var node = Db.Queryable<ComicNode>()
             .Includes(x => x.ReadingRecord)
-            .Includes(x => x.Authors)
-            .Includes(x => x.Tags)
             .First(x => x.Id == comicId);
+        CurrentComic = new LocalComic(node);
         ReLoadTags();
         ReLoadEps();
     }
@@ -84,7 +83,7 @@ public partial class AttributesViewModel : ObservableObject
     public void ReLoadEps()
     {
         Episodes.Clear();
-        foreach (var item in Db.Queryable<LocalEpisode>().Where(x => x.ComicId == CurrentComic.Id).ToList())
+        foreach (var item in Db.Queryable<ComicChapter>().Where(x => x.ComicId == CurrentComic.Id).ToList())
             Episodes.Add(item);
     }
 

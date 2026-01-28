@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
 using Serilog;
 using ShadowPluginLoader.Attributes;
@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
+using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Sdk.Services;
 using ShadowViewer.Plugin.Local.I18n;
 
@@ -61,7 +62,7 @@ public partial class FolderComicImporter : IComicImporter
         var node = ShadowTreeNode.FromFolder(path);
         ShadowTreeNode? thumb = null;
         var number = 1;
-        var pics = new List<LocalPicture>();
+        var pics = new List<ComicPicture>();
         var comicNode = node.GetFilesByHeight(2).FirstOrDefault();
         // 检查是否是多话漫画
         if (comicNode != null)
@@ -86,7 +87,7 @@ public partial class FolderComicImporter : IComicImporter
 
         if (thumb != null)
         {
-            await Db.Updateable<LocalComic>()
+            await Db.Updateable<ComicNode>()
                 .SetColumns(x => x.Thumb == thumb.Path)
                 .Where(x => x.Id == comicId)
                 .ExecuteCommandAsync();
@@ -94,40 +95,43 @@ public partial class FolderComicImporter : IComicImporter
 
         await Db.Insertable(pics).ExecuteReturnSnowflakeIdListAsync();
         var episodeCount =
-            await Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comicId).CountAsync();
-        var count = await Db.Queryable<LocalPicture>().Where(x => x.ComicId == comicId).CountAsync();
-        await Db.Updateable<LocalComic>()
+            await Db.Queryable<ComicChapter>().Where(x => x.ComicId == comicId).CountAsync();
+        var count = await Db.Queryable<ComicPicture>().Where(x => x.ComicId == comicId).CountAsync();
+        await Db.Updateable<ComicNode>()
             .SetColumns(it => it.Size == node.Size)
-            .SetColumns(it => it.EpisodeCount == episodeCount)
-            .SetColumns(it => it.Count == count)
             .Where(x => x.Id == comicId)
+            .ExecuteCommandAsync();
+        await Db.Updateable<ComicDetail>()
+            .SetColumns(it => it.ChapterCount == episodeCount)
+            .SetColumns(it => it.PageCount == count)
+            .Where(x => x.ComicId == comicId)
             .ExecuteCommandAsync();
         return node;
     }
 
-    private async Task<IEnumerable<LocalPicture>> CreateEpisode(long comicId,
+    private async Task<IEnumerable<ComicPicture>> CreateEpisode(long comicId,
         ShadowTreeNode child, int number)
     {
-        var epId = await Db.Insertable(new LocalEpisode
+        var epId = await Db.Insertable(new ComicChapter
         {
             Name = child.Name,
             Order = number,
             ComicId = comicId,
             PageCount = child.Count,
             Size = child.Size,
-            CreateTime = DateTime.Now,
+            CreatedDateTime = DateTime.Now,
         }).ExecuteReturnSnowflakeIdAsync();
         return child.Children
             .Where(c => c.IsPic)
             .Select(item =>
-                new LocalPicture
+                new ComicPicture
                 {
                     Name = item.Name,
-                    EpisodeId = epId,
+                    ChapterId = epId,
                     ComicId = comicId,
-                    Img = item.Path,
+                    StoragePath = item.Path,
                     Size = item.Size,
-                    CreateTime = DateTime.Now,
+                    CreatedDateTime = DateTime.Now,
                 });
     }
 
@@ -142,18 +146,24 @@ public partial class FolderComicImporter : IComicImporter
         CancellationToken token)
     {
         if (item is not StorageFolder folder) return;
-        var comic = await Db.InsertNav(new LocalComic()
+        var comic = await Db.InsertNav(new ComicNode()
         {
             Name = folder.DisplayName,
             Thumb = "mx-appx:///default.png",
-            Affiliation = PluginId,
             ParentId = parentId,
-            IsFolder = false,
+            NodeType = "Comic",
             ReadingRecord = new LocalReadingRecord()
             {
                 CreatedDateTime = DateTime.Now,
                 UpdatedDateTime = DateTime.Now
             },
+            ComicDetail = new ComicDetail()
+            {
+                ProcessMode = "Folder",
+                StoragePath = folder.Path,
+                ChapterCount = 0,
+                PageCount = 0,
+            }
         }).Include(z1 => z1.ReadingRecord).ExecuteReturnEntityAsync();
         await SaveComic(folder.Path, comic.Id, findThumb: true);
         NotifyService.NotifyTip(this, I18N.ImportComicSuccess, InfoBarSeverity.Success);

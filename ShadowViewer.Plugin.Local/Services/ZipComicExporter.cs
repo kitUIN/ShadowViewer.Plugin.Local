@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.WinUI;
+using CommunityToolkit.WinUI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -21,6 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using ShadowViewer.Sdk.Extensions;
+using ShadowViewer.Plugin.Local.Entities;
 
 namespace ShadowViewer.Plugin.Local.Services;
 
@@ -164,12 +165,12 @@ public partial class ZipComicExporter : IComicExporter
         using var archive = ZipArchive.Create();
         var count = comic.Count;
         var current = 0;
-        foreach (var ep in await Db.Queryable<LocalEpisode>().Where(x => x.ComicId == comic.Id).ToArrayAsync())
+        foreach (var ep in await Db.Queryable<ComicChapter>().Where(x => x.ComicId == comic.Id).ToArrayAsync())
         {
-            foreach (var pic in await Db.Queryable<LocalPicture>()
-                         .Where(x => x.ComicId == comic.Id && x.EpisodeId == ep.Id).ToArrayAsync())
+            foreach (var pic in await Db.Queryable<ComicPicture>()
+                         .Where(x => x.ComicId == comic.Id && x.ChapterId == ep.Id).ToArrayAsync())
             {
-                archive.AddEntry($"{ep.Name}/{pic.Name}", pic.Img);
+                archive.AddEntry($"{ep.Name}/{pic.Name}", pic.StoragePath);
                 current += 1;
                 progress?.Report((double)current / count * 100); 
             }

@@ -30,6 +30,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
+using ShadowViewer.Plugin.Local.Entities;
+using ShadowViewer.Plugin.Local.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -61,7 +63,7 @@ public partial class BookShelfViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanBackFolder))]
-    public partial LocalComic CurrentFolder { get; set; }
+    public partial IComicNode CurrentFolder { get; set; }
 
     /// <summary>
     /// 原始地址
@@ -82,7 +84,7 @@ public partial class BookShelfViewModel : ObservableObject
     /// <summary>
     /// 文件夹树形结构
     /// </summary>
-    public ObservableCollection<ShadowPath> FolderTree { get; } = [];
+    public ObservableCollection<ComicNode> FolderTree { get; } = [];
 
     /// <summary>
     /// 选中项的大小
@@ -160,7 +162,7 @@ public partial class BookShelfViewModel : ObservableObject
         }
 
         Logger.Information("导航到{Path},Path={P}", uri, toId);
-        var current = Db.Queryable<LocalComic>().First(x => x.Id == toId);
+        var current = Db.Queryable<ComicNode>().First(x => x.Id == toId);
 
         OriginPath = uri;
         CurrentFolder = current ?? throw new Exception("跳转失败");
@@ -179,7 +181,7 @@ public partial class BookShelfViewModel : ObservableObject
             I18N.NewFolderName, "", "",
             (_, _, text) =>
             {
-                LocalComic.CreateFolder(text, CurrentFolder.Id);
+                ComicNode.CreateFolder(text, CurrentFolder.Id);
                 RefreshLocalComic();
             });
 
@@ -296,8 +298,8 @@ public partial class BookShelfViewModel : ObservableObject
         var item = SelectedItems.FirstOrDefault();
         if (item == null) return;
         var file = await FilePickerService.PickSaveFileAsync(exportTypes,
-            item.Name,  
-            PickerLocationId.Downloads, 
+            item.Name,
+            PickerLocationId.Downloads,
             "SaveFile");
         if (file == null) return;
         var token = CancellationToken.None;
@@ -328,13 +330,14 @@ public partial class BookShelfViewModel : ObservableObject
                     .SetColumns(x => x.ComicId == null)
                     .Where(x => x.ComicId == comic.Id)
                     .ExecuteCommand();
-                db.Deleteable<LocalEpisode>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
-                db.Deleteable<LocalPicture>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
-                db.Deleteable<LocalComic>().Where(x => x.Id == comic.Id).ExecuteCommand();
+                db.Deleteable<ComicChapter>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
+                db.Deleteable<ComicPicture>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
+                db.Deleteable<ComicDetail>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
+                db.Deleteable<ComicNode>().Where(x => x.Id == comic.Id).ExecuteCommand();
             }
             else
             {
-                db.Updateable<LocalComic>()
+                db.Updateable<ComicNode>()
                     .SetColumns(x => x.IsDelete == true)
                     .Where(x => x.Id == comic.Id)
                     .ExecuteCommand();
@@ -351,8 +354,9 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     public void RefreshLocalComic()
     {
-        var comics = Db.Queryable<LocalComic>()
+        var comics = Db.Queryable<ComicNode>()
             .Includes(x => x.ReadingRecord)
+            .Includes(x => x.SourcePluginData)
             .Where(x => x.ParentId == CurrentFolder.Id)
             .ToList();
         if (comics.Count > 0)
@@ -360,21 +364,21 @@ public partial class BookShelfViewModel : ObservableObject
             switch (Sort)
             {
                 case LocalSort.Az:
-                    comics.Sort(LocalComic.AzSort); break;
+                    comics.Sort(IComicNode.AzSort); break;
                 case LocalSort.Za:
-                    comics.Sort(LocalComic.ZaSort); break;
+                    comics.Sort(IComicNode.ZaSort); break;
                 case LocalSort.Ca:
-                    comics.Sort(LocalComic.CaSort); break;
+                    comics.Sort(IComicNode.CaSort); break;
                 case LocalSort.Cz:
-                    comics.Sort(LocalComic.CzSort); break;
+                    comics.Sort(IComicNode.CzSort); break;
                 case LocalSort.Ra:
-                    comics.Sort(LocalComic.RaSort); break;
+                    comics.Sort(IComicNode.RaSort); break;
                 case LocalSort.Rz:
-                    comics.Sort(LocalComic.RzSort); break;
+                    comics.Sort(IComicNode.RzSort); break;
                 case LocalSort.Pa:
-                    comics.Sort(LocalComic.PaSort); break;
+                    comics.Sort(IComicNode.PaSort); break;
                 case LocalSort.Pz:
-                    comics.Sort(LocalComic.PzSort); break;
+                    comics.Sort(IComicNode.PzSort); break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -383,8 +387,9 @@ public partial class BookShelfViewModel : ObservableObject
         LocalComics.Clear();
         foreach (var item in comics)
         {
-            LocalComics.Add(item);
+            LocalComics.Add(new LocalComic(item, Db));
         }
+
         LoadFolderTree();
     }
 
@@ -395,8 +400,8 @@ public partial class BookShelfViewModel : ObservableObject
     private async Task AddComicFromFolder(Page page)
     {
         var folder = await FilePickerService.PickFolderAsync(
-            PickerLocationId.Downloads, 
-            PickerViewMode.List, 
+            PickerLocationId.Downloads,
+            PickerViewMode.List,
             "AddNewComic");
         if (folder == null) return;
         var token = CancellationToken.None;
@@ -445,8 +450,8 @@ public partial class BookShelfViewModel : ObservableObject
     private async Task AddComicFromZip(Page page)
     {
         var files = await FilePickerService.PickMultipleFilesAsync(
-            ComicIoService.GetImportSupportType(), 
-            PickerLocationId.Downloads, 
+            ComicIoService.GetImportSupportType(),
+            PickerLocationId.Downloads,
             PickerViewMode.List,
             "AddComicsFromZip");
         if (!files.Any()) return;
@@ -482,33 +487,31 @@ public partial class BookShelfViewModel : ObservableObject
     {
         FolderTree.Clear();
         var selectedIds = SelectedItems.Select(x => x.Id).ToHashSet();
-        var allFolders = Db.Queryable<LocalComic>()
-            .Where(x => x.IsFolder && !x.IsDelete)
+        var allFolders = Db.Queryable<ComicNode>()
+            .Where(x => x.NodeType == "Folder" && !x.IsDelete)
             .ToList();
 
         // 构建根节点（虚拟根目录）
-        var rootComic = new LocalComic
+        var rootComic = new ComicNode
         {
             Id = -1,
             Name = "Root",
-            Thumb = "ms-appx:///Assets/Default/folder.png",
-            IsFolder = true
+            NodeType = "Folder"
         };
-        var root = new ShadowPath(rootComic);
-        BuildFolderTree(root, allFolders, selectedIds);
-        FolderTree.Add(root);
+        BuildFolderTree(rootComic, allFolders, selectedIds);
+        FolderTree.Add(rootComic);
     }
 
     /// <summary>
     /// 递归构建文件夹树
     /// </summary>
-    private static void BuildFolderTree(ShadowPath parent, List<LocalComic> allFolders, HashSet<long> excludeIds)
+    private static void BuildFolderTree(ComicNode parent, List<ComicNode> allFolders, HashSet<long> excludeIds)
     {
         var children = allFolders
             .Where(x => x.ParentId == parent.Id && !excludeIds.Contains(x.Id))
             .ToList();
 
-        foreach (var childPath in children.Select(child => new ShadowPath(child)))
+        foreach (var childPath in children)
         {
             BuildFolderTree(childPath, allFolders, excludeIds);
             parent.Children.Add(childPath);

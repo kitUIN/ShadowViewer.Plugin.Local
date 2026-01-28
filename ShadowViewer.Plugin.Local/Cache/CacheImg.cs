@@ -1,6 +1,6 @@
-﻿using DryIoc;
+using DryIoc;
 using ShadowPluginLoader.WinUI;
-using ShadowViewer.Plugin.Local.Models;
+using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Sdk.Helpers;
 using SqlSugar;
 
@@ -55,7 +55,7 @@ namespace ShadowViewer.Plugin.Local.Cache
             System.IO.File.WriteAllBytes(path, bytes);
             if (db.Queryable<CacheImg>().First(x => x.Md5 == md5) is { } cache)
             {
-                db.Updateable<LocalComic>()
+                db.Updateable<ComicNode>()
                     .SetColumns(it => it.Thumb == cache.Path)
                     .Where(x => x.Id == comicId)
                     .ExecuteCommand();
@@ -69,7 +69,7 @@ namespace ShadowViewer.Plugin.Local.Cache
                     Dir = dir,
                     ComicId = comicId,
                 }).ExecuteCommand();
-                db.Updateable<LocalComic>()
+                db.Updateable<ComicNode>()
                     .SetColumns(it => it.Thumb == path)
                     .Where(x => x.Id == comicId)
                     .ExecuteCommand();
