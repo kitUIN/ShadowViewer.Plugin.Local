@@ -47,7 +47,7 @@ public sealed partial class BookShelfPage
         if (e.Parameter is ShadowUri uri) ViewModel.NavigateTo(uri);
     }
 
-     
+
     /// <summary>
     ///
     /// </summary>
@@ -55,44 +55,17 @@ public sealed partial class BookShelfPage
     {
         HomeCommandBarFlyout.Hide();
         ViewModel.LoadFolderTree();
-        MoveTeachingTip.IsOpen = true;
+        ViewModel.MoveTeachingTipIsOpen = true;
     }
- 
 
-     
+
     /// <summary>
     /// 路径树-双击
     /// </summary>
     private async void TreeViewItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
-        await MoveToPath(MoveTreeView.SelectedItem as IComicNode);
+        await ViewModel.MoveToPathCommand.ExecuteAsync(MoveTreeView.SelectedItem as IComicNode);
     }
-
-    /// <summary>
-    /// 路径树-确定移动
-    /// </summary>
-    /// <param name="sender">The sender.</param>
-    /// <param name="args">The arguments.</param>
-    private async void MoveTeachingTip_ActionButtonClick(TeachingTip sender, object args)
-    {
-        await MoveToPath(MoveTreeView.SelectedItem as IComicNode);
-    }
-
-    /// <summary>
-    /// 移动到路径树
-    /// </summary>
-    /// <param name="path">The path.</param>
-    private async Task MoveToPath(IComicNode? path)
-    {
-        if (path == null) return;
-
-        var selectedComics = ViewModel.SelectedItems.ToList();
-        await ViewModel.MoveTo(path.Id, selectedComics);
-
-        MoveTeachingTip.IsOpen = false;
-        ViewModel.RefreshLocalComic();
-    }
-
 
     /// <summary>
     /// 检测按键

@@ -65,6 +65,9 @@ public partial class BookShelfViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanBackFolder))]
     public partial IComicNode CurrentFolder { get; set; }
 
+    [ObservableProperty]
+    public partial bool MoveTeachingTipIsOpen { get; set; }
+
     /// <summary>
     /// 原始地址
     /// </summary>
@@ -478,6 +481,20 @@ public partial class BookShelfViewModel : ObservableObject
             .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
             .Where(x => ids.Contains(x.Id))
             .ExecuteCommandAsync();
+    }
+    /// <summary>
+    /// 移动到路径树
+    /// </summary>
+    [RelayCommand]
+    private async Task MoveToPath(IComicNode? node)
+    {
+        if (node == null) return;
+
+        var selectedComics = SelectedItems.ToList();
+        await MoveTo(node.Id, selectedComics);
+
+        MoveTeachingTipIsOpen = false;
+        RefreshLocalComic();
     }
 
     /// <summary>
