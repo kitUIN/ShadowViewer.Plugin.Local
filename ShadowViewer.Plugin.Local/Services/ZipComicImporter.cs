@@ -1,26 +1,21 @@
-using CommunityToolkit.WinUI;
 using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Serilog;
 using ShadowPluginLoader.Attributes;
 using ShadowPluginLoader.WinUI.Config;
-using ShadowViewer.Controls.Extensions;
 using ShadowViewer.Plugin.Local.Cache;
 using ShadowViewer.Plugin.Local.Configs;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Sdk.Cache;
-using ShadowViewer.Sdk.Enums;
 using ShadowViewer.Sdk.Extensions;
 using ShadowViewer.Sdk.Helpers;
-using ShadowViewer.Sdk.Services;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 using SqlSugar;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -40,10 +35,20 @@ public partial class ZipComicImporter : FolderComicImporter
     [Autowired] private LocalPluginConfig LocalPluginConfig { get; }
 
     /// <summary>
+    /// 手动输入的密码
+    /// </summary>
+    public string? Password { get; set; }
+
+    /// <summary>
     /// 支持的类型
     /// </summary>
     public override string[] SupportTypes => [".zip", ".rar", ".tar", ".cbr", ".cbz", ".shad", ".7z"];
 
+    /// <inheritdoc />
+    public override string Name => "ZipToFolder";
+
+    /// <inheritdoc />
+    public override string Description => I18N.ZipImporterDescription;
 
     /// <inheritdoc />
     public override bool Check(IStorageItem item)
@@ -51,154 +56,166 @@ public partial class ZipComicImporter : FolderComicImporter
         return item is StorageFile file && SupportTypes.ContainsIgnoreCase(file.FileType);
     }
 
+    /// <inheritdoc />
+    public override async Task<ComicImportPreview> Preview(IStorageItem item)
+    {
+        if (item is not StorageFile file) return new ComicImportPreview();
+        var op = new ReaderOptions();
+        if (!string.IsNullOrEmpty(Password))
+        {
+            op.Password = Password;
+        }
+        var passed = await Task.Run(() => CheckPassword(file.Path, op));
+        
+        if (!passed) return new ComicImportPreview()
+        {
+            Name = file.DisplayName, 
+            SourceItem = file, 
+            IsPasswordRequired = true
+        };
+
+        return await Task.Run(async () =>
+        {
+            try
+            {
+                using var archive = ArchiveFactory.Open(file.Path, op);
+                var validEntries = archive.Entries
+                    .Where(entry => !entry.IsDirectory && (entry.Key?.IsPic() ?? false))
+                    .OrderBy(x => x.Key)
+                    .Select(e => new { Entry = e, Key = e.Key?.Replace('\\', '/').TrimStart('/') })
+                    .ToList();
+
+                if (validEntries.Count == 0) return new ComicImportPreview() { Name = file.DisplayName, SourceItem = file };
+                
+                var count = validEntries.Count;
+                var thumb = "mx-appx:///default.png";
+                if (validEntries.FirstOrDefault() is { Entry: {} img })
+                {
+                    var tempPath = Path.Combine(BaseSdkConfig.TempFolderPath, Guid.NewGuid() + ".jpg");
+                    await using (var entryStream = img.OpenEntryStream())
+                    {
+                        await using var fs = File.Create(tempPath);
+                        await entryStream.CopyToAsync(fs);
+                    }
+                    thumb = tempPath;
+                }
+
+                // Parse Chapters
+                // Detect Common Root
+                string? commonRoot = null;
+                if (validEntries.Count > 0)
+                {
+                    var firstKey = validEntries[0].Key;
+                    if (firstKey != null)
+                    {
+                        var slashIndex = firstKey.IndexOf('/');
+                        if (slashIndex != -1)
+                        {
+                            var checkRoot = firstKey[..(slashIndex + 1)];
+                            if (validEntries.All(x => x.Key!.StartsWith(checkRoot, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                commonRoot = checkRoot;
+                            }
+                        }
+                    }
+                }
+
+                var processedEntries = validEntries.Select(x => new 
+                { 
+                    x.Entry, 
+                    OriginalKey = x.Key, 
+                    RelativeKey = (commonRoot != null && x.Key!.Length > commonRoot.Length) 
+                                  ? x.Key[commonRoot.Length..] 
+                                  : x.Key
+                }).ToList();
+
+                bool isMulti = processedEntries.Any(x => x.RelativeKey!.Contains('/'));
+                var grouped = processedEntries.GroupBy(x => 
+                {
+                   if (!isMulti) return "";
+                   var idx = x.RelativeKey!.IndexOf('/');
+                   return idx < 0 ? "" : x.RelativeKey.Substring(0, idx);
+                });
+
+                var chapters = new List<ComicChapter>();
+                var imagesMap = new Dictionary<ComicChapter, List<ComicPicture>>();
+                int order = 1;
+                foreach(var g in grouped)
+                {
+                    var chapterName = isMulti && !string.IsNullOrEmpty(g.Key) ? g.Key : file.DisplayName; 
+                    if (isMulti && string.IsNullOrEmpty(g.Key)) continue;
+
+                    var chapterId = SnowFlakeSingle.Instance.NextId();
+                    var chapter = new ComicChapter()
+                    {
+                        Id = chapterId,
+                        Name = chapterName,
+                        Order = order++,
+                        PageCount = g.Count(),
+                        CreatedDateTime = DateTime.Now
+                    };
+                    
+                    var pics = new List<ComicPicture>();
+                    foreach(var item in g)
+                    {
+                        pics.Add(new ComicPicture()
+                        {
+                            Id = SnowFlakeSingle.Instance.NextId(),
+                            Name = Path.GetFileName(item.OriginalKey)!,
+                            ChapterId = chapterId,
+                            StoragePath = item.OriginalKey!, // Provisional path (relative)
+                            Size = item.Entry.Size,
+                            CreatedDateTime = DateTime.Now
+                        });
+                    }
+                    chapter.Size = pics.Sum(p => p.Size);
+                    chapters.Add(chapter);
+                    imagesMap[chapter] = pics;
+                }
+
+                return new ComicImportPreview()
+                {
+                    Name = file.DisplayName,
+                    Thumb = thumb,
+                    ComicDetail = new ComicDetail()
+                    {
+                        ChapterCount = chapters.Count,
+                        PageCount = count
+                    },
+                    SourceItem = file,
+                    Password = op.Password,
+                    PreviewChapters = chapters,
+                    PreviewImages = imagesMap
+                };
+            }
+            catch (Exception e)
+            {
+                Logger.Error("预览压缩包失败: {e}", e);
+                return new ComicImportPreview() { Name = file.DisplayName, SourceItem = file };
+            }
+        });
+    }
 
     /// <inheritdoc />
-    public override async Task ImportComic(IStorageItem item, long parentId, DispatcherQueue dispatcher,
-        CancellationToken token)
+    public override async Task ImportComic(ComicImportPreview preview, long parentId, DispatcherQueue dispatcher,
+        CancellationToken token, IProgress<double>? progress = null)
     {
-        if (item is not StorageFile file) return;
-        var progressRing = new ProgressRing()
-        {
-            Width = 20,
-            Height = 20,
-            Maximum = 100,
-            Value = 0,
-        };
-        var progressRingBackground = new ProgressRing()
-        {
-            Width = 20,
-            Height = 20,
-            Maximum = 100,
-            Value = 100,
-            IsIndeterminate = false,
-            Visibility = Visibility.Collapsed,
-            Opacity = 0.3,
-        };
-        var progressRingText = new TextBlock()
-        {
-            VerticalAlignment = VerticalAlignment.Center,
-            FontSize = 16,
-            Visibility = Visibility.Collapsed,
-            Text = "0.00%"
-        };
-        var zipThumb = new Image()
-        {
-            Width = 120,
-            Height = 160,
-            Visibility = Visibility.Collapsed
-        };
-        var progressStackPanel = new StackPanel()
-        {
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Spacing = 10,
-            Orientation = Orientation.Horizontal,
-            Children =
-            {
-                new Grid()
-                {
-                    Children =
-                    {
-                        progressRingBackground,
-                        progressRing
-                    }
-                },
-                progressRingText
-            }
-        };
-        var infoBar = new InfoBar()
-        {
-            Title = I18N.ImportComic + ": " + file.DisplayName,
-            Severity = InfoBarSeverity.Informational,
-            IsClosable = false,
-            IsIconVisible = true,
-            IsOpen = true,
-            FlowDirection = FlowDirection.LeftToRight,
-            Content = new StackPanel()
-            {
-                Orientation = Orientation.Vertical,
-                Margin = new Thickness(0, 0, 45, 18),
-                Spacing = 10,
-                Children =
-                {
-                    zipThumb,
-                    progressStackPanel,
-                }
-            }
-        };
-        NotifyService.NotifyTip(
-            this, infoBar, 0, TipPopupPosition.Right);
+        if (preview.SourceItem is not StorageFile file) return;
+        
         var op = new ReaderOptions();
-        var passed = false;
-        while (!passed) // 检查压缩包密码
+        if (!string.IsNullOrEmpty(preview.Password))
         {
-            passed = await Task.Run(() => CheckPassword(file.Path, op), token);
-            if (passed) break;
-            infoBar.Severity = InfoBarSeverity.Warning;
-            infoBar.Title = I18N.NeedPassword + ": " + Path.GetFileNameWithoutExtension(file.Path);
-            var dialog = XamlHelper.CreateOneTextBoxDialog(
-                I18N.PasswordError,
-                "", I18N.ZipPasswordPlaceholder, "",
-                (_, _, text) => op.Password = text);
-            var res = await NotifyService.ShowDialog(this, dialog);
-            if (res == ContentDialogResult.None) break;
+            op.Password = preview.Password;
         }
-
-        if (!passed) // 如果取消输入密码
-        {
-            await infoBar.Close(0.5);
-            return;
-        }
-
-        if (infoBar.Severity == InfoBarSeverity.Warning)
-        {
-            infoBar.Severity = InfoBarSeverity.Informational;
-            infoBar.Title = I18N.ImportComic + ": " + Path.GetFileNameWithoutExtension(file.Path);
-        }
-
-        progressRing.IsIndeterminate = false;
-        progressRingBackground.Visibility = Visibility.Visible;
-        progressRingText.Visibility = Visibility.Visible;
-        await Task.Run(() => ImportComicFromZipAsync(file.Path,
+        await Task.Run(() => ImportComicFromZipAsync(preview, file.Path,
             LocalPluginConfig.ComicFolderPath,
             PluginId, parentId,
             new Progress<MemoryStream>(async void (thumbStream) =>
             {
-                try
-                {
-                    await dispatcher.EnqueueAsync(async () =>
-                    {
-                        var bitmapImage = new BitmapImage();
-                        await bitmapImage.SetSourceAsync(thumbStream.AsRandomAccessStream());
-                        zipThumb.Source = bitmapImage;
-                        zipThumb.Visibility = Visibility.Visible;
-                    });
-                }
-                catch (Exception e)
-                {
-                    Logger.Error("上报缩略图报错: {e}", e);
-                }
+               // Original code updated zipThumb.Source. We don't have zipThumb anymore.
+               // We can ignore thumb progress or expose it? User didn't ask for thumb update in dialog.
             }),
-            new Progress<double>(async void (v) =>
-            {
-                try
-                {
-                    await dispatcher.EnqueueAsync(async () =>
-                    {
-                        progressRing.Value = v;
-                        progressRingText.Text = $"{v:0.00}%";
-                        if (Math.Abs(v - 100) == 0)
-                        {
-                            infoBar.Severity = InfoBarSeverity.Success;
-                            infoBar.Title = I18N.ImportComicSuccess;
-                            await infoBar.Close();
-                        }
-                    });
-                }
-                catch (Exception e)
-                {
-                    Logger.Error("上报进度报错: {e}", e);
-                }
-            }), op), token);
+            progress, op), token);
     }
 
 
@@ -244,6 +261,7 @@ public partial class ZipComicImporter : FolderComicImporter
     /// <summary>
     /// 解压压缩包并且导入
     /// </summary>
+    /// <param name="preview"></param>
     /// <param name="zip"></param>
     /// <param name="destinationDirectory"></param>
     /// <param name="affiliation"></param>
@@ -253,7 +271,7 @@ public partial class ZipComicImporter : FolderComicImporter
     /// <param name="readerOptions"></param>
     /// <returns></returns>
     /// <exception cref="TaskCanceledException"></exception>
-    public async Task<bool> ImportComicFromZipAsync(string zip,
+    public async Task<bool> ImportComicFromZipAsync(ComicImportPreview preview, string zip,
         string destinationDirectory,
         string affiliation,
         long parentId,
@@ -285,25 +303,27 @@ public partial class ZipComicImporter : FolderComicImporter
                 return true;
             }
         }
+        
+        // 1. Init Comic Node and Detail from preview if possible
+        var comicNode = new ComicNode()
+        {
+            Name = Path.GetFileNameWithoutExtension(zip),
+            Thumb = "mx-appx:///default.png",
+            ParentId = parentId,
+            NodeType = "Comic",
+            Id = comicId,
+            ReadingRecord = new LocalReadingRecord() { CreatedDateTime = DateTime.Now, UpdatedDateTime = DateTime.Now },
+            ComicDetail = new ComicDetail() { ComicId = comicId, StoragePath = path },
+            SourcePluginDataId = PluginId + Version
+        };
 
-        await Db.InsertNav(new ComicNode()
-            {
-                Name = Path.GetFileNameWithoutExtension(zip),
-                Thumb = "mx-appx:///default.png",
-                ParentId = parentId,
-                NodeType = "Comic",
-                Id = comicId,
-                ReadingRecord = new LocalReadingRecord()
-                {
-                    CreatedDateTime = DateTime.Now,
-                    UpdatedDateTime = DateTime.Now,
-                },
-                ComicDetail = new ComicDetail()
-                {
-                    ComicId = comicId,
-                    StoragePath = path
-                }
-        })
+        if (preview?.ComicDetail != null)
+        {
+            comicNode.ComicDetail.ChapterCount = preview.ComicDetail.ChapterCount;
+            comicNode.ComicDetail.PageCount = preview.ComicDetail.PageCount;
+        }
+
+        await Db.InsertNav(comicNode)
             .Include(z1 => z1.ReadingRecord)
             .Include(z1 => z1.ComicDetail)
             .ExecuteCommandAsync();
@@ -338,7 +358,51 @@ public partial class ZipComicImporter : FolderComicImporter
             progress?.Report(Math.Round(result * 100, 2) - 0.01D);
         }
 
-        await SaveComic(path, comicId);
+        // 2. Use Preview Content for Insert if valid
+        if (preview != null && preview.PreviewChapters.Count > 0)
+        {
+             // Fix Paths
+             foreach(var kvp in preview.PreviewImages)
+             {
+                 foreach(var pic in kvp.Value)
+                 {
+                     pic.ComicId = comicId;
+                     // Convert relative zip path to absolute path
+                     // Zip Entry Key usually has backslashes or forward slashes.
+                     // The extraction with ExtractFullPath = true preserves structure.
+                     // On Windows, paths will use backslash if SharpCompress respects OS, 
+                     // but usually we can join paths.
+                     // The preview.Key was user saved earlier as `item.Key`.
+                     // `item.Key` usually is strict relative path in Zip.
+                     // `WriteToDirectory` uses `Path.Combine(path, entry.Key)`.
+                     // So:
+                     pic.StoragePath = Path.Combine(path, pic.StoragePath);
+                 }
+                 kvp.Key.ComicId = comicId;
+             }
+             
+             // Bulk Insert
+             var allPics = preview.PreviewImages.Values.SelectMany(x => x).ToList();
+             await Db.Insertable(preview.PreviewChapters).ExecuteCommandAsync();
+             await Db.Insertable(allPics).ExecuteCommandAsync();
+             
+             // Update Thumb (ComicNode)
+             if (!string.IsNullOrEmpty(preview.Thumb) && !preview.Thumb.StartsWith("mx-appx"))
+             {
+                  // The thumb in preview is a temp file. We might want to point to the real file in the comic folder if possible.
+                  // But usually preview thumb is fine as long as temp isn't deleted immediately?
+                  // Better: Find the thumb in the extracted files.
+                  var firstPic = allPics.FirstOrDefault();
+                  if (firstPic != null)
+                  {
+                       await Db.Updateable<ComicNode>().SetColumns(x => x.Thumb == firstPic.StoragePath).Where(x => x.Id == comicId).ExecuteCommandAsync();
+                  }
+             }
+        }
+        else
+        {
+            await SaveComic(path, comicId);
+        }
 
         progress?.Report(100D);
         var stop = DateTime.Now;

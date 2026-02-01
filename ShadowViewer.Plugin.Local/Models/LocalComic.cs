@@ -54,7 +54,7 @@ public partial class LocalComic : ObservableObject, IComicNode
     /// 漫画缩略图
     /// </summary>
     [ObservableProperty]
-    public partial string? Thumb { get; set; }
+    public partial string Thumb { get; set; } = null!;
 
     /// <summary>
     /// 漫画备注
@@ -164,7 +164,7 @@ public partial class LocalComic : ObservableObject, IComicNode
         Id = node.Id;
         ParentId = node.ParentId;
         Name = node.Name;
-        Thumb = node.Thumb;
+        Thumb = node.Thumb ?? "appx://Assets/Default.png";
         NodeType = node.NodeType;
         Size = node.Size;
         CreatedDateTime = node.CreatedDateTime;

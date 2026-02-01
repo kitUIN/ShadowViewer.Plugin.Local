@@ -325,4 +325,25 @@
   <data name="NextEpisodeTipSubTitle" xml:space="preserve">
     <value></value>
   </data>
+  <data name="SingleComicFolderImporterDescription" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="ZipImporterDescription" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MultiComicFolderImporterDescription" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="Importing" xml:space="preserve">
+    <value>Importing</value>
+  </data>
+  <data name="Chapters" xml:space="preserve">
+    <value>Chapters</value>
+  </data>
+  <data name="ComicImporter" xml:space="preserve">
+    <value>ComicImporter</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>Password Required</value>
+  </data>
 </root>

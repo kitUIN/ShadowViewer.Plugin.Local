@@ -157,10 +157,10 @@
     <value>需要</value>
   </data>
   <data name="DeleteWithFiles" xml:space="preserve">
-    <value>删除漫画的同时删除缓存文件</value>
+    <value>删除漫画的同时删除漫画源文件</value>
   </data>
   <data name="DeleteWithFilesDescription" xml:space="preserve">
-    <value>删除解压压缩文件产生的漫画文件</value>
+    <value>删除漫画的同时删除漫画源文件</value>
   </data>
   <data name="IsImportAgainDescription" xml:space="preserve">
     <value>开启后能导入相同文件夹的漫画</value>
@@ -437,5 +437,26 @@
   </data>
   <data name="NextEpisodeTipSubTitle" xml:space="preserve">
     <value>是否跳转到下一话？</value>
+  </data>
+  <data name="SingleComicFolderImporterDescription" xml:space="preserve">
+    <value>仅支持单个文件夹下有单个漫画</value>
+  </data>
+  <data name="ZipImporterDescription" xml:space="preserve">
+    <value>该导入器将自动把压缩包漫画转换为文件夹模式</value>
+  </data>
+  <data name="MultiComicFolderImporterDescription" xml:space="preserve">
+    <value>支持单个文件夹下有多个漫画</value>
+  </data>
+  <data name="Importing" xml:space="preserve">
+    <value>导入中</value>
+  </data>
+  <data name="Chapters" xml:space="preserve">
+    <value>章节数</value>
+  </data>
+  <data name="ComicImporter" xml:space="preserve">
+    <value>漫画导入器</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>需要密码</value>
   </data>
 </root>

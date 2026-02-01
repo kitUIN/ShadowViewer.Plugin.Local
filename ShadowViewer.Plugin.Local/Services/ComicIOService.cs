@@ -1,4 +1,4 @@
-﻿using ShadowPluginLoader.Attributes;
+using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -23,12 +23,14 @@ public partial class ComicIoService
     /// <summary>
     /// 导入器
     /// </summary> 
-    private IEnumerable<IComicImporter> Importers => DiFactory.Services.ResolveMany<IComicImporter>();
+    [Autowired]
+    private IEnumerable<IComicImporter> Importers { get; }
 
     /// <summary>
     /// 导出器
     /// </summary> 
-    private IEnumerable<IComicExporter> Exporters => DiFactory.Services.ResolveMany<IComicExporter>();
+    [Autowired]
+    private IEnumerable<IComicExporter> Exporters { get; }
 
     /// <summary>
     /// NotifyService
@@ -53,6 +55,16 @@ public partial class ComicIoService
     }
 
     /// <summary>
+    /// 获取所有支持的导入器
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    public IEnumerable<IComicImporter> GetImporters(IStorageItem item)
+    {
+        return Importers.Where(x => x.Check(item)).OrderBy(x => x.Priority);
+    }
+
+    /// <summary>
     /// 
     /// </summary>
     /// <param name="item"></param>
@@ -64,7 +76,9 @@ public partial class ComicIoService
     {
         try
         {
-            await GetImporter(item).ImportComic(item, parentId, dispatcher, token);
+            var importer = GetImporter(item);
+            var preview = await importer.Preview(item);
+            await importer.ImportComic(preview, parentId, dispatcher, token);
         }
         catch (Exception ex)
         {

@@ -30,8 +30,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
+using Windows.Storage;
 using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
+using ShadowViewer.Plugin.Local.Controls;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -65,8 +67,7 @@ public partial class BookShelfViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanBackFolder))]
     public partial IComicNode CurrentFolder { get; set; }
 
-    [ObservableProperty]
-    public partial bool MoveTeachingTipIsOpen { get; set; }
+    [ObservableProperty] public partial bool MoveTeachingTipIsOpen { get; set; }
 
     /// <summary>
     /// 原始地址
@@ -328,7 +329,7 @@ public partial class BookShelfViewModel : ObservableObject
         {
             if (LocalPluginConfig.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder)
             {
-                comic.Link?.DeleteDirectory();
+                comic.Link?.DeleteDirectory(recycleBin: true);
                 db.Updateable<CacheZip>()
                     .SetColumns(x => x.ComicId == null)
                     .Where(x => x.ComicId == comic.Id)
@@ -397,23 +398,6 @@ public partial class BookShelfViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 悬浮菜单-从文件夹导入漫画
-    /// </summary>
-    [RelayCommand]
-    private async Task AddComicFromFolder(Page page)
-    {
-        var folder = await FilePickerService.PickFolderAsync(
-            PickerLocationId.Downloads,
-            PickerViewMode.List,
-            "AddNewComic");
-        if (folder == null) return;
-        var token = CancellationToken.None;
-        await ComicIoService
-            .Import(folder, CurrentFolder.Id, page.DispatcherQueue, token);
-        RefreshLocalComic();
-    }
-
-    /// <summary>
     /// 双击
     /// </summary>
     [RelayCommand]
@@ -447,6 +431,22 @@ public partial class BookShelfViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 悬浮菜单-从文件夹导入漫画
+    /// </summary>
+    [RelayCommand]
+    private async Task AddComicFromFolder(Page page)
+    {
+        var folder = await FilePickerService.PickFolderAsync(
+            PickerLocationId.Downloads,
+            PickerViewMode.List,
+            "AddNewComic");
+        if (folder == null) return;
+
+        await PreviewAndImport(folder, page);
+        RefreshLocalComic();
+    }
+
+    /// <summary>
     /// 悬浮菜单-从压缩包导入漫画
     /// </summary>
     [RelayCommand]
@@ -458,13 +458,66 @@ public partial class BookShelfViewModel : ObservableObject
             PickerViewMode.List,
             "AddComicsFromZip");
         if (!files.Any()) return;
-        var token = CancellationToken.None;
+
         foreach (var file in files)
         {
-            await ComicIoService.Import(file, CurrentFolder.Id, page.DispatcherQueue, token);
+            await PreviewAndImport(file, page);
         }
 
         RefreshLocalComic();
+    }
+
+    private async Task PreviewAndImport(IStorageItem item, Page page)
+    {
+        var importers = ComicIoService.GetImporters(item);
+        if (!importers.Any())
+        {
+            await ComicIoService.Import(item, CurrentFolder.Id, page.DispatcherQueue, CancellationToken.None);
+            return;
+        }
+
+        var vm = new ImportPreviewViewModel(item, importers);
+        var control = new ImportPreviewDialog() { ViewModel = vm };
+
+        var dialog = new ContentDialog
+        {
+            Title = I18N.ImportComic,
+            Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
+            IsPrimaryButtonEnabled = true,
+            PrimaryButtonText = I18N.Confirm,
+            DefaultButton = ContentDialogButton.Primary,
+            CloseButtonText = I18N.Cancel,
+            Content = control,
+            XamlRoot = page.XamlRoot
+        };
+
+        dialog.PrimaryButtonClick += async (_, args) =>
+        {
+            var deferral = args.GetDeferral();
+            try
+            {
+                args.Cancel = true;
+                vm.IsImporting = true;
+                vm.ImportProgress = 0;
+                dialog.IsPrimaryButtonEnabled = false;
+
+                var selectedImporter = vm.SelectedImporter;
+                if (selectedImporter != null && vm.PreviewInfo != null)
+                {
+                    var progress = new Progress<double>(p => vm.ImportProgress = p);
+                    await selectedImporter.ImportComic(vm.PreviewInfo, CurrentFolder.Id, page.DispatcherQueue,
+                        CancellationToken.None, progress);
+                }
+
+                dialog.Hide();
+            }
+            finally
+            {
+                deferral.Complete();
+            }
+        };
+
+        await NotifyService.ShowDialog(this, dialog);
     }
 
     /// <summary>
@@ -482,6 +535,7 @@ public partial class BookShelfViewModel : ObservableObject
             .Where(x => ids.Contains(x.Id))
             .ExecuteCommandAsync();
     }
+
     /// <summary>
     /// 移动到路径树
     /// </summary>

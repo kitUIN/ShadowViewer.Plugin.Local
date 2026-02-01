@@ -6,6 +6,7 @@ using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Services;
 using ShadowViewer.Plugin.Local.Cache;
+using ShadowViewer.Plugin.Local.Constants;
 using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
 using ShadowViewer.Sdk.Plugins;
@@ -22,11 +23,21 @@ public partial class LocalPlugin : AShadowViewerPlugin
     partial void ConstructorInit()
     {
         DiFactory.Services.Register<IComicImporter, FolderComicImporter>(Reuse.Singleton,
-            made: Parameters.Of.Type(_ => MetaData.Id));
+            made: Parameters.Of
+                .Name("pluginId", _ => MetaData.Id)
+                .Name("version", _ => MetaData.Version.ToString()));
+        DiFactory.Services.Register<IComicImporter, FolderContainerComicImporter>(Reuse.Singleton,
+            made: Parameters.Of
+                .Name("pluginId", _ => MetaData.Id)
+                .Name("version", _ => MetaData.Version.ToString()));
         DiFactory.Services.Register<IComicImporter, ZipComicImporter>(Reuse.Singleton,
-            made: Parameters.Of.Type(_ => MetaData.Id));
+            made: Parameters.Of
+                .Name("pluginId", _ => MetaData.Id)
+                .Name("version", _ => MetaData.Version.ToString()));
         DiFactory.Services.Register<IComicExporter, ZipComicExporter>(Reuse.Singleton,
-            made: Parameters.Of.Type(_ => MetaData.Id));
+            made: Parameters.Of
+                .Name("pluginId", _ => MetaData.Id)
+                .Name("version", _ => MetaData.Version.ToString()));
         DiFactory.Services.Register<ComicIoService>(Reuse.Transient);
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
@@ -43,6 +54,14 @@ public partial class LocalPlugin : AShadowViewerPlugin
         {
             ComicNode.CreateFolder("root", -2, -1);
         }
+
+        Db.Storageable(new SourcePluginData(
+            MetaData.Id,
+            MetaData.Version.ToString(),
+            MetaData.Name,
+            "#ffd657",
+            "#000000"
+        )).ExecuteCommand();
     }
 
 

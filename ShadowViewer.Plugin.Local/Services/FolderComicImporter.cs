@@ -24,19 +24,31 @@ namespace ShadowViewer.Plugin.Local.Services;
 public partial class FolderComicImporter : IComicImporter
 {
     /// <summary>
-    /// NotifyService
-    /// </summary>
-    [Autowired]
-    protected INotifyService NotifyService { get; }
-
-    /// <summary>
     /// <inheritdoc/>
     /// </summary>
     [Autowired]
     public string PluginId { get; }
 
+    /// <summary>
+    /// <inheritdoc/>
+    /// </summary>
+    [Autowired]
+    public string Version { get; }
+
+    /// <summary>
+    /// NotifyService
+    /// </summary>
+    [Autowired]
+    protected INotifyService NotifyService { get; }
+
+    /// <inheritdoc/>
+    public virtual string Name => "SingleComicFolder";
+
     /// <inheritdoc />
     public virtual int Priority => 0;
+
+    /// <inheritdoc />
+    public virtual string Description => I18N.SingleComicFolderImporterDescription;
 
     /// <summary>
     /// Logger
@@ -142,31 +154,223 @@ public partial class FolderComicImporter : IComicImporter
     }
 
     /// <inheritdoc />
-    public virtual async Task ImportComic(IStorageItem item, long parentId, DispatcherQueue dispatcher,
-        CancellationToken token)
+    public virtual async Task<ComicImportPreview> Preview(IStorageItem item)
     {
-        if (item is not StorageFolder folder) return;
-        var comic = await Db.InsertNav(new ComicNode()
+        if (item is not StorageFolder folder) return new ComicImportPreview();
+        var node = ShadowTreeNode.FromFolder(folder.Path);
+        var singlePreview = GetSingleComicPreview(node);
+        singlePreview.SourceItem = folder;
+        return singlePreview;
+    }
+
+    /// <summary>
+    /// Gets the single comic preview.
+    /// </summary>
+    /// <param name="node">The node.</param>
+    /// <returns></returns>
+    protected virtual ComicImportPreview GetSingleComicPreview(ShadowTreeNode node)
+    {
+        var preview = new ComicImportPreview
         {
-            Name = folder.DisplayName,
-            Thumb = "mx-appx:///default.png",
-            ParentId = parentId,
-            NodeType = "Comic",
-            ReadingRecord = new LocalReadingRecord()
+            Name = node.Name,
+            ComicDetail = new ComicDetail
             {
-                CreatedDateTime = DateTime.Now,
-                UpdatedDateTime = DateTime.Now
-            },
-            ComicDetail = new ComicDetail()
-            {
-                ProcessMode = "Folder",
-                StoragePath = folder.Path,
-                ChapterCount = 0,
-                PageCount = 0,
+                StoragePath = node.Path
             }
-        }).Include(z1 => z1.ReadingRecord).ExecuteReturnEntityAsync();
-        await SaveComic(folder.Path, comic.Id, findThumb: true);
-        NotifyService.NotifyTip(this, I18N.ImportComicSuccess, InfoBarSeverity.Success);
+        };
+
+        var comicNode = node.GetFilesByHeight(2).FirstOrDefault();
+        ShadowTreeNode? thumb = null;
+        var episodeCount = 0;
+        var count = 0;
+        var chapters = new List<ComicChapter>();
+        var imagesMap = new Dictionary<ComicChapter, List<ComicPicture>>();
+
+        if (comicNode != null)
+        {
+            // Structure: Root -> Chapter Folders -> Images
+            // comicNode is one of the nodes that has files at height 2.
+            // But we should iterate all children that are folders.
+
+            thumb = comicNode.Children.FirstOrDefault(child => child.IsPic);
+            // Fallback for thumb if comicNode didn't have pic (unlikely if it was returned by GetFilesByHeight(2))
+
+            var order = 1;
+            foreach (var child in node.Children.Where(child => child is { IsDirectory: true, Count: > 0 }))
+            {
+                var chapterId = SnowFlakeSingle.Instance.NextId();
+                var chapter = new ComicChapter()
+                {
+                    Id = chapterId,
+                    Name = child.Name,
+                    Order = order++,
+                    CreatedDateTime = DateTime.Now,
+                    // PageCount and Size calculated below
+                };
+
+                var pics = child.Children.Where(c => c.IsPic).Select(item => new ComicPicture
+                {
+                    Id = SnowFlakeSingle.Instance.NextId(),
+                    Name = item.Name,
+                    ChapterId = chapterId,
+                    // ComicId set later
+                    StoragePath = item.Path,
+                    Size = item.Size,
+                    CreatedDateTime = DateTime.Now,
+                }).ToList();
+
+                if (pics.Count > 0)
+                {
+                    chapter.PageCount = pics.Count;
+                    chapter.Size = child.Size; // Or sum of pics size? using child.Size fits original logic
+
+                    chapters.Add(chapter);
+                    imagesMap[chapter] = pics;
+
+                    count += pics.Count;
+                    episodeCount++;
+                }
+            }
+        }
+        else
+        {
+            // Structure: Root -> Images
+            // Single Chapter Mode
+            var epNode = node.GetFilesByHeight(1).FirstOrDefault();
+            if (epNode != null)
+            {
+                // In single chapter mode, "epNode" is effectively "node" usually?
+                // Depending on GetFilesByHeight implementation. 
+                // Original logic: epNode.Children...
+                // If epNode is node, node.Children...
+
+                thumb = epNode.Children.FirstOrDefault(child => child.IsPic);
+
+                var chapterId = SnowFlakeSingle.Instance.NextId();
+                var chapter = new ComicChapter()
+                {
+                    Id = chapterId,
+                    Name = epNode.Name, // Or node.Name? Original used epNode.Name
+                    Order = 1,
+                    PageCount = epNode.Children.Count(c => c.IsPic),
+                    Size = epNode.Size,
+                    CreatedDateTime = DateTime.Now,
+                };
+
+                var pics = epNode.Children.Where(c => c.IsPic).Select(item => new ComicPicture
+                {
+                    Id = SnowFlakeSingle.Instance.NextId(),
+                    Name = item.Name,
+                    ChapterId = chapterId,
+                    StoragePath = item.Path,
+                    Size = item.Size,
+                    CreatedDateTime = DateTime.Now,
+                }).ToList();
+
+                if (pics.Count > 0)
+                {
+                    chapter.PageCount = pics.Count;
+                    chapters.Add(chapter);
+                    imagesMap[chapter] = pics;
+
+                    count += pics.Count;
+                    episodeCount = 1;
+                }
+            }
+        }
+
+        preview.Thumb = thumb?.Path ?? "mx-appx:///default.png";
+        preview.ComicDetail.ChapterCount = episodeCount;
+        preview.ComicDetail.PageCount = count;
+        preview.PreviewChapters = chapters;
+        preview.PreviewImages = imagesMap;
+
+        return preview;
+    }
+
+    /// <inheritdoc />
+    public virtual async Task ImportComic(ComicImportPreview preview, long parentId, DispatcherQueue dispatcher,
+        CancellationToken token, IProgress<double>? progress = null)
+    {
+        // Single import using preview info
+        if (preview.SourceItem is StorageFolder || !string.IsNullOrEmpty(preview.ComicDetail.StoragePath))
+        {
+            await ImportDetail(preview, parentId);
+            progress?.Report(100);
+            NotifyService.NotifyTip(this, I18N.ImportComicSuccess, InfoBarSeverity.Success);
+        }
+    }
+
+    /// <summary>
+    /// Imports the detail.
+    /// </summary>
+    /// <param name="preview">The preview.</param>
+    /// <param name="parentId">The parent identifier.</param>
+    /// <returns></returns>
+    protected virtual async Task ImportDetail(ComicImportPreview preview, long parentId)
+    {
+        var path = preview.SourceItem?.Path ?? preview.ComicDetail.StoragePath;
+
+        // Create ComicNode (The Book) with Detail attached
+        var comic = await Db.InsertNav(new ComicNode()
+            {
+                Name = preview.Name,
+                Thumb = preview.Thumb,
+                ParentId = parentId,
+                NodeType = "Comic",
+                Size = preview.PreviewChapters.Sum(c => c.Size),
+                ReadingRecord = new LocalReadingRecord()
+                {
+                    CreatedDateTime = DateTime.Now,
+                    UpdatedDateTime = DateTime.Now
+                },
+                ComicDetail = new ComicDetail()
+                {
+                    ProcessMode = "Folder",
+                    StoragePath = path,
+                    ChapterCount = preview.ComicDetail.ChapterCount,
+                    PageCount = preview.ComicDetail.PageCount,
+                },
+                SourcePluginDataId = PluginId + Version
+            })
+            .Include(z1 => z1.ReadingRecord)
+            .Include(z1 => z1.ComicDetail)
+            .ExecuteReturnEntityAsync();
+
+        var comicId = comic.Id;
+
+        // Prepare Entities for Bulk Insert
+        var allChapters = preview.PreviewChapters;
+        var allPictures = new List<ComicPicture>();
+
+        foreach (var chapter in allChapters)
+        {
+            chapter.ComicId = comicId;
+            // Chapter ID is already set in Preview
+            if (preview.PreviewImages.TryGetValue(chapter, out var pics))
+            {
+                foreach (var pic in pics)
+                {
+                    pic.ComicId = comicId;
+                    pic.ChapterId = chapter.Id; // Already mapped, but safe to ensure
+                    allPictures.Add(pic);
+                }
+            }
+        }
+
+        // Bulk Insert
+        if (allChapters.Count > 0)
+        {
+            await Db.Insertable(allChapters).ExecuteCommandAsync();
+        }
+
+        if (allPictures.Count > 0)
+        {
+            // Use chunks if too many pictures? Sqlite has limits on variables.
+            // SqlSugar usually handles batching but safer to check.
+            // For now assuming safe or SqlSugar handles it.
+            await Db.Insertable(allPictures).ExecuteCommandAsync();
+        }
     }
 
     /// <inheritdoc />

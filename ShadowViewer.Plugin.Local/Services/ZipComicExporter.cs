@@ -54,11 +54,19 @@ public partial class ZipComicExporter : IComicExporter
     [Autowired]
     protected ISqlSugarClient Db { get; }
 
-    /// <summary>
     /// <inheritdoc/>
-    /// </summary>
     [Autowired]
     public string PluginId { get; }
+
+    /// <inheritdoc/>
+    [Autowired]
+    public string Version { get; }
+
+    /// <inheritdoc/>
+    public string Description { get; } = "";
+
+    /// <inheritdoc/>
+    public string Name => "Zip";
 
     /// <inheritdoc />
     public virtual int Priority => 0;

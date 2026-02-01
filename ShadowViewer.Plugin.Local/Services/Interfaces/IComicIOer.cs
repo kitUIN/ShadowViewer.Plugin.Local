@@ -1,4 +1,4 @@
-﻿using Windows.Storage;
+using Windows.Storage;
 
 namespace ShadowViewer.Plugin.Local.Services.Interfaces;
 
@@ -20,8 +20,22 @@ public interface IComicIOer
     string PluginId { get; }
 
     /// <summary>
+    /// 插件版本号
+    /// </summary>
+    string Version { get; }
+
+    /// <summary>
+    /// 名称
+    /// </summary>
+    string Name { get; }
+
+    /// <summary>
+    /// 描述
+    /// </summary>
+    string Description { get; }
+
+    /// <summary>
     /// 优先度,越小越早加载
     /// </summary>
     int Priority { get; }
-
 }

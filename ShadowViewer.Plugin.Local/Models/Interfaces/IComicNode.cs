@@ -32,7 +32,7 @@ namespace ShadowViewer.Plugin.Local.Models.Interfaces
         /// <summary>
         /// 获取或设置节点缩略图的路径或 URL。
         /// </summary>
-        string? Thumb { get; set; }
+        string Thumb { get; set; }
 
         /// <summary>
         /// 获取或设置该节点的创建日期和时间。

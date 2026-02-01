@@ -52,8 +52,8 @@ public class ComicNode : IComicNode
     /// 缩略图
     /// </summary>
 
-    [SugarColumn(ColumnDataType = "TEXT", IsNullable = true, ColumnDescription = "缩略图")]
-    public string? Thumb { get; set; } = "mx-appx:///default.png";
+    [SugarColumn(ColumnDataType = "TEXT", DefaultValue = "mx-appx:///default.png", ColumnDescription = "缩略图")]
+    public string Thumb { get; set; } = "mx-appx:///default.png";
 
     /// <summary>
     /// 创建时间
@@ -71,7 +71,7 @@ public class ComicNode : IComicNode
     /// <summary>
     /// Gets or sets the source plugin data identifier.
     /// </summary>
-    [SugarColumn(IsNullable = true)] public long? SourcePluginDataId { get; set; }
+    [SugarColumn(IsNullable = true)] public string? SourcePluginDataId { get; set; }
 
     /// <summary>
     /// 归属的插件
@@ -130,6 +130,12 @@ public class ComicNode : IComicNode
     /// </summary>
     [SugarColumn(IsIgnore = true)]
     public ICollection<IComicNode> Children { get; } = new ObservableCollection<IComicNode>();
+
+    /// <summary>
+    /// 预览使用的章节列表
+    /// </summary>
+    [SugarColumn(IsIgnore = true)]
+    public List<ComicChapter> PreviewChapters { get; set; } = new();
 
     /// <summary>
     /// 新建文件夹
