@@ -1,4 +1,5 @@
-﻿using ShadowViewer.Plugin.Local.Controls;
+﻿using System.Collections.Generic;
+using ShadowViewer.Plugin.Local.Controls;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Models;
@@ -15,7 +16,7 @@ public class SinglePageStrategy: IReadingModeStrategy
         if (reader.Pictures.Count >= reader.CurrentIndex)
         {
             var picture = reader.Pictures[reader.CurrentIndex - 1];
-            reader.Source = picture.SourcePath;
+            reader.Sources = new List<string> { picture.SourcePath };
         }
         reader.CheckCanPage();
     }

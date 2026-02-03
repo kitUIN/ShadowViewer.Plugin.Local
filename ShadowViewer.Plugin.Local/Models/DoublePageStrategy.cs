@@ -1,4 +1,5 @@
-﻿using ShadowViewer.Plugin.Local.Controls;
+﻿using System.Collections.Generic;
+using ShadowViewer.Plugin.Local.Controls;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Models;
@@ -14,21 +15,21 @@ public class DoublePageStrategy : IReadingModeStrategy
         if (reader.CurrentIndex <= 0 || reader.CurrentIndex > reader.Pictures.Count) return;
         var index = reader.CurrentIndex;
         if (index % 2 == 0) index -= 1;
+        
+        var sources = new List<string>();
         if (reader.Pictures.Count >= index)
         {
             var leftPicture = reader.Pictures[index - 1];
-            reader.Source = leftPicture.SourcePath;
+            sources.Add(leftPicture.SourcePath);
         }
 
         if (reader.Pictures.Count >= index + 1)
         {
             var rightPicture = reader.Pictures[index];
-            reader.RightSource = rightPicture.SourcePath;
+            sources.Add(rightPicture.SourcePath);
         }
-        else
-        {
-            reader.RightSource = null;
-        }
+
+        reader.Sources = sources;
 
         reader.CheckCanPage();
     }

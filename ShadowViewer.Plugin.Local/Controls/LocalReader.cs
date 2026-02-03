@@ -97,28 +97,6 @@ public sealed class LocalReader : Control
 
     #region Dependency Properties - 图像源相关
 
-    public string Source
-    {
-        get => (string)GetValue(SourceProperty);
-        set => SetValue(SourceProperty, value);
-    }
-
-    public static readonly DependencyProperty SourceProperty =
-        DependencyProperty.Register(nameof(Source), typeof(string),
-            typeof(LocalReader),
-            new PropertyMetadata(null, OnSourceChanged));
-
-    public string RightSource
-    {
-        get => (string)GetValue(RightSourceProperty);
-        set => SetValue(RightSourceProperty, value);
-    }
-
-    public static readonly DependencyProperty RightSourceProperty =
-        DependencyProperty.Register(nameof(RightSource), typeof(string),
-            typeof(LocalReader),
-            new PropertyMetadata(null, OnSourceChanged));
-
     public IList<string> Sources
     {
         get => (IList<string>)GetValue(SourcesProperty);
@@ -325,13 +303,6 @@ public sealed class LocalReader : Control
 
     #region Property Changed Handlers
 
-    private static async void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        var control = (LocalReader)d;
-        if (control.canvas == null) return;
-        await control.ReloadImagesAsync();
-    }
-
     private static void OnSourcesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (LocalReader)d;
@@ -390,11 +361,6 @@ public sealed class LocalReader : Control
         else
         {
             control.ReadingModeStrategy.OnCurrentIndexChanged(control, (int)e.OldValue, (int)e.NewValue);
-
-            // Single/Double mode uses CurrentLeftPagePath/CurrentRightPagePath (computed from Pictures)
-            // to load images. When index changes we must reload bitmaps.
-            if (control.canvas != null)
-                _ = control.ReloadImagesAsync();
         }
     }
 
@@ -567,43 +533,12 @@ public sealed class LocalReader : Control
 
         try
         {
-            if (ReaderMode == LocalReaderMode.VerticalScrolling)
+            if (Sources != null && Sources.Count > 0)
             {
-                if (Sources != null && Sources.Count > 0)
+                foreach (var src in Sources)
                 {
-                    foreach (var src in Sources)
-                    {
-                        if (currentVersion != loadVersion) break;
-                        var bitmap = await LoadBitmapAsync(src);
-                        if (bitmap != null && currentVersion == loadVersion)
-                            bitmaps.Add(bitmap);
-                    }
-                }
-            }
-            else if (ReaderMode == LocalReaderMode.DoublePage)
-            {
-                var leftPath = Source;
-                var rightPath =  RightSource;
-
-                if (!string.IsNullOrWhiteSpace(leftPath))
-                {
-                    var leftBitmap = await LoadBitmapAsync(leftPath);
-                    if (leftBitmap != null && currentVersion == loadVersion)
-                        bitmaps.Add(leftBitmap);
-                }
-
-                if (!string.IsNullOrWhiteSpace(rightPath))
-                {
-                    var rightBitmap = await LoadBitmapAsync(rightPath);
-                    if (rightBitmap != null && currentVersion == loadVersion)
-                        bitmaps.Add(rightBitmap);
-                }
-            }
-            else // SinglePage
-            {
-                if (!string.IsNullOrWhiteSpace(Source))
-                {
-                    var bitmap = await LoadBitmapAsync(Source);
+                    if (currentVersion != loadVersion) break;
+                    var bitmap = await LoadBitmapAsync(src);
                     if (bitmap != null && currentVersion == loadVersion)
                         bitmaps.Add(bitmap);
                 }
