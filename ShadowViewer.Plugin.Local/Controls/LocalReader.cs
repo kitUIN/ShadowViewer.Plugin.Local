@@ -22,6 +22,7 @@ using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using ShadowPluginLoader.WinUI;
 using DryIoc;
+using System.Diagnostics;
 
 namespace ShadowViewer.Plugin.Local.Controls;
 
@@ -36,6 +37,7 @@ public sealed class LocalReader : Control
 
     // Canvas 相关
     private CanvasVirtualControl canvas;
+    private Dictionary<string, CanvasBitmap> bitmapCache = new();
     private List<CanvasBitmap> bitmaps = new();
     private readonly List<Rect> pageRects = new();
     private Size contentSize = new(0, 0);
@@ -59,6 +61,9 @@ public sealed class LocalReader : Control
     // 垂直滚动窗口优化
     private const int ImageWindowSize = 3;
     private List<string> allImagePaths = new();
+    private bool _isUpdatingIndexFromScroll = false;
+    private List<string> _lastLoadedSources = new();
+    private bool _isLayoutDirty = false;
 
     private IReadingModeStrategy ReadingModeStrategy => ReadingModeStrategies[(int)ReaderMode];
 
@@ -312,12 +317,14 @@ public sealed class LocalReader : Control
         if (e.NewValue is INotifyCollectionChanged newNotify)
             newNotify.CollectionChanged += control.OnSourcesCollectionChanged;
 
+        control._isLayoutDirty = true;
         if (control.canvas == null) return;
         _ = control.ReloadImagesAsync();
     }
 
     private void OnSourcesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
+        _isLayoutDirty = true;
         _ = ReloadImagesAsync();
     }
 
@@ -346,22 +353,26 @@ public sealed class LocalReader : Control
     private static void OnCurrentIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (LocalReader)d;
-
+        Debug.WriteLine($"[LocalReader] CurrentIndex changed from {(int)e.OldValue} to {(int)e.NewValue}");
         if (control.ReaderMode == LocalReaderMode.VerticalScrolling)
         {
             control.EnsureImageWindow((int)e.NewValue);
 
-            var prevIgnore = control.IgnoreViewChanged;
-            control.IgnoreViewChanged = true;
-            control.ScrollToPage((int)e.NewValue);
-            control.IgnoreViewChanged = prevIgnore;
-
-            control.CheckCanPage();
+            if (!control._isUpdatingIndexFromScroll)
+            {
+                var prevIgnore = control.IgnoreViewChanged;
+                control.IgnoreViewChanged = true;
+                control.ScrollToPage((int)e.NewValue);
+                Debug.WriteLine($"[LocalReader] ScrollToPage invoked for index {(int)e.NewValue}");
+                control.IgnoreViewChanged = prevIgnore;
+            }
         }
         else
         {
             control.ReadingModeStrategy.OnCurrentIndexChanged(control, (int)e.OldValue, (int)e.NewValue);
         }
+
+        control.CheckCanPage();
     }
 
     private static void OnCurrentEpisodeIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -439,7 +450,16 @@ public sealed class LocalReader : Control
     {
         if (IgnoreViewChanged) return;
         if (ReaderMode != LocalReaderMode.VerticalScrolling) return;
-        CurrentIndex = pageIndex;
+
+        _isUpdatingIndexFromScroll = true;
+        try
+        {
+            CurrentIndex = pageIndex;
+        }
+        finally
+        {
+            _isUpdatingIndexFromScroll = false;
+        }
     }
 
     private void UpdateImageSourcesFromPictures()
@@ -526,28 +546,151 @@ public sealed class LocalReader : Control
         if (canvas == null) return;
 
         var currentVersion = ++loadVersion;
-        IsLoading = Visibility.Visible;
+        if (bitmaps.Count == 0)
+            IsLoading = Visibility.Visible;
 
-        var oldBitmaps = bitmaps;
-        bitmaps = new List<CanvasBitmap>();
+        // 尝试捕获当前视图锚点（仅垂直滚动模式）
+        string anchorPath = null;
+        double anchorOffsetFromViewportTop = 0;
+        bool hasAnchor = false;
+
+        if (ReaderMode == LocalReaderMode.VerticalScrolling &&
+            _lastLoadedSources != null &&
+            bitmaps.Count > 0 &&
+            pageRects.Count == _lastLoadedSources.Count &&
+            canvas.ActualHeight > 0)
+        {
+            var viewportTop = -offset.Y / ZoomFactor;
+            var viewportBottom = viewportTop + canvas.ActualHeight / ZoomFactor;
+
+            for (int i = 0; i < pageRects.Count; i++)
+            {
+                var rect = pageRects[i];
+                // 只要图片在视口范围内有重叠
+                if (rect.Bottom > viewportTop && rect.Top < viewportBottom)
+                {
+                    var path = _lastLoadedSources[i];
+                    // 检查新列表中是否包含这个图片
+                    if (Sources != null && Sources.Contains(path))
+                    {
+                        anchorPath = path;
+                        anchorOffsetFromViewportTop = rect.Y - viewportTop;
+                        hasAnchor = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         try
         {
-            if (Sources != null && Sources.Count > 0)
+            var newBitmaps = new List<CanvasBitmap>();
+            var currentSources = Sources;
+            
+            if (currentSources != null && currentSources.Count > 0)
             {
-                foreach (var src in Sources)
+                // 使用HashSet加速查找
+                var neededSources = new HashSet<string>(currentSources);
+
+                foreach (var src in currentSources)
                 {
-                    if (currentVersion != loadVersion) break;
-                    var bitmap = await LoadBitmapAsync(src);
+                    if (currentVersion != loadVersion) return;
+
+                    CanvasBitmap bitmap = null;
+                    if (bitmapCache.TryGetValue(src, out var cached))
+                    {
+                        bitmap = cached;
+                    }
+                    else
+                    {
+                        bitmap = await LoadBitmapAsync(src);
+                        if (bitmap != null && currentVersion == loadVersion)
+                        {
+                            bitmapCache[src] = bitmap;
+                        }
+                    }
+
                     if (bitmap != null && currentVersion == loadVersion)
-                        bitmaps.Add(bitmap);
+                        newBitmaps.Add(bitmap);
                 }
+
+                // 清理不再使用的图片缓存
+                if (currentVersion == loadVersion)
+                {
+                    var keysToRemove = bitmapCache.Keys.Where(k => !neededSources.Contains(k)).ToList();
+                    foreach (var key in keysToRemove)
+                    {
+                        if (bitmapCache.TryGetValue(key, out var bmp))
+                        {
+                            bmp.Dispose();
+                            bitmapCache.Remove(key);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // 如果没有源，清理所有缓存
+                foreach (var bmp in bitmapCache.Values) bmp.Dispose();
+                bitmapCache.Clear();
             }
 
             if (currentVersion == loadVersion)
             {
+                bitmaps = newBitmaps;
                 UpdateLayoutMetrics();
-                ResetView();
+                _isLayoutDirty = false;
+
+                _lastLoadedSources = currentSources != null ? new List<string>(currentSources) : new();
+
+                // 仅在非垂直滚动模式，或者初次加载时 ResetView
+                if (ReaderMode != LocalReaderMode.VerticalScrolling)
+                {
+                    ResetView();
+                }
+                else
+                {
+                    bool positionRestored = false;
+
+                    // 尝试恢复位置
+                    if (hasAnchor && contentSize.Width > 0 && currentSources != null)
+                    {
+                        var newIndex = currentSources.IndexOf(anchorPath);
+                        if (newIndex >= 0 && newIndex < pageRects.Count)
+                        {
+                            var newRect = pageRects[newIndex];
+                            var newViewportTop = newRect.Y - anchorOffsetFromViewportTop;
+                            offset = new Vector2(offset.X, (float)(-newViewportTop * ZoomFactor));
+                            positionRestored = true;
+                        }
+                    }
+
+                    
+                    bool resetViewCalled = false;
+
+                    if (!positionRestored)
+                    {
+                        // 垂直滚动模式下，如果尚未初始化视图（ZoomFactor异常或offset为0且之前无内容），则重置
+                        // 否则保持当前视图位置，并修正滚动位置到当前页
+                        if (contentSize.Width > 0 && (ZoomFactor <= 0.01f || (offset == Vector2.Zero && bitmaps.Count <= ImageWindowSize)))
+                        {
+                            ResetView();
+                            resetViewCalled = true;
+                            ScrollToPage(CurrentIndex);
+                        }
+                        else
+                        {
+                            ScrollToPage(CurrentIndex);
+                        }
+                    }
+
+                    // 如果没有重置视图（ResetView会处理居中），则手动更新水平偏移以保持居中
+                    if (!resetViewCalled && contentSize.Width > 0 && canvas.ActualWidth > 0)
+                    {
+                        offset.X = (float)((canvas.ActualWidth - contentSize.Width * ZoomFactor) / 2f);
+                    }
+                }
+
                 canvas.Invalidate();
             }
         }
@@ -555,9 +698,6 @@ public sealed class LocalReader : Control
         {
             if (currentVersion == loadVersion)
                 IsLoading = Visibility.Collapsed;
-
-            foreach (var oldBitmap in oldBitmaps)
-                oldBitmap?.Dispose();
         }
     }
 
@@ -649,15 +789,26 @@ public sealed class LocalReader : Control
         var scaleX = canvasWidth / (float)contentSize.Width;
         var scaleY = canvasHeight / (float)contentSize.Height;
 
-        ZoomFactor = Math.Min(scaleX, scaleY);
+        if (ReaderMode == LocalReaderMode.VerticalScrolling)
+        {
+            ZoomFactor = scaleX;
+            var scaledContentWidth = (float)contentSize.Width * ZoomFactor;
+            offset = new Vector2(
+                (canvasWidth - scaledContentWidth) / 2f,
+                0
+            );
+        }
+        else
+        {
+            ZoomFactor = Math.Min(scaleX, scaleY);
+            var scaledContentWidth = (float)contentSize.Width * ZoomFactor;
+            var scaledContentHeight = (float)contentSize.Height * ZoomFactor;
 
-        var scaledContentWidth = (float)contentSize.Width * ZoomFactor;
-        var scaledContentHeight = (float)contentSize.Height * ZoomFactor;
-
-        offset = new Vector2(
-            (canvasWidth - scaledContentWidth) / 2f,
-            (canvasHeight - scaledContentHeight) / 2f
-        );
+            offset = new Vector2(
+                (canvasWidth - scaledContentWidth) / 2f,
+                (canvasHeight - scaledContentHeight) / 2f
+            );
+        }
     }
 
     #endregion
@@ -718,22 +869,29 @@ public sealed class LocalReader : Control
 
     private void Canvas_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
-        if (!EnableZoom) return;
-
         var props = e.GetCurrentPoint(canvas).Properties;
         var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(
             Windows.System.VirtualKey.Control);
 
-        if (!ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down))
-            return;
+        if (ctrl.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down))
+        {
+            if (!EnableZoom) return;
 
-        float zoom = props.MouseWheelDelta > 0 ? 1.1f : 0.9f;
+            float zoom = props.MouseWheelDelta > 0 ? 1.1f : 0.9f;
 
-        var pos = e.GetCurrentPoint(canvas).Position.ToVector2();
-        offset = pos - (pos - offset) * zoom;
+            var pos = e.GetCurrentPoint(canvas).Position.ToVector2();
+            offset = pos - (pos - offset) * zoom;
 
-        ZoomFactor *= zoom;
-        NotifyViewportChanged();
+            ZoomFactor *= zoom;
+            NotifyViewportChanged();
+        }
+        else if (ReaderMode == LocalReaderMode.VerticalScrolling)
+        {
+            offset += new Vector2(0, props.MouseWheelDelta);
+            canvas.Invalidate();
+            NotifyViewportChanged();
+            e.Handled = true;
+        }
     }
 
     private void Canvas_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
@@ -766,15 +924,21 @@ public sealed class LocalReader : Control
     public void ScrollToPage(int pageIndex)
     {
         if (ReaderMode != LocalReaderMode.VerticalScrolling || canvas == null) return;
-        if (pageRects.Count == 0) return;
+        
+        int relativeIndex = -1;
+        if (allImagePaths != null && pageIndex >= 1 && pageIndex <= allImagePaths.Count && Sources != null)
+        {
+            var path = allImagePaths[pageIndex - 1];
+            relativeIndex = Sources.IndexOf(path);
+        }
 
-        if (pageIndex < 1) pageIndex = 1;
-        if (pageIndex > pageRects.Count) pageIndex = pageRects.Count;
-
-        var rect = pageRects[pageIndex - 1];
-        offset = new Vector2(offset.X, -((float)rect.Y) * ZoomFactor);
-        canvas.Invalidate();
-        NotifyViewportChanged();
+        if (relativeIndex >= 0 && relativeIndex < pageRects.Count)
+        {
+            var rect = pageRects[relativeIndex];
+            offset = new Vector2(offset.X, -((float)rect.Y) * ZoomFactor);
+            canvas.Invalidate();
+            NotifyViewportChanged();
+        }
     }
 
     public void ScrollByViewport(float deltaPixels)
@@ -787,26 +951,40 @@ public sealed class LocalReader : Control
 
     public int GetVisiblePageIndex()
     {
+        if (_isLayoutDirty) return lastReportedPageIndex > 0 ? lastReportedPageIndex : CurrentIndex;
         if (ReaderMode != LocalReaderMode.VerticalScrolling || canvas == null) return 0;
         if (pageRects.Count == 0) return 0;
         if (ZoomFactor <= 0.0001f) return 0;
 
         var viewportCenterY = ((-offset.Y) + (float)canvas.ActualHeight / 2f) / ZoomFactor;
+        int foundRelativeIndex = pageRects.Count - 1;
 
         for (int i = 0; i < pageRects.Count; i++)
         {
             var rect = pageRects[i];
-            if (viewportCenterY < rect.Top)
-                return i + 1;
-            if (viewportCenterY >= rect.Top && viewportCenterY <= rect.Bottom)
-                return i + 1;
+            if (viewportCenterY <= rect.Bottom)
+            {
+                foundRelativeIndex = i;
+                break;
+            }
         }
 
-        return pageRects.Count;
+        if (Sources != null && foundRelativeIndex >= 0 && foundRelativeIndex < Sources.Count)
+        {
+            var path = Sources[foundRelativeIndex];
+            if (allImagePaths != null)
+            {
+                var idx = allImagePaths.IndexOf(path);
+                if (idx >= 0) return idx + 1;
+            }
+        }
+
+        return 0;
     }
 
     private void NotifyViewportChanged()
     {
+        if (_isLayoutDirty) return;
         if (ReaderMode != LocalReaderMode.VerticalScrolling) return;
         var pageIndex = GetVisiblePageIndex();
         if (pageIndex <= 0 || pageIndex == lastReportedPageIndex) return;
