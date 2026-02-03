@@ -7,12 +7,12 @@ namespace ShadowViewer.Plugin.Local.Controls;
 /// <summary>
 /// 
 /// </summary>
-public sealed partial class ImportPreviewDialog : UserControl
+public sealed partial class ImportPreviewDialog
 {
     /// <summary>
     /// 
     /// </summary>
-    public ImportPreviewViewModel ViewModel
+    public ImportPreviewViewModel? ViewModel
     {
         get => (ImportPreviewViewModel)GetValue(ViewModelProperty);
         set => SetValue(ViewModelProperty, value);

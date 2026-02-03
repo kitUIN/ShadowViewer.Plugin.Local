@@ -1,7 +1,27 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local2="using:ShadowViewer.Plugin.Local.Controls">
+    xmlns:local2="using:ShadowViewer.Plugin.Local.Controls"
+    xmlns:xaml="using:Microsoft.Graphics.Canvas.UI.Xaml">
 
     <Style TargetType="local2:ReaderSlider" BasedOn="{StaticResource DefaultSliderStyle}" />
+    <Style TargetType="local2:LocalReader">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local2:LocalReader">
+                    <Grid HorizontalAlignment="Stretch" >
+                        <xaml:CanvasVirtualControl
+                            x:Name="PART_Canvas"/>
+                        <ProgressRing
+                            IsIndeterminate="True"
+                            Visibility="{TemplateBinding IsLoading}"
+                            Width="32"
+                            Height="32"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

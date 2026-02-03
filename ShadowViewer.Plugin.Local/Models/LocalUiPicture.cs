@@ -10,9 +10,10 @@ public partial class LocalUiPicture : ObservableObject, IUiPicture
 {
     [ObservableProperty] public partial int Index { get; set; }
     [ObservableProperty] public partial ImageSource Source { get; set; }
+    [ObservableProperty] public partial string SourcePath { get; set; } = string.Empty;
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="index"></param>
     /// <param name="image"></param>
@@ -20,10 +21,11 @@ public partial class LocalUiPicture : ObservableObject, IUiPicture
     {
         Index = index;
         Source = image;
+        SourcePath = image.UriSource?.ToString() ?? string.Empty;
     }
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="index"></param>
     /// <param name="uri"></param>
@@ -32,7 +34,7 @@ public partial class LocalUiPicture : ObservableObject, IUiPicture
     }
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="index"></param>
     /// <param name="uri"></param>

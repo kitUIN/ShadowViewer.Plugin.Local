@@ -16,20 +16,19 @@ public class VerticalScrollingStrategy : IReadingModeStrategy
     /// <param name="newValue"></param>
     public void OnCurrentIndexChanged(LocalReader reader, int oldValue, int newValue)
     {
-        reader.ScrollIntoCurrentPage(newValue);
-        reader.CheckCanPage();
+        // reader.ScrollIntoCurrentPage(newValue);
     }
 
     /// <inheritdoc />
     public void NextPage(LocalReader reader)
     {
-        reader.ScrollIntoOffset(true);
+        // reader.ScrollIntoOffset(true);
     }
 
     /// <inheritdoc />
     public void PrevPage(LocalReader reader)
     {
-        reader.ScrollIntoOffset(false);
+        // reader.ScrollIntoOffset(false);
     }
 
     /// <inheritdoc />

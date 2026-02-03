@@ -27,12 +27,12 @@
         Tapped="PageTapped">
         <controls:LocalReader
             x:Name="MangaReader"
-            HorizontalAlignment="Center"
+            HorizontalAlignment="Stretch"
             CurrentEpisodeIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}"
             CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
             IgnoreViewChanged="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
             Pictures="{x:Bind ViewModel.Images, Mode=OneWay}"
-            ReadMode="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}"
+            ReaderMode="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}"
             SmoothScroll="{x:Bind LocalPluginConfig.PageAutoTurn, Mode=TwoWay}" />
         <controls:FlashIcon
             Margin="0,0,0,0"

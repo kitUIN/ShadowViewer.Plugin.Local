@@ -15,4 +15,8 @@ public interface IUiPicture
     /// 图片
     /// </summary>
     ImageSource Source { get; set; }
+    /// <summary>
+    /// 图片文件路径
+    /// </summary>
+    string SourcePath { get; set; }
 }

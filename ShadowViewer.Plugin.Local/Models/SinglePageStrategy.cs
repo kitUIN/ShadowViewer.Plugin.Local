@@ -14,7 +14,8 @@ public class SinglePageStrategy: IReadingModeStrategy
         if (reader.CurrentIndex <= 0 || reader.CurrentIndex > reader.Pictures.Count) return;
         if (reader.Pictures.Count >= reader.CurrentIndex)
         {
-            reader.CurrentLeftPage = reader.Pictures[reader.CurrentIndex - 1].Source;
+            var picture = reader.Pictures[reader.CurrentIndex - 1];
+            reader.Source = picture.SourcePath;
         }
         reader.CheckCanPage();
     }
