@@ -61,6 +61,7 @@ public sealed class LocalReader : Control
     // 垂直滚动窗口优化
     private const int ImageWindowSize = 3;
     private List<string> allImagePaths = new();
+    private Dictionary<string, Size> _pageSizeCache = new();
     private bool _isUpdatingIndexFromScroll = false;
     private List<string> _lastLoadedSources = new();
     private bool _isLayoutDirty = false;
@@ -551,30 +552,42 @@ public sealed class LocalReader : Control
 
         // 尝试捕获当前视图锚点（仅垂直滚动模式）
         string anchorPath = null;
-        double anchorOffsetFromViewportTop = 0;
+        double anchorOldY = 0;
         bool hasAnchor = false;
 
         if (ReaderMode == LocalReaderMode.VerticalScrolling &&
             _lastLoadedSources != null &&
-            bitmaps.Count > 0 &&
-            pageRects.Count == _lastLoadedSources.Count &&
+            pageRects.Count > 0 && // pageRects 现在可能是全量的
             canvas.ActualHeight > 0)
         {
             var viewportTop = -offset.Y / ZoomFactor;
             var viewportBottom = viewportTop + canvas.ActualHeight / ZoomFactor;
 
+            // 在旧布局中找到第一个可视的图片作为锚点
+            // 注意：此时 pageRects 尚未更新，仍是基于旧状态的（但如果之前已经是全量模式，Rect.Y应该是准的）
+            // 如果是从非 Vertical 模式切换过来，或者是首次加载，pageRects 可能不准，但 hasAnchor 会处理
+            
             for (int i = 0; i < pageRects.Count; i++)
             {
                 var rect = pageRects[i];
-                // 只要图片在视口范围内有重叠
-                if (rect.Bottom > viewportTop && rect.Top < viewportBottom)
+                // 只要图片在视口范围内有重叠且高度大于0
+                if (rect.Height > 0 && rect.Bottom > viewportTop && rect.Top < viewportBottom)
                 {
-                    var path = _lastLoadedSources[i];
-                    // 检查新列表中是否包含这个图片
-                    if (Sources != null && Sources.Contains(path))
+                    // 找到对应的 Path
+                    string path = null;
+                    if (allImagePaths.Count == pageRects.Count) 
+                    {
+                        path = allImagePaths[i];
+                    }
+                    else if (_lastLoadedSources.Count == pageRects.Count) // 兼容旧逻辑/混合状态
+                    {
+                        path = _lastLoadedSources[i];
+                    }
+
+                    if (path != null)
                     {
                         anchorPath = path;
-                        anchorOffsetFromViewportTop = rect.Y - viewportTop;
+                        anchorOldY = rect.Y;
                         hasAnchor = true;
                         break;
                     }
@@ -640,6 +653,8 @@ public sealed class LocalReader : Control
                 bitmaps = newBitmaps;
                 UpdateLayoutMetrics();
                 _isLayoutDirty = false;
+                
+                var totalLoadedCount = bitmaps.Count; // 保存局部变量供后续使用
 
                 _lastLoadedSources = currentSources != null ? new List<string>(currentSources) : new();
 
@@ -653,14 +668,28 @@ public sealed class LocalReader : Control
                     bool positionRestored = false;
 
                     // 尝试恢复位置
-                    if (hasAnchor && contentSize.Width > 0 && currentSources != null)
+                    if (hasAnchor && contentSize.Width > 0)
                     {
-                        var newIndex = currentSources.IndexOf(anchorPath);
+                        // 在新布局中找到锚点
+                        // 此时 pageRects 应该已经包含所有路径
+                        int newIndex = -1;
+                        if (allImagePaths.Count > 0)
+                        {
+                            newIndex = allImagePaths.IndexOf(anchorPath);
+                        }
+                        
                         if (newIndex >= 0 && newIndex < pageRects.Count)
                         {
                             var newRect = pageRects[newIndex];
-                            var newViewportTop = newRect.Y - anchorOffsetFromViewportTop;
-                            offset = new Vector2(offset.X, (float)(-newViewportTop * ZoomFactor));
+                            // 只有当 Y 坐标确实发生变化时才调整 offset
+                            // 如果是向下滚动，前面的图片高度保留，diff 应该是 0
+                            // 如果是向上滚动加载了前面的图片，diff < 0，offset 变小（向上推），符合预期
+                            var diff = newRect.Y - anchorOldY;
+                            if (Math.Abs(diff) > 0.001)
+                            {
+                                offset = new Vector2(offset.X, offset.Y - (float)(diff * ZoomFactor));
+                                
+                            }
                             positionRestored = true;
                         }
                     }
@@ -672,7 +701,7 @@ public sealed class LocalReader : Control
                     {
                         // 垂直滚动模式下，如果尚未初始化视图（ZoomFactor异常或offset为0且之前无内容），则重置
                         // 否则保持当前视图位置，并修正滚动位置到当前页
-                        if (contentSize.Width > 0 && (ZoomFactor <= 0.01f || (offset == Vector2.Zero && bitmaps.Count <= ImageWindowSize)))
+                        if (contentSize.Width > 0 && (ZoomFactor <= 0.01f || (offset == Vector2.Zero && totalLoadedCount <= ImageWindowSize)))
                         {
                             ResetView();
                             resetViewCalled = true;
@@ -680,13 +709,18 @@ public sealed class LocalReader : Control
                         }
                         else
                         {
-                            ScrollToPage(CurrentIndex);
+                           // 如果没有恢复位置（比如跳页了），尝试滚动到 CurrentIndex
+                           // 但如果是滑动加载触发的重载，通常 hasAnchor 会命中，除非跳得太快
+                           // 这里的 ScrollToPage 可能会打断滑动，所以仅当没有锚点时调用
+                           if (!hasAnchor)
+                               ScrollToPage(CurrentIndex);
                         }
                     }
 
                     // 如果没有重置视图（ResetView会处理居中），则手动更新水平偏移以保持居中
                     if (!resetViewCalled && contentSize.Width > 0 && canvas.ActualWidth > 0)
                     {
+                        
                         offset.X = (float)((canvas.ActualWidth - contentSize.Width * ZoomFactor) / 2f);
                     }
                 }
@@ -742,32 +776,73 @@ public sealed class LocalReader : Control
 
     private void DrawContent(CanvasDrawingSession ds, Rect region)
     {
-        if (bitmaps.Count == 0) return;
-
-        ds.Clear(Colors.Black);
-
         var canvasWidth = (float)canvas.ActualWidth;
         var canvasHeight = (float)canvas.ActualHeight;
 
         if (canvasWidth <= 0 || canvasHeight <= 0) return;
 
-        for (int i = 0; i < bitmaps.Count && i < pageRects.Count; i++)
+        ds.Clear(Colors.Black);
+
+        // VerticalScrolling 模式下，pageRects 对应 allImagePaths
+        if (ReaderMode == LocalReaderMode.VerticalScrolling)
         {
-            var bitmap = bitmaps[i];
-            var rect = pageRects[i];
+            if (pageRects.Count == 0) return;
 
-            var scaledRect = new Rect(
-                rect.X * ZoomFactor + offset.X,
-                rect.Y * ZoomFactor + offset.Y,
-                rect.Width * ZoomFactor,
-                rect.Height * ZoomFactor
-            );
+            // 只需要遍历 pageRects，找到对应的图片进行绘制
+            for (int i = 0; i < pageRects.Count; i++)
+            {
+                var rect = pageRects[i];
+                if (rect.Height <= 0) continue; // 跳过占位符
 
-            if (scaledRect.Right < region.Left || scaledRect.Left > region.Right ||
-                scaledRect.Bottom < region.Top || scaledRect.Top > region.Bottom)
-                continue;
+                var scaledRect = new Rect(
+                    rect.X * ZoomFactor + offset.X,
+                    rect.Y * ZoomFactor + offset.Y,
+                    rect.Width * ZoomFactor,
+                    rect.Height * ZoomFactor
+                );
 
-            ds.DrawImage(bitmap, scaledRect);
+                // 视口剔除
+                if (scaledRect.Right < region.Left || scaledRect.Left > region.Right ||
+                    scaledRect.Bottom < region.Top || scaledRect.Top > region.Bottom)
+                    continue;
+
+                // 获取图片
+                CanvasBitmap bitmap = null;
+                if (i < allImagePaths.Count)
+                {
+                    var path = allImagePaths[i];
+                    bitmapCache.TryGetValue(path, out bitmap);
+                }
+
+                if (bitmap != null)
+                {
+                    ds.DrawImage(bitmap, scaledRect);
+                }
+            }
+        }
+        else
+        {
+            // 其他模式保持原有逻辑 (基于 bitmaps 列表)
+            if (bitmaps.Count == 0) return;
+
+            for (int i = 0; i < bitmaps.Count && i < pageRects.Count; i++)
+            {
+                var bitmap = bitmaps[i];
+                var rect = pageRects[i];
+
+                var scaledRect = new Rect(
+                    rect.X * ZoomFactor + offset.X,
+                    rect.Y * ZoomFactor + offset.Y,
+                    rect.Width * ZoomFactor,
+                    rect.Height * ZoomFactor
+                );
+
+                if (scaledRect.Right < region.Left || scaledRect.Left > region.Right ||
+                    scaledRect.Bottom < region.Top || scaledRect.Top > region.Bottom)
+                    continue;
+
+                ds.DrawImage(bitmap, scaledRect);
+            }
         }
     }
 
@@ -882,11 +957,13 @@ public sealed class LocalReader : Control
             var pos = e.GetCurrentPoint(canvas).Position.ToVector2();
             offset = pos - (pos - offset) * zoom;
 
-            ZoomFactor *= zoom;
+            
             NotifyViewportChanged();
         }
         else if (ReaderMode == LocalReaderMode.VerticalScrolling)
         {
+            offset += new Vector2(0, props.MouseWheelDelta);
+            
             offset += new Vector2(0, props.MouseWheelDelta);
             canvas.Invalidate();
             NotifyViewportChanged();
@@ -917,32 +994,49 @@ public sealed class LocalReader : Control
         canvas.Invalidate();
     }
 
-    #endregion
-
-    #region 滚动和页面导航
-
     public void ScrollToPage(int pageIndex)
     {
         if (ReaderMode != LocalReaderMode.VerticalScrolling || canvas == null) return;
         
-        int relativeIndex = -1;
-        if (allImagePaths != null && pageIndex >= 1 && pageIndex <= allImagePaths.Count && Sources != null)
+        // 垂直模式下 pageRects 对应 allImagePaths (通常情况)
+        // 或者是 Sources (如果 allImagePaths 为空)
+        // 优先使用 allImagePaths
+        if (allImagePaths != null && allImagePaths.Count > 0)
         {
-            var path = allImagePaths[pageIndex - 1];
-            relativeIndex = Sources.IndexOf(path);
+             if (pageIndex >= 1 && pageIndex <= pageRects.Count && pageIndex <= allImagePaths.Count)
+             {
+                 var rect = pageRects[pageIndex - 1];
+                 // 只有当页面有高度时才滚动（或者是占位符？）
+                 
+                 // 即使高度为0，Y坐标也是准确的（等于下一页的起始位置）
+                 offset = new Vector2(offset.X, -((float)rect.Y) * ZoomFactor);
+                 canvas.Invalidate();
+                 NotifyViewportChanged();
+             }
         }
-
-        if (relativeIndex >= 0 && relativeIndex < pageRects.Count)
+        else
         {
-            var rect = pageRects[relativeIndex];
-            offset = new Vector2(offset.X, -((float)rect.Y) * ZoomFactor);
-            canvas.Invalidate();
-            NotifyViewportChanged();
+            // Fallback for empty allImagePaths (unlikely)
+            int relativeIndex = -1;
+            if (Sources != null && pageIndex >= 1 && pageIndex <= Sources.Count) // Assuming pageIndex matches Source index if allImagePaths is missing
+            {
+                relativeIndex = pageIndex - 1;
+            }
+
+            if (relativeIndex >= 0 && relativeIndex < pageRects.Count)
+            {
+                
+                var rect = pageRects[relativeIndex];
+                offset = new Vector2(offset.X, -((float)rect.Y) * ZoomFactor);
+                canvas.Invalidate();
+                NotifyViewportChanged();
+            }
         }
     }
 
     public void ScrollByViewport(float deltaPixels)
     {
+        
         if (ReaderMode != LocalReaderMode.VerticalScrolling || canvas == null) return;
         offset += new Vector2(0f, -deltaPixels);
         canvas.Invalidate();
@@ -957,26 +1051,34 @@ public sealed class LocalReader : Control
         if (ZoomFactor <= 0.0001f) return 0;
 
         var viewportCenterY = ((-offset.Y) + (float)canvas.ActualHeight / 2f) / ZoomFactor;
-        int foundRelativeIndex = pageRects.Count - 1;
+        
+        // Vertical模式下，pageRects 对应 allImagePaths
+        // 直接查找命中 rect 的索引即可
+        int foundIndex = -1;
 
         for (int i = 0; i < pageRects.Count; i++)
         {
             var rect = pageRects[i];
+            // 考虑高度为0的情况，应该跳过？或者如果正好在那个位置...
+            if (rect.Height <= 0) continue; 
+            
             if (viewportCenterY <= rect.Bottom)
             {
-                foundRelativeIndex = i;
+                foundIndex = i;
                 break;
             }
         }
+        
+        if (foundIndex == -1 && pageRects.Count > 0)
+            foundIndex = pageRects.Count - 1;
 
-        if (Sources != null && foundRelativeIndex >= 0 && foundRelativeIndex < Sources.Count)
+        if (foundIndex >= 0)
         {
-            var path = Sources[foundRelativeIndex];
-            if (allImagePaths != null)
-            {
-                var idx = allImagePaths.IndexOf(path);
-                if (idx >= 0) return idx + 1;
-            }
+             // 如果使用 allImagePaths，index + 1 即为页码
+             if (allImagePaths != null && allImagePaths.Count > 0)
+                return foundIndex + 1;
+             else
+                return foundIndex + 1; // Fallback
         }
 
         return 0;
@@ -1035,27 +1137,62 @@ public sealed class LocalReader : Control
                 float maxWidth = 0f;
                 float totalHeight = 0f;
 
-                foreach (var bitmap in bitmaps)
+                var items = new List<(Size Size, string Path)>();
+                
+                // 使用 allImagePaths 保持全局布局稳定性
+                var pathsToUse = allImagePaths != null && allImagePaths.Count > 0 ? allImagePaths : (Sources ?? new List<string>());
+
+                double totalKnownHeight = 0;
+                int knownCount = 0;
+
+                foreach (var path in pathsToUse)
                 {
-                    if (bitmap == null) continue;
-                    maxWidth = Math.Max(maxWidth, (float)bitmap.Size.Width);
+                    Size size = Size.Empty;
+                    if (bitmapCache.TryGetValue(path, out var bmp))
+                    {
+                        size = bmp.Size;
+                        _pageSizeCache[path] = size;
+                    }
+                    else if (_pageSizeCache.TryGetValue(path, out var cachedSize))
+                    {
+                        size = cachedSize;
+                    }
+
+                    if (!size.IsEmpty)
+                    {
+                        maxWidth = Math.Max(maxWidth, (float)size.Width);
+                        totalKnownHeight += size.Height;
+                        knownCount++;
+                    }
+                    items.Add((size, path));
                 }
 
-                foreach (var bitmap in bitmaps)
-                {
-                    if (bitmap == null) continue;
+                // 计算估算高度
+                float estimatedHeight = knownCount > 0 ? (float)(totalKnownHeight / knownCount) : (maxWidth > 0 ? maxWidth * 1.414f : 1000f);
+                float layoutWidth = maxWidth > 0 ? maxWidth : 1000f;
 
-                    var width = (float)bitmap.Size.Width;
-                    var height = (float)bitmap.Size.Height;
-                    var x = (maxWidth - width) / 2f;
-                    pageRects.Add(new Rect(x, totalHeight, width, height));
-                    totalHeight += height + spacing;
+                foreach (var item in items)
+                {
+                    if (item.Size.IsEmpty)
+                    {
+                        // 未知尺寸，使用估算高度占位，确保滚动条和锚点逻辑正常工作
+                        pageRects.Add(new Rect(0, totalHeight, layoutWidth, estimatedHeight));
+                        totalHeight += estimatedHeight + spacing;
+                    }
+                    else
+                    {
+                        var width = (float)item.Size.Width;
+                        var height = (float)item.Size.Height;
+                        var x = (layoutWidth - width) / 2f;
+                        pageRects.Add(new Rect(x, totalHeight, width, height));
+                        totalHeight += height + spacing;
+                    }
                 }
 
                 if (pageRects.Count > 0)
                     totalHeight -= spacing;
 
-                contentSize = new Size(maxWidth, Math.Max(0f, totalHeight));
+                contentSize = new Size(layoutWidth, Math.Max(0f, totalHeight));
                 break;
             }
             default: // SinglePage
@@ -1071,4 +1208,5 @@ public sealed class LocalReader : Control
     }
 
     #endregion
+
 }
