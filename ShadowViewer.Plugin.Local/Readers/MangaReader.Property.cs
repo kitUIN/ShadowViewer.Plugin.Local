@@ -32,7 +32,7 @@ public sealed partial class MangaReader
 
     private static void OnPageSpacingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is MangaReader control && control.Mode == ReadingMode.Scroll)
+        if (d is MangaReader control && control.Mode == ReadingMode.VerticalScroll)
         {
             control.UpdateActiveLayout();
         }
@@ -43,7 +43,7 @@ public sealed partial class MangaReader
     /// </summary>
     public static readonly DependencyProperty ModeProperty =
         DependencyProperty.Register(nameof(Mode), typeof(ReadingMode), typeof(MangaReader),
-            new PropertyMetadata(ReadingMode.Scroll, OnModeChanged));
+            new PropertyMetadata(ReadingMode.VerticalScroll, OnModeChanged));
 
     /// <summary>
     /// 当前阅读模式（例如滚动或分页）。修改后会更新引擎状态并重置布局与缩放。
@@ -171,7 +171,7 @@ public sealed partial class MangaReader
     /// </summary>
     private void ResetItems()
     {
-        loadCts.Cancel();
+        loadCts?.Cancel();
         lock (allNodes)
         {
             foreach (var node in allNodes)
@@ -313,7 +313,7 @@ public sealed partial class MangaReader
     {
         if (d is MangaReader { isUpdatingInternal: false } control && e.NewValue is int newIndex)
         {
-            if (control.Mode != ReadingMode.Scroll)
+            if (control.Mode != ReadingMode.VerticalScroll)
             {
                 control.UpdateActiveLayout();
                 control.ResetZoom();

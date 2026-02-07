@@ -70,7 +70,7 @@ public sealed partial class MangaReader
         bool isZoomed = Math.Abs(currentZoom - baseZoomScale) > 0.001f;
         bool isMoved;
 
-        if (state.CurrentMode == ReadingMode.Scroll)
+        if (state.CurrentMode == ReadingMode.VerticalScroll)
         {
             // In Scroll mode, ignore Y changes for visibility
             isMoved = Math.Abs(currentPos.X) > 1.0f;
@@ -167,7 +167,7 @@ public sealed partial class MangaReader
         baseZoomScale = 1.0f;
 
         // 滚动模式下，X=0 即为中心
-        if (state.CurrentMode == ReadingMode.Scroll)
+        if (state.CurrentMode == ReadingMode.VerticalScroll)
         {
             state.CameraPos.X = 0;
 

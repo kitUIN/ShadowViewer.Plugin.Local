@@ -299,8 +299,8 @@
   <data name="NeedPassword" xml:space="preserve"> <value>Password Required</value> </data>
   <data name="NewFolderName" xml:space="preserve"> <value>New Folder Name</value> </data>
   <data name="BackFolder" xml:space="preserve"> <value>Back to Previous</value> </data>
-  <data name="DoublePage" xml:space="preserve"> <value>Two-Page Reading</value> </data>
-  <data name="VerticalScrolling" xml:space="preserve"> <value>Vertical Scrolling</value> </data>
+  <data name="SpreadRtl" xml:space="preserve"> <value>Two-Page(Right To Left)</value> </data>
+  <data name="VerticalScroll" xml:space="preserve"> <value>Vertical Scroll</value> </data>
   <data name="PrevEpisode" xml:space="preserve"> <value>Previous Episode</value> </data>
   <data name="NextEpisode" xml:space="preserve"> <value>Next Episode</value> </data>
   <data name="DisplayName" xml:space="preserve"> <value>Local Reader</value> </data>
@@ -312,7 +312,7 @@
   <data name="LocalReaderMode" xml:space="preserve"> <value>Reading Mode</value> </data>
   <data name="LocalReaderSetting" xml:space="preserve"> <value>Reader Settings</value> </data>
   <data name="SinglePage" xml:space="preserve"> <value>Single-Page Reading</value> </data>
-  <data name="HorizontalScrolling" xml:space="preserve"> <value>Horizontal Scrolling</value> </data>
+  <data name="HorizontalScroll" xml:space="preserve"> <value>Horizontal Scroll</value> </data>
   <data name="PasswordError" xml:space="preserve"> <value>Incorrect Password</value> </data>
   <data name="ZipPasswordPlaceholder" xml:space="preserve"> <value>Please enter the zip file password</value> </data>
   <data name="Export" xml:space="preserve"> <value>Export</value> </data>
@@ -345,5 +345,8 @@
   </data>
   <data name="PasswordRequired" xml:space="preserve">
     <value>Password Required</value>
+  </data>
+  <data name="SpreadLtr" xml:space="preserve">
+    <value>Two-Page(Left To Right)</value>
   </data>
 </root>

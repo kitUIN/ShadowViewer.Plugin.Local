@@ -56,12 +56,12 @@ public partial class PicViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NextEpisodeTip))]
-    public partial int CurrentPage { get; set; }
+    public partial int CurrentPageIndex { get; set; }
 
     /// <summary>
     ///  下一页显示
     /// </summary> 
-    public bool NextEpisodeTip => CurrentPage == Images.Count && CanNextEpisode;
+    public bool NextEpisodeTip => CurrentPageIndex + 1 == Images.Count && CanNextEpisode;
 
     /// <summary>
     /// 菜单可见性
@@ -145,7 +145,7 @@ public partial class PicViewModel : ObservableObject
     /// </summary>
     /// <param name="oldValue"></param>
     /// <param name="newValue"></param>
-    partial void OnCurrentPageChanged(int oldValue, int newValue)
+    partial void OnCurrentPageIndexChanged(int oldValue, int newValue)
     {
         PicViewResponder?.CurrentPageIndexChanged(this, Context, oldValue, newValue);
     }
@@ -189,5 +189,53 @@ public partial class PicViewModel : ObservableObject
     private void PrevEpisode()
     {
         CurrentEpisodeIndex -= 1;
+    }
+
+    /// <summary>
+    /// 允许下一页
+    /// </summary>
+    public bool CanNextPage => Images.Count > CurrentPageIndex + 1;
+
+    /// <summary>
+    /// 允许上一页
+    /// </summary>
+    public bool CanPrevPage => Images.Count > CurrentPageIndex - 1 && CurrentPageIndex > 0;
+
+    /// <summary>
+    /// 下一页
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanNextPage))]
+    private void NextPage()
+    {
+        if (!CanNextPage) return;
+        CurrentPageIndex += 1;
+    }
+
+    /// <summary>
+    /// 上一页
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanPrevPage))]
+    private void PrevPage()
+    {
+        if (!CanPrevPage) return;
+        CurrentPageIndex -= 1;
+    }
+
+    /// <summary>
+    /// Currents the page.
+    /// </summary>
+    /// <param name="index">The index.</param>
+    /// <returns></returns>
+    public int CurrentPage(int index)
+    {
+        return index + 1;
+    }
+    /// <summary>
+    /// Currents the page back.
+    /// </summary>
+    /// <param name="currentPage">The current page.</param>
+    public void CurrentPageBack(double currentPage)
+    {
+        CurrentPageIndex = Convert.ToInt32(currentPage) - 1;
     }
 }

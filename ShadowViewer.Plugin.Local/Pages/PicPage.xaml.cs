@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ShadowViewer.Plugin.Local.Controls;
+using ShadowViewer.Plugin.Local.Readers;
 
 namespace ShadowViewer.Plugin.Local.Pages;
 
@@ -46,7 +47,7 @@ public sealed partial class PicPage
         autoPageTimer.Interval = TimeSpan.FromSeconds(LocalPluginConfig.PageAutoTurnInterval);
         autoPageTimer.Tick += ((_, _) =>
         {
-            if (LocalPluginConfig.PageAutoTurn && !ViewModel.IsMenu) (MangaReader as LocalReader)?.NextPage();
+            if (LocalPluginConfig.PageAutoTurn && !ViewModel.IsMenu) ViewModel?.NextPageCommand.Execute(null);
         });
         SettingsHelper.SettingChanged += SettingsHelper_SettingChanged;
     }
@@ -86,35 +87,6 @@ public sealed partial class PicPage
         ViewModel.Affiliation = arg.Affiliation;
         ViewModel.Init(arg);
         autoPageTimer.Start();
-    }
-
-    /// <summary>
-    /// 滚轮翻页响应
-    /// </summary>
-    private void MangaPointerWheelChanged(object sender, PointerRoutedEventArgs e)
-    {
-        // var thread = CoreWindow.GetForCurrentThread();
-        // if (thread != null)
-        // {
-        //     var ctrlState = thread.GetKeyState(VirtualKey.Control);
-        //     if (ctrlState.HasFlag(CoreVirtualKeyStates.Down))
-        //         return;
-        // }
-        if ((int)LocalPluginConfig.LocalReaderMode > 1 || ViewModel.IsMenu) return;
-        var point = e.GetCurrentPoint(this);
-        var delta = point.Properties.MouseWheelDelta;
-        var scrollSteps = delta / 120;
-        if (scrollSteps == 0) return;
-        if (scrollSteps > 0)
-        {
-            for (var i = 0; i < scrollSteps; i++)
-                (MangaReader as LocalReader)?.PrevPage();
-        }
-        else
-        {
-            for (var i = 0; i < -scrollSteps; i++)
-                (MangaReader as LocalReader)?.NextPage();
-        }
     }
 
     private void PageTapped(object sender, TappedRoutedEventArgs e)
@@ -167,20 +139,20 @@ public sealed partial class PicPage
     private void NextPageTapped()
     {
         if (ViewModel.TappedGridSetting || ViewModel.IsMenu) return;
-        (MangaReader as LocalReader)?.NextPage();
+        ViewModel.NextPageCommand.Execute(null);
     }
 
     private void PrevPageTapped()
     {
         if (ViewModel.TappedGridSetting || ViewModel.IsMenu) return;
-        (MangaReader as LocalReader)?.PrevPage();
+        ViewModel.PrevPageCommand.Execute(null);
     }
 
 
     private void TappedGridSet(object sender, RoutedEventArgs e)
     {
         ViewModel.ScrollingPaddingEnabled =
-            MangaReader.ReaderMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
+            MangaReader.Mode == ReadingMode.VerticalScroll && !ViewModel.TappedGridSetting;
         if (ViewModel.TappedGridSetting) return;
         LocalPluginConfig.TappedGridLayout = new Dictionary<string, double>()
         {
@@ -234,6 +206,6 @@ public sealed partial class PicPage
     private void ReadModeClosed(object? sender, object e)
     {
         ViewModel.ScrollingPaddingEnabled =
-            MangaReader.ReaderMode == LocalReaderMode.VerticalScrolling && !ViewModel.TappedGridSetting;
+            MangaReader.Mode == ReadingMode.VerticalScroll && !ViewModel.TappedGridSetting;
     }
 }

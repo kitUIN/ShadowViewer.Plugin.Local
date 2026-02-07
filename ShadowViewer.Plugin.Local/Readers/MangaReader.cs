@@ -113,7 +113,7 @@ public sealed partial class MangaReader : Control
     /// <param name="index">目标页索引（从 0 开始）。</param>
     public void ScrollToPage(int index)
     {
-        if (Mode != ReadingMode.Scroll)
+        if (Mode != ReadingMode.VerticalScroll)
         {
             state.CameraPos = Vector2.Zero;
             state.Velocity = Vector2.Zero;
@@ -176,7 +176,7 @@ public sealed partial class MangaReader : Control
             {
                 bool wasZero = viewSize == Vector2.Zero;
                 viewSize = new Vector2((float)e.NewSize.Width, (float)e.NewSize.Height);
-                if (Mode == ReadingMode.Scroll)
+                if (Mode == ReadingMode.VerticalScroll)
                 {
                     UpdateActiveLayout();
                 }
@@ -553,7 +553,7 @@ public sealed partial class MangaReader : Control
                 
             state.CameraPos += (screenPoint - center) * (1.0f / oldZoom - 1.0f / state.Zoom);
         }
-        else if (state.CurrentMode == ReadingMode.Scroll)
+        else if (state.CurrentMode == ReadingMode.VerticalScroll)
         {
             // 停止惯性
             state.Velocity = Vector2.Zero;
@@ -566,7 +566,7 @@ public sealed partial class MangaReader : Control
             if (delta != 0)
             {
                 int direction = delta < 0 ? 1 : -1;
-                int step = (state.CurrentMode == ReadingMode.Single) ? 1 : 2;
+                int step = (state.CurrentMode == ReadingMode.SinglePage) ? 1 : 2;
 
                 int target = CurrentPageIndex + (direction * step);
 
@@ -702,14 +702,14 @@ public sealed partial class MangaReader : Control
         // Dispatch to UI thread for Mode access and LayoutNodes update
         this.DispatcherQueue.TryEnqueue(() =>
         {
-            if (Mode == ReadingMode.Scroll)
+            if (Mode == ReadingMode.VerticalScroll)
             {
                 UpdateActiveLayout();
             }
             else
             {
                 bool shouldUpdate = false;
-                if (Mode == ReadingMode.Single && node.PageIndex == CurrentPageIndex) shouldUpdate = true;
+                if (Mode == ReadingMode.SinglePage && node.PageIndex == CurrentPageIndex) shouldUpdate = true;
                 else if (Mode == ReadingMode.SpreadRtl || Mode == ReadingMode.SpreadLtr)
                 {
                     int spreadIndex = (CurrentPageIndex == 0) ? 0 : (CurrentPageIndex - 1) / 2 + 1;
@@ -740,7 +740,7 @@ public sealed partial class MangaReader : Control
         {
             state.LayoutNodes.Clear();
                 
-            if (Mode == ReadingMode.Scroll)
+            if (Mode == ReadingMode.VerticalScroll)
             {
                 float currentY = 0;
                 float spacing = PageSpacing;
@@ -783,7 +783,7 @@ public sealed partial class MangaReader : Control
                     }
                 }
             }
-            else if (Mode == ReadingMode.Single)
+            else if (Mode == ReadingMode.SinglePage)
             {
                 lock (allNodes)
                 {

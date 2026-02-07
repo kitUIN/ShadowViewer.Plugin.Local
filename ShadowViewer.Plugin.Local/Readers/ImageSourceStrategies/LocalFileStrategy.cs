@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using ShadowViewer.Plugin.Local.Models.Interfaces;
 
 namespace ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 
@@ -22,6 +23,7 @@ public class LocalFileStrategy : IImageSourceStrategy
     public bool CanHandle(object source)
     {
         if (source is StorageFile) return true;
+        if (source is IUiPicture) return true;
         if (source is string path)
         {
             if (string.IsNullOrEmpty(path)) return false;
@@ -42,9 +44,14 @@ public class LocalFileStrategy : IImageSourceStrategy
     public async Task InitImageAsync(ImageLoadingContext ctx)
     {
         var file = ctx.Source as StorageFile;
-        if (file == null && ctx.Source is string path)
+        if (file == null)
         {
-            file = await StorageFile.GetFileFromPathAsync(path);
+            file = ctx.Source switch
+            {
+                string path => await StorageFile.GetFileFromPathAsync(path),
+                IUiPicture picture => await StorageFile.GetFileFromPathAsync(picture.SourcePath),
+                _ => file
+            };
         }
 
         if (file != null)

@@ -372,10 +372,10 @@
   <data name="BackFolder" xml:space="preserve">
     <value>返回上级</value>
   </data>
-  <data name="DoublePage" xml:space="preserve">
-    <value>双页阅读</value>
+  <data name="SpreadRtl" xml:space="preserve">
+    <value>双页模式 (从右向左)</value>
   </data>
-  <data name="VerticalScrolling" xml:space="preserve">
+  <data name="VerticalScroll" xml:space="preserve">
     <value>竖直滚动</value>
   </data>
   <data name="PrevEpisode" xml:space="preserve">
@@ -411,7 +411,7 @@
   <data name="SinglePage" xml:space="preserve">
     <value>单页阅读</value>
   </data>
-  <data name="HorizontalScrolling" xml:space="preserve">
+  <data name="HorizontalScroll" xml:space="preserve">
     <value>横向滚动</value>
   </data>
   <data name="PasswordError" xml:space="preserve">
@@ -458,5 +458,8 @@
   </data>
   <data name="PasswordRequired" xml:space="preserve">
     <value>需要密码</value>
+  </data>
+  <data name="SpreadLtr" xml:space="preserve">
+    <value>双页模式 (从左向右)</value>
   </data>
 </root>

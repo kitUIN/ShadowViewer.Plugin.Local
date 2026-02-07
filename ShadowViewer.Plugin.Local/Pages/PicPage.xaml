@@ -12,6 +12,7 @@
     xmlns:interfaces="using:ShadowViewer.Plugin.Local.Models.Interfaces"
     xmlns:local="using:ShadowViewer.Plugin.Local"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:readers="using:ShadowViewer.Plugin.Local.Readers"
     xmlns:winUi="using:FluentIcons.WinUI"
     mc:Ignorable="d">
     <Page.Resources>
@@ -23,17 +24,14 @@
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
         CornerRadius="{ThemeResource NavigationViewContentGridCornerRadius}"
-        PointerWheelChanged="MangaPointerWheelChanged"
         Tapped="PageTapped">
-        <controls:LocalReader
+        <readers:MangaReader
             x:Name="MangaReader"
             HorizontalAlignment="Stretch"
-            CurrentEpisodeIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}"
-            CurrentIndex="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}"
-            IgnoreViewChanged="{x:Bind ViewModel.IsMenu, Mode=OneWay}"
-            Pictures="{x:Bind ViewModel.Images, Mode=OneWay}"
-            ReaderMode="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}"
-            SmoothScroll="{x:Bind LocalPluginConfig.PageAutoTurn, Mode=TwoWay}" />
+            VerticalAlignment="Stretch"
+            CurrentPageIndex="{x:Bind ViewModel.CurrentPageIndex, Mode=TwoWay}"
+            ItemsSource="{x:Bind ViewModel.Images, Mode=OneWay}"
+            Mode="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}" />
         <controls:FlashIcon
             Margin="0,0,0,0"
             HorizontalAlignment="Right"
@@ -52,7 +50,7 @@
             PreferredPlacement="Auto"
             Subtitle="{i18N:Locale Key=NextEpisodeTipSubTitle}" />
         <Grid
-            Background="#AA141414"
+            Background="#60141414"
             CornerRadius="6,0,6,0"
             Visibility="{x:Bind ViewModel.IsMenu, Mode=OneWay}">
             <Grid
@@ -232,7 +230,7 @@
                                 <Button.Flyout>
                                     <controls1:EnumMenuFlyout
                                         Closed="ReadModeClosed"
-                                        EnumSource="enums:LocalReaderMode"
+                                        EnumSource="readers:ReadingMode"
                                         Placement="Top"
                                         SelectedValue="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}"
                                         TextConverter="{StaticResource LocalReaderModeConverter}" />
@@ -306,7 +304,7 @@
                             <TextBlock
                                 Grid.Column="1"
                                 VerticalAlignment="Center"
-                                Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}"
+                                Text="{x:Bind ViewModel.CurrentPage(ViewModel.CurrentPageIndex), Mode=OneWay}"
                                 TextAlignment="Right" />
                             <controls:ReaderSlider
                                 x:Name="PageSlider"
@@ -316,7 +314,7 @@
                                 Minimum="1"
                                 SmallChange="1"
                                 StepFrequency="1"
-                                Value="{x:Bind ViewModel.CurrentPage, Mode=TwoWay}" />
+                                Value="{x:Bind ViewModel.CurrentPage(ViewModel.CurrentPageIndex), Mode=TwoWay, BindBack=ViewModel.CurrentPageBack}" />
                             <TextBlock
                                 Grid.Column="3"
                                 VerticalAlignment="Center"

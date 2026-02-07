@@ -42,5 +42,5 @@ public class EngineState
     /// <summary>
     /// 当前的阅读模式（例如滚动或分页）。
     /// </summary>
-    public ReadingMode CurrentMode = ReadingMode.Scroll;
+    public ReadingMode CurrentMode = ReadingMode.VerticalScroll;
 }

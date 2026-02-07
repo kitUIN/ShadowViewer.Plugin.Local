@@ -36,11 +36,11 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
             .Where(x => x.Id == episode.Source.ComicId)
             .Where(x => x.LastEpisode == episode.Source.Order)
             .First();
-        viewModel.CurrentPage = readingRecord is { LastPicture: >= 2 } ? readingRecord.LastPicture : 1;
+        viewModel.CurrentPageIndex = readingRecord is { LastPicture: >= 2 } ? readingRecord.LastPicture : 0;
 
         Db.Updateable<LocalReadingRecord>()
             .SetColumns(x => x.LastEpisode == episode.Source.Order)
-            .SetColumns(x => x.LastPicture == viewModel.CurrentPage)
+            .SetColumns(x => x.LastPicture == viewModel.CurrentPageIndex)
             .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
             .Where(x => x.Id == episode.Source.ComicId)
             .ExecuteCommand();
@@ -55,18 +55,18 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
         if (sender is not PicViewModel viewModel) return;
         if (oldValue == newValue) return;
         if (viewModel.Affiliation != Id) return;
-        if (viewModel.CurrentPage <= 0 || viewModel.Comic is not { } localComic) return;
+        if (viewModel.CurrentPageIndex < 0 || viewModel.Comic is not { } localComic) return;
         decimal percent = 0;
         if (viewModel.CurrentEpisodeIndex >= 0 && viewModel.EpisodeCounts.Count > viewModel.CurrentEpisodeIndex &&
             localComic.Count != 0)
         {
             percent = Math.Round(
-                (viewModel.EpisodeCounts[viewModel.CurrentEpisodeIndex] + viewModel.CurrentPage) /
+                (viewModel.EpisodeCounts[viewModel.CurrentEpisodeIndex] + viewModel.CurrentPageIndex + 1) /
                 (decimal)localComic.Count * 100, 2);
         }
 
         Db.Updateable<LocalReadingRecord>()
-            .SetColumns(x => x.LastPicture == viewModel.CurrentPage)
+            .SetColumns(x => x.LastPicture == viewModel.CurrentPageIndex)
             .SetColumns(x => x.Percent == percent)
             .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
             .Where(x => x.Id == localComic.Id)
