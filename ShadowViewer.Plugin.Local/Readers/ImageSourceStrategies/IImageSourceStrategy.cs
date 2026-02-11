@@ -26,4 +26,5 @@ public interface IImageSourceStrategy
     /// <param name="ctx">包含资源标识和目标尺寸等信息的加载上下文。</param>
     /// <returns>表示异步初始化操作的任务。</returns>
     Task InitImageAsync(ImageLoadingContext ctx);
+
 }

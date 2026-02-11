@@ -1,14 +1,15 @@
 using DryIoc;
 using ShadowPluginLoader.Attributes;
-using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowPluginLoader.WinUI;
-using ShadowViewer.Plugin.Local.Models;
-using ShadowViewer.Plugin.Local.I18n;
-using ShadowViewer.Plugin.Local.Services;
 using ShadowViewer.Plugin.Local.Cache;
 using ShadowViewer.Plugin.Local.Constants;
 using ShadowViewer.Plugin.Local.Entities;
+using ShadowViewer.Plugin.Local.I18n;
+using ShadowViewer.Plugin.Local.Models;
+using ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
+using ShadowViewer.Plugin.Local.Services;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
+using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.Sdk.Plugins;
 
 namespace ShadowViewer.Plugin.Local;
@@ -42,6 +43,12 @@ public partial class LocalPlugin : AShadowViewerPlugin
         DiFactory.Services.Register<AttributesViewModel>(Reuse.Transient);
         DiFactory.Services.Register<PicViewModel>(Reuse.Transient);
         DiFactory.Services.Register<BookShelfViewModel>(Reuse.Transient);
+        DiFactory.Services.Register<IImageSourceStrategy, LocalFileStrategy>(
+            Reuse.Singleton, serviceKey: "local",
+            ifAlreadyRegistered: IfAlreadyRegistered.Replace);
+        DiFactory.Services.Register<IImageSourceStrategy, NetworkStrategy>(
+            Reuse.Singleton, serviceKey: "network",
+            ifAlreadyRegistered: IfAlreadyRegistered.Replace);
         Db.CodeFirst.InitTables<ComicChapter>();
         Db.CodeFirst.InitTables<ComicPicture>();
         Db.CodeFirst.InitTables<CacheImg>();

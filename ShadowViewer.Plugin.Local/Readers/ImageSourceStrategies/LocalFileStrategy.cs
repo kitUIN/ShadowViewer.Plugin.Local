@@ -22,11 +22,19 @@ public class LocalFileStrategy : IImageSourceStrategy
     /// <returns>如果可以处理该资源则返回 <c>true</c>，否则返回 <c>false</c>。</returns>
     public bool CanHandle(object source)
     {
+        if (source is IUiPicture picture)
+        {
+            source = picture.SourcePath;
+        }
         if (source is StorageFile) return true;
-        if (source is IUiPicture) return true;
         if (source is string path)
         {
             if (string.IsNullOrEmpty(path)) return false;
+            if (path.StartsWith("http:", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("https:", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
             return Path.IsPathRooted(path) || path.StartsWith("ms-appx:") || path.StartsWith("ms-appdata:");
         }
 

@@ -1,3 +1,10 @@
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.UI;
+using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using ShadowPluginLoader.WinUI;
+using ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,12 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Storage.Streams;
-using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI;
-using Microsoft.Graphics.Canvas.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
+using DryIoc;
 
 namespace ShadowViewer.Plugin.Local.Readers;
 
@@ -105,7 +107,7 @@ public sealed partial class MangaReader : Control
     /// <summary>
     /// 插件可用的图像加载策略集合（优先级按添加顺序）。
     /// </summary>
-    public List<IImageSourceStrategy> ImageStrategies { get; } = new List<IImageSourceStrategy>();
+    public IEnumerable<IImageSourceStrategy> ImageStrategies { get; }
 
     /// <summary>
     /// 将视图平移以将指定页居中显示（仅在滚动模式下有效）。
@@ -142,8 +144,7 @@ public sealed partial class MangaReader : Control
     public MangaReader()
     {
         this.DefaultStyleKey = typeof(MangaReader);
-        ImageStrategies.Add(new LocalFileStrategy());
-        ImageStrategies.Add(new NetworkStrategy());
+        ImageStrategies = DiFactory.Services.ResolveMany<IImageSourceStrategy>();
     }
 
     /// <summary>
