@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using ShadowObservableConfig.Attributes;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Enums;
+using ShadowViewer.Plugin.Local.Readers;
 
 namespace ShadowViewer.Plugin.Local.Configs;
 
@@ -66,7 +67,7 @@ public partial class LocalPluginConfig
     /// 阅读模式-滑动/双页
     /// </summary>
     [ObservableConfigProperty(Description = "阅读模式-滑动/双页")]
-    private LocalReaderMode localReaderMode = LocalReaderMode.DoublePage;
+    private ReadingMode localReaderMode = ReadingMode.VerticalScroll;
 
     /// <summary>
     /// 阅读器点击区域设置

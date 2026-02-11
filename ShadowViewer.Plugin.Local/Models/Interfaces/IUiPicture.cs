@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media;
 
 namespace ShadowViewer.Plugin.Local.Models.Interfaces;
 
@@ -12,7 +12,7 @@ public interface IUiPicture
     /// </summary>
     int Index { get; set; }
     /// <summary>
-    /// 图片
+    /// 图片文件路径
     /// </summary>
-    ImageSource Source { get; set; }
+    string SourcePath { get; set; }
 }
