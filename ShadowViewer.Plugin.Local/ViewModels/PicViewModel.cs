@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ShadowViewer.Sdk.Args;
 using ShadowViewer.Sdk.Helpers;
+using ShadowViewer.Sdk.Models;
 using ShadowViewer.Sdk.Responders;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
@@ -25,7 +26,7 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 图片
     /// </summary>
-    public ObservableCollection<IUiPicture> Images { get; set; } = [];
+    public ObservableCollectionFast<IUiPicture> Images { get; } = [];
 
     /// <summary>
     /// 当前漫画
@@ -230,6 +231,7 @@ public partial class PicViewModel : ObservableObject
     {
         return index + 1;
     }
+
     /// <summary>
     /// Currents the page back.
     /// </summary>

@@ -157,8 +157,6 @@ public sealed partial class MangaReader
                 RemoveItems(e.OldItems, e.OldStartingIndex);
                 break;
             case NotifyCollectionChangedAction.Reset:
-                ResetItems();
-                break;
             case NotifyCollectionChangedAction.Replace:
             case NotifyCollectionChangedAction.Move:
                 ReloadItems();

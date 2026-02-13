@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Sdk.Responders;
 using SqlSugar; 
@@ -24,14 +25,15 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
         if (sender is not PicViewModel viewModel) return;
         if (oldValue == newValue) return;
         if (viewModel.Affiliation != Id) return;
-        viewModel.Images.Clear();
         var index = 0;
         if (viewModel.Episodes.Count <= 0 || viewModel.Episodes[newValue] is not LocalUiEpisode episode) return;
-
-        foreach (var item in Db.Queryable<ComicPicture>().Where(x => x.ChapterId == episode.Source.Id)
-                     .OrderBy(x => x.Name)
-                     .ToList())
-            viewModel.Images.Add(new LocalUiPicture(++index, item.StoragePath));
+        var list = Db.Queryable<ComicPicture>()
+            .Where(x => x.ChapterId == episode.Source.Id)
+            .OrderBy(x => x.Name)
+            .ToList()
+            .Select(item => new LocalUiPicture(++index, item.StoragePath))
+            .ToList();
+        viewModel.Images.ReplaceAll(list);
         var readingRecord = Db.Queryable<LocalReadingRecord>()
             .Where(x => x.Id == episode.Source.ComicId)
             .Where(x => x.LastEpisode == episode.Source.Order)

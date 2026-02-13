@@ -83,6 +83,11 @@ public sealed partial class MangaReader : Control
     private CancellationTokenSource? loadCts;
 
     /// <summary>
+    /// 递增的重载版本号，用于避免多次 Reset 时旧加载任务回写状态。
+    /// </summary>
+    private long reloadVersion;
+
+    /// <summary>
     /// 标记当前是否处于内部更新流程中，以避免属性回调触发循环。
     /// </summary>
     private bool isUpdatingInternal;
@@ -613,8 +618,11 @@ public sealed partial class MangaReader : Control
     /// </summary>
     private async void ReloadItems()
     {
+        // bump generation first so any in-flight continuations can detect staleness
+        var myVersion = Interlocked.Increment(ref reloadVersion);
+
         // 取消之前的加载任务
-        loadCts?.Cancel();
+        if (loadCts != null) await loadCts.CancelAsync();
         loadCts = new CancellationTokenSource();
         var token = loadCts.Token;
 
@@ -640,6 +648,13 @@ public sealed partial class MangaReader : Control
             state.Velocity = Vector2.Zero;
         }
 
+        // ensure page index resets immediately for the latest reload
+        this.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (myVersion != Volatile.Read(ref reloadVersion)) return;
+            CurrentPageIndex = 0;
+        });
+
         // 1. 优先加载前 10 张，快速响应
         int index = 0;
         float currentY = 0;
@@ -648,13 +663,32 @@ public sealed partial class MangaReader : Control
         var firstBatch = itemList.Take(10).ToList();
         var remainingFiles = itemList.Skip(10).ToList();
 
+        var didEnsureFirstPage = false;
+
         foreach (var item in firstBatch)
         {
             if (token.IsCancellationRequested) return;
+            if (myVersion != Volatile.Read(ref reloadVersion)) return;
+
             var node = await CreateNodeAsync(item, index++);
+            if (token.IsCancellationRequested) return;
+            if (myVersion != Volatile.Read(ref reloadVersion)) return;
+
             if (node != null)
             {
                 currentY = AppendNodeToLayout(node, currentY, spacing);
+
+                // after first successful append for the latest reload, snap to page 0
+                if (!didEnsureFirstPage)
+                {
+                    didEnsureFirstPage = true;
+                    this.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        if (myVersion != Volatile.Read(ref reloadVersion)) return;
+                        CurrentPageIndex = 0;
+                        ScrollToPage(0);
+                    });
+                }
             }
         }
 
@@ -666,8 +700,12 @@ public sealed partial class MangaReader : Control
                 foreach (var item in remainingFiles)
                 {
                     if (token.IsCancellationRequested) return;
+                    if (myVersion != Volatile.Read(ref reloadVersion)) return;
 
                     var node = await CreateNodeAsync(item, index++);
+                    if (token.IsCancellationRequested) return;
+                    if (myVersion != Volatile.Read(ref reloadVersion)) return;
+
                     if (node != null)
                     {
                         currentY = AppendNodeToLayout(node, currentY, spacing);
