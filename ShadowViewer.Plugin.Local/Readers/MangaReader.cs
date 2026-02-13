@@ -115,6 +115,21 @@ public sealed partial class MangaReader : Control
     private bool hasPendingLayoutUpdate = false;
 
     /// <summary>
+    /// 缓存的缩放比例，避免每次重新计算。
+    /// </summary>
+    private float cachedScale = 1.0f;
+
+    /// <summary>
+    /// 缓存缩放比例时的视口高度。
+    /// </summary>
+    private float cachedViewHeight = 0;
+
+    /// <summary>
+    /// 缓存缩放比例时的节点数量。
+    /// </summary>
+    private int cachedNodeCount = 0;
+
+    /// <summary>
     /// 插件可用的图像加载策略集合（优先级按添加顺序）。
     /// </summary>
     public IEnumerable<IImageSourceStrategy> ImageStrategies { get; }
@@ -161,6 +176,11 @@ public sealed partial class MangaReader : Control
 
             allNodes.Clear();
             TotalPage = 0;
+
+            // 重置缓存
+            cachedScale = 1.0f;
+            cachedViewHeight = 0;
+            cachedNodeCount = 0;
         }
 
         lock (state.LayoutNodes)
@@ -235,7 +255,7 @@ public sealed partial class MangaReader : Control
     /// 这是推荐的加载方式：Clear -> Add 一个个。
     /// </summary>
     /// <param name="items">要设置的项目集合。</param>
-    public void SetItems(IEnumerable? items)
+    public async void SetItems(IEnumerable? items)
     {
         if (items == null)
         {
@@ -250,9 +270,29 @@ public sealed partial class MangaReader : Control
 
         if (itemList.Count == 0) return;
 
+        // 异步分批添加，避免阻塞 UI
+        const int batchSize = 50;
+        var totalCount = itemList.Count;
+
         BeginBatchAdd();
-        AddItems(itemList, -1);
-        EndBatchAdd();
+        try
+        {
+            for (int i = 0; i < totalCount; i += batchSize)
+            {
+                var batch = itemList.Skip(i).Take(batchSize).ToList();
+                AddItems(batch, -1);
+
+                // 让出时间片，保持 UI 响应
+                if (i + batchSize < totalCount)
+                {
+                    await Task.Delay(1);
+                }
+            }
+        }
+        finally
+        {
+            EndBatchAdd();
+        }
 
         // 滚动到第一页
         this.DispatcherQueue.TryEnqueue(() =>
@@ -652,6 +692,67 @@ public sealed partial class MangaReader : Control
     }
 
     /// <summary>
+    /// 计算并缓存缩放比例。
+    /// </summary>
+    private void UpdateCachedScale()
+    {
+        if (allNodes.Count == 0 || viewSize.Y <= 0)
+        {
+            cachedScale = 1.0f;
+            return;
+        }
+
+        // 只采样已加载实际尺寸的节点（排除默认 200x300 的占位节点）
+        var loadedNodes = allNodes.Where(n => n.IsSizeLoaded).ToList();
+
+        // 如果没有已加载尺寸的节点，使用默认缩放
+        if (loadedNodes.Count == 0)
+        {
+            cachedScale = 1.0f;
+            cachedViewHeight = viewSize.Y;
+            cachedNodeCount = allNodes.Count;
+            return;
+        }
+
+        // 只采样前 100 个已加载的节点计算众数高度
+        var sampleNodes = loadedNodes.Count <= 100 ? loadedNodes : loadedNodes.Take(100).ToList();
+
+        var modeHeightGroup = sampleNodes
+            .GroupBy(n => Math.Round(n.Ctx.Size.Height))
+            .OrderByDescending(g => g.Count())
+            .FirstOrDefault();
+
+        if (modeHeightGroup != null)
+        {
+            double modeHeight = modeHeightGroup.Key;
+            if (modeHeight > 0)
+            {
+                cachedScale = viewSize.Y / (float)modeHeight;
+            }
+        }
+
+        cachedViewHeight = viewSize.Y;
+        cachedNodeCount = allNodes.Count;
+    }
+
+    /// <summary>
+    /// 获取当前缩放比例，必要时重新计算。
+    /// </summary>
+    private float GetScale()
+    {
+        // 如果视口高度或节点数量变化较大，重新计算
+        bool needRecalculate = Math.Abs(viewSize.Y - cachedViewHeight) > 1.0f
+            || Math.Abs(allNodes.Count - cachedNodeCount) > 10;
+
+        if (needRecalculate)
+        {
+            UpdateCachedScale();
+        }
+
+        return cachedScale;
+    }
+
+    /// <summary>
     /// 根据当前阅读模式和视口大小计算并更新 <see cref="EngineState.LayoutNodes"/> 中的布局信息。
     /// </summary>
     private void UpdateActiveLayout()
@@ -664,27 +765,11 @@ public sealed partial class MangaReader : Control
             {
                 float currentY = 0;
                 float spacing = PageSpacing;
-                float scale = 1.0f;
+                float scale;
 
                 lock (allNodes)
                 {
-                    // 计算众数高度 (Mode Height)
-                    if (allNodes.Count > 0 && viewSize.Y > 0)
-                    {
-                        var modeHeightGroup = allNodes
-                            .GroupBy(n => Math.Round(n.Ctx.Size.Height)) // 简单的归组
-                            .OrderByDescending(g => g.Count())
-                            .FirstOrDefault();
-
-                        if (modeHeightGroup != null)
-                        {
-                            double modeHeight = modeHeightGroup.Key;
-                            if (modeHeight > 0)
-                            {
-                                scale = viewSize.Y / (float)modeHeight;
-                            }
-                        }
-                    }
+                    scale = GetScale();
 
                     foreach (var node in allNodes)
                     {

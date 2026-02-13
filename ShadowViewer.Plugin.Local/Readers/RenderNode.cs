@@ -40,6 +40,11 @@ public class RenderNode
     public bool IsLoaded => Bitmap != null;
 
     /// <summary>
+    /// 是否已加载实际尺寸（不是默认占位尺寸）。
+    /// </summary>
+    public bool IsSizeLoaded;
+
+    /// <summary>
     /// 释放托管的位图资源并将其引用置空。
     /// </summary>
     public void Dispose()

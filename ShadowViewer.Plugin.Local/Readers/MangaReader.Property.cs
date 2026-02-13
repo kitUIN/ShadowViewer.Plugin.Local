@@ -163,26 +163,42 @@ public sealed partial class MangaReader
         }
     }
 
+    /// <summary>
+    /// 异步加载队列，用于顺序加载节点尺寸，避免并发。
+    /// </summary>
+    private readonly Queue<RenderNode> pendingSizeLoadQueue = new();
+
+    /// <summary>
+    /// 是否正在处理尺寸加载队列。
+    /// </summary>
+    private bool isProcessingSizeQueue = false;
+
+    /// <summary>
+    /// 异步加载尺寸时是否需要更新布局。
+    /// </summary>
+    private bool sizeLoadPendingLayout = false;
+
     private void AddItems(System.Collections.IList? newItems, int startIndex)
     {
         if (newItems == null || newItems.Count == 0) return;
 
         var newNodes = new List<RenderNode>(newItems.Count);
 
+        // 1. 快速创建占位节点，不加载实际数据
         foreach (var item in newItems)
         {
             var ctx = new ImageLoadingContext { Source = item, Size = new Size(200, 300) };
             var node = new RenderNode
             {
-                PageIndex = -1, // 稍后更新
+                PageIndex = -1,
                 Source = item,
                 Ctx = ctx,
-                Bounds = new Rect(0, 0, 200, 300)
+                Bounds = new Rect(0, 0, 200, 300) // 默认占位尺寸
             };
             newNodes.Add(node);
         }
 
-        // 同步插入到列表
+        // 2. 同步插入到列表
         lock (allNodes)
         {
             if (startIndex < 0 || startIndex > allNodes.Count)
@@ -198,14 +214,14 @@ public sealed partial class MangaReader
 
             TotalPage = allNodes.Count;
 
-            // 异步加载内容
+            // 3. 将新节点加入尺寸加载队列
             foreach (var node in newNodes)
             {
-                _ = LoadNodeDataAsync(node);
+                pendingSizeLoadQueue.Enqueue(node);
             }
         }
 
-        // 触发布局更新（批量模式下延迟更新）
+        // 4. 触发布局更新（批量模式下延迟更新）
         if (isBatchAdding)
         {
             hasPendingLayoutUpdate = true;
@@ -217,9 +233,60 @@ public sealed partial class MangaReader
                 UpdateActiveLayout();
             });
         }
+
+        // 5. 启动尺寸加载队列处理
+        _ = ProcessSizeLoadQueueAsync();
     }
 
-    private async Task LoadNodeDataAsync(RenderNode node)
+    /// <summary>
+    /// 顺序处理尺寸加载队列，避免并发加载造成卡顿。
+    /// </summary>
+    private async Task ProcessSizeLoadQueueAsync()
+    {
+        if (isProcessingSizeQueue) return;
+        isProcessingSizeQueue = true;
+
+        try
+        {
+            while (true)
+            {
+                RenderNode? node;
+                lock (allNodes)
+                {
+                    if (pendingSizeLoadQueue.Count == 0)
+                        break;
+                    node = pendingSizeLoadQueue.Dequeue();
+                }
+
+                if (node != null)
+                {
+                    await LoadNodeSizeAsync(node);
+                }
+
+                // 让出时间片，保持 UI 响应
+                await Task.Yield();
+            }
+        }
+        finally
+        {
+            isProcessingSizeQueue = false;
+
+            // 队列处理完成后，如有需要则更新布局
+            if (sizeLoadPendingLayout)
+            {
+                sizeLoadPendingLayout = false;
+                this.DispatcherQueue.TryEnqueue(() =>
+                {
+                    UpdateActiveLayout();
+                });
+            }
+        }
+    }
+
+    /// <summary>
+    /// 异步加载节点尺寸（只获取尺寸，不加载完整图片数据）。
+    /// </summary>
+    private async Task LoadNodeSizeAsync(RenderNode node)
     {
         var strategy = ImageStrategies.FirstOrDefault(s => s.CanHandle(node.Source));
         if (strategy == null) return;
@@ -227,16 +294,18 @@ public sealed partial class MangaReader
         try
         {
             await strategy.InitImageAsync(node.Ctx);
-            // Update bounds
+
+            // 更新节点尺寸
             node.Bounds.Width = node.Ctx.Size.Width;
             node.Bounds.Height = node.Ctx.Size.Height;
+            node.IsSizeLoaded = true;
 
-            // Refresh Layout
-            this.DispatcherQueue.TryEnqueue(UpdateActiveLayout);
+            // 标记需要更新布局
+            sizeLoadPendingLayout = true;
         }
         catch
         {
-            // ignored
+            // 加载失败保持默认尺寸
         }
     }
 
