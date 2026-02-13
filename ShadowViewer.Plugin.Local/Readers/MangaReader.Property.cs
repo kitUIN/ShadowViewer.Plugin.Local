@@ -153,46 +153,21 @@ public sealed partial class MangaReader
             case NotifyCollectionChangedAction.Add:
                 AddItems(e.NewItems, e.NewStartingIndex);
                 break;
-            case NotifyCollectionChangedAction.Remove:
-                RemoveItems(e.OldItems, e.OldStartingIndex);
-                break;
             case NotifyCollectionChangedAction.Reset:
-            case NotifyCollectionChangedAction.Replace:
-            case NotifyCollectionChangedAction.Move:
+                ReloadItems();
+                break;
+            // Remove, Replace, Move 不再单独处理，统一走 Reset
+            default:
                 ReloadItems();
                 break;
         }
     }
 
-    /// <summary>
-    /// 清空当前节点并取消正在进行的加载操作，随后重置布局与页索引。
-    /// </summary>
-    private void ResetItems()
-    {
-        loadCts?.Cancel();
-        lock (allNodes)
-        {
-            foreach (var node in allNodes)
-            {
-                node.Dispose();
-            }
-
-            allNodes.Clear();
-            TotalPage = 0;
-        }
-
-        this.DispatcherQueue.TryEnqueue(() =>
-        {
-            UpdateActiveLayout();
-            CurrentPageIndex = 0;
-        });
-    }
-
     private void AddItems(System.Collections.IList? newItems, int startIndex)
     {
-        if (newItems == null) return;
+        if (newItems == null || newItems.Count == 0) return;
 
-        var newNodes = new List<RenderNode>();
+        var newNodes = new List<RenderNode>(newItems.Count);
 
         foreach (var item in newItems)
         {
@@ -207,7 +182,7 @@ public sealed partial class MangaReader
             newNodes.Add(node);
         }
 
-        // 2. 同步插入到列表 (Sync: Insert into list immediately)
+        // 同步插入到列表
         lock (allNodes)
         {
             if (startIndex < 0 || startIndex > allNodes.Count)
@@ -216,7 +191,6 @@ public sealed partial class MangaReader
             allNodes.InsertRange(startIndex, newNodes);
 
             // 更新页码索引
-            // Update PageIndex
             for (int i = startIndex; i < allNodes.Count; i++)
             {
                 allNodes[i].PageIndex = i;
@@ -224,50 +198,25 @@ public sealed partial class MangaReader
 
             TotalPage = allNodes.Count;
 
-            // 3. 异步加载内容 (Async: Load content in background)
+            // 异步加载内容
             foreach (var node in newNodes)
             {
                 _ = LoadNodeDataAsync(node);
             }
         }
-    }
 
-    private void RemoveItems(System.Collections.IList? oldItems, int startIndex)
-    {
-        if (oldItems == null) return;
-        lock (allNodes)
+        // 触发布局更新（批量模式下延迟更新）
+        if (isBatchAdding)
         {
-            if (startIndex < 0 || startIndex >= allNodes.Count) return;
-
-            int count = oldItems.Count;
-            if (startIndex + count > allNodes.Count)
-                count = allNodes.Count - startIndex;
-
-            // Dispose removed nodes
-            for (int i = 0; i < count; i++)
-            {
-                allNodes[startIndex + i].Dispose();
-            }
-
-            allNodes.RemoveRange(startIndex, count);
-
-            // Update PageIndex
-            for (int i = startIndex; i < allNodes.Count; i++)
-            {
-                allNodes[i].PageIndex = i;
-            }
-
-            TotalPage = allNodes.Count;
+            hasPendingLayoutUpdate = true;
         }
-
-        this.DispatcherQueue.TryEnqueue(() =>
+        else
         {
-            UpdateActiveLayout();
-            if (CurrentPageIndex >= TotalPage && TotalPage > 0)
+            this.DispatcherQueue.TryEnqueue(() =>
             {
-                CurrentPageIndex = TotalPage - 1;
-            }
-        });
+                UpdateActiveLayout();
+            });
+        }
     }
 
     private async Task LoadNodeDataAsync(RenderNode node)

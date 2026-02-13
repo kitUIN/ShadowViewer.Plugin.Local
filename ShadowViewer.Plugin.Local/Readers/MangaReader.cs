@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -77,16 +78,6 @@ public sealed partial class MangaReader : Control
     private object loadingLock = new object();
 
     /// <summary>
-    /// 用于取消后台加载任务的 CancellationTokenSource。
-    /// </summary>
-    private CancellationTokenSource? loadCts;
-
-    /// <summary>
-    /// 递增的重载版本号，用于避免多次 Reset 时旧加载任务回写状态。
-    /// </summary>
-    private long reloadVersion;
-
-    /// <summary>
     /// 标记当前是否处于内部更新流程中，以避免属性回调触发循环。
     /// </summary>
     private bool isUpdatingInternal;
@@ -114,6 +105,16 @@ public sealed partial class MangaReader : Control
     private int lastReportedTotal = -1;
 
     /// <summary>
+    /// 是否处于批量添加模式，批量添加时延迟布局更新。
+    /// </summary>
+    private bool isBatchAdding = false;
+
+    /// <summary>
+    /// 批量添加期间是否有新节点需要更新布局。
+    /// </summary>
+    private bool hasPendingLayoutUpdate = false;
+
+    /// <summary>
     /// 插件可用的图像加载策略集合（优先级按添加顺序）。
     /// </summary>
     public IEnumerable<IImageSourceStrategy> ImageStrategies { get; }
@@ -123,6 +124,148 @@ public sealed partial class MangaReader : Control
     /// </summary>
     /// <param name="index">目标页索引（从 0 开始）。</param>
     public void ScrollToPage(int index)
+    {
+        if (Mode != ReadingMode.VerticalScroll)
+        {
+            state.CameraPos = Vector2.Zero;
+            state.Velocity = Vector2.Zero;
+            return;
+        }
+
+        RenderNode? targetNode;
+        lock (state.LayoutNodes)
+        {
+            targetNode = state.LayoutNodes.FirstOrDefault(n => n.PageIndex == index);
+        }
+
+        if (targetNode != null)
+        {
+            var center = new Vector2((float)(targetNode.Bounds.X + targetNode.Bounds.Width / 2),
+                (float)(targetNode.Bounds.Y + targetNode.Bounds.Height / 2));
+            state.CameraPos = center;
+            state.Velocity = Vector2.Zero;
+        }
+    }
+
+    /// <summary>
+    /// 清空所有节点并释放资源。
+    /// </summary>
+    public void ClearItems()
+    {
+        lock (allNodes)
+        {
+            foreach (var node in allNodes)
+            {
+                node.Dispose();
+            }
+
+            allNodes.Clear();
+            TotalPage = 0;
+        }
+
+        lock (state.LayoutNodes)
+        {
+            state.LayoutNodes.Clear();
+            state.CameraPos = Vector2.Zero;
+            state.Zoom = 1.0f;
+            state.Velocity = Vector2.Zero;
+        }
+
+        this.DispatcherQueue.TryEnqueue(() =>
+        {
+            UpdateActiveLayout();
+            CurrentPageIndex = 0;
+        });
+    }
+
+    /// <summary>
+    /// 开始批量添加模式，此模式下添加节点不会立即触发布局更新。
+    /// </summary>
+    public void BeginBatchAdd()
+    {
+        isBatchAdding = true;
+        hasPendingLayoutUpdate = false;
+    }
+
+    /// <summary>
+    /// 结束批量添加模式，统一触发布局更新。
+    /// </summary>
+    public void EndBatchAdd()
+    {
+        isBatchAdding = false;
+        if (hasPendingLayoutUpdate)
+        {
+            this.DispatcherQueue.TryEnqueue(() =>
+            {
+                UpdateActiveLayout();
+            });
+            hasPendingLayoutUpdate = false;
+        }
+    }
+
+    /// <summary>
+    /// 添加单个项目到阅读器。
+    /// </summary>
+    /// <param name="item">要添加的项目。</param>
+    public void AddItem(object item)
+    {
+        AddItems(new[] { item }, -1);
+    }
+
+    /// <summary>
+    /// 添加多个项目到阅读器。
+    /// </summary>
+    /// <param name="items">要添加的项目集合。</param>
+    public void AddItems(IEnumerable items)
+    {
+        if (items == null) return;
+
+        var itemList = new List<object>();
+        foreach (var item in items) itemList.Add(item);
+
+        if (itemList.Count == 0) return;
+
+        BeginBatchAdd();
+        AddItems(itemList, -1);
+        EndBatchAdd();
+    }
+
+    /// <summary>
+    /// 设置项目源，清空现有内容后添加所有项目。
+    /// 这是推荐的加载方式：Clear -> Add 一个个。
+    /// </summary>
+    /// <param name="items">要设置的项目集合。</param>
+    public void SetItems(IEnumerable? items)
+    {
+        if (items == null)
+        {
+            ClearItems();
+            return;
+        }
+
+        var itemList = new List<object>();
+        foreach (var item in items) itemList.Add(item);
+
+        ClearItems();
+
+        if (itemList.Count == 0) return;
+
+        BeginBatchAdd();
+        AddItems(itemList, -1);
+        EndBatchAdd();
+
+        // 滚动到第一页
+        this.DispatcherQueue.TryEnqueue(() =>
+        {
+            ScrollToPage(0);
+        });
+    }
+
+    /// <summary>
+    /// 将视图平移以将指定页居中显示（仅在滚动模式下有效）。
+    /// </summary>
+    /// <param name="index">目标页索引（从 0 开始）。</param>
+    private void ScrollToPageInternal(int index)
     {
         if (Mode != ReadingMode.VerticalScroll)
         {
@@ -500,187 +643,12 @@ public sealed partial class MangaReader : Control
     // --- 加载逻辑 ---
 
     /// <summary>
-    /// 重新加载 ItemsSource 中的所有项，优先同步加载前 N 张以提高首次响应，其余项在后台加载。
+    /// 重新加载 ItemsSource 中的所有项。
+    /// 简化实现：直接调用 SetItems 统一处理。
     /// </summary>
-    private async void ReloadItems()
+    private void ReloadItems()
     {
-        // bump generation first so any in-flight continuations can detect staleness
-        var myVersion = Interlocked.Increment(ref reloadVersion);
-
-        // 取消之前的加载任务
-        if (loadCts != null) await loadCts.CancelAsync();
-        loadCts = new CancellationTokenSource();
-        var token = loadCts.Token;
-
-        // 获取绑定源
-        var items = ItemsSource as System.Collections.IEnumerable;
-        if (items == null) return;
-
-        var itemList = new List<object>();
-        foreach (var item in items) itemList.Add(item);
-
-        if (itemList.Count == 0) return;
-
-        lock (allNodes)
-        {
-            allNodes.Clear();
-        }
-
-        lock (state.LayoutNodes)
-        {
-            state.LayoutNodes.Clear();
-            state.CameraPos = Vector2.Zero;
-            state.Zoom = 1.0f;
-            state.Velocity = Vector2.Zero;
-        }
-
-        // ensure page index resets immediately for the latest reload
-        this.DispatcherQueue.TryEnqueue(() =>
-        {
-            if (myVersion != Volatile.Read(ref reloadVersion)) return;
-            CurrentPageIndex = 0;
-        });
-
-        // 1. 优先加载前 10 张，快速响应
-        int index = 0;
-        float currentY = 0;
-        float spacing = PageSpacing;
-
-        var firstBatch = itemList.Take(10).ToList();
-        var remainingFiles = itemList.Skip(10).ToList();
-
-        var didEnsureFirstPage = false;
-
-        foreach (var item in firstBatch)
-        {
-            if (token.IsCancellationRequested) return;
-            if (myVersion != Volatile.Read(ref reloadVersion)) return;
-
-            var node = await CreateNodeAsync(item, index++);
-            if (token.IsCancellationRequested) return;
-            if (myVersion != Volatile.Read(ref reloadVersion)) return;
-
-            if (node != null)
-            {
-                currentY = AppendNodeToLayout(node, currentY, spacing);
-
-                // after first successful append for the latest reload, snap to page 0
-                if (!didEnsureFirstPage)
-                {
-                    didEnsureFirstPage = true;
-                    this.DispatcherQueue.TryEnqueue(() =>
-                    {
-                        if (myVersion != Volatile.Read(ref reloadVersion)) return;
-                        CurrentPageIndex = 0;
-                        ScrollToPage(0);
-                    });
-                }
-            }
-        }
-
-        // 2. 后台加载剩余图片
-        if (remainingFiles.Count > 0)
-        {
-            _ = Task.Run(async () =>
-            {
-                foreach (var item in remainingFiles)
-                {
-                    if (token.IsCancellationRequested) return;
-                    if (myVersion != Volatile.Read(ref reloadVersion)) return;
-
-                    var node = await CreateNodeAsync(item, index++);
-                    if (token.IsCancellationRequested) return;
-                    if (myVersion != Volatile.Read(ref reloadVersion)) return;
-
-                    if (node != null)
-                    {
-                        currentY = AppendNodeToLayout(node, currentY, spacing);
-                    }
-                }
-            }, token);
-        }
-    }
-
-    /// <summary>
-    /// 使用可用策略创建并初始化一个渲染节点，返回包含尺寸信息的 <see cref="RenderNode"/>。
-    /// </summary>
-    /// <param name="item">原始资源标识（例如路径或 URL）。</param>
-    /// <param name="index">页索引。</param>
-    /// <returns>已初始化的 <see cref="RenderNode"/> 或在失败时返回 <c>null</c>。</returns>
-    private async Task<RenderNode?> CreateNodeAsync(object item, int index)
-    {
-        try
-        {
-            var strategy = ImageStrategies.FirstOrDefault(s => s.CanHandle(item));
-            if (strategy == null) return null;
-
-            var ctx = new ImageLoadingContext { Source = item };
-            await strategy.InitImageAsync(ctx);
-            var size = ctx.Size;
-            if (size.IsEmpty) size = new Size(1000, 1414); // Default size if unknown
-
-            return new RenderNode
-            {
-                PageIndex = index,
-                Source = item,
-                Ctx = ctx,
-                Bounds = new Rect(0, 0, size.Width, size.Height)
-            };
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// 将节点追加到内部节点列表并根据当前布局模式决定是否触发布局更新。
-    /// </summary>
-    /// <param name="node">要追加的渲染节点。</param>
-    /// <param name="currentY">当前 Y 偏移，用于顺序布局。</param>
-    /// <param name="spacing">页面间距。</param>
-    /// <returns>追加后下一个节点的 Y 偏移值。</returns>
-    private float AppendNodeToLayout(RenderNode node, float currentY, float spacing)
-    {
-        lock (allNodes)
-        {
-            allNodes.Add(node);
-        }
-
-        // Capture necessary values
-        float nodeHeight = (float)node.Bounds.Height;
-        float nextY = currentY + nodeHeight + spacing;
-
-        // Dispatch to UI thread for Mode access and LayoutNodes update
-        this.DispatcherQueue.TryEnqueue(() =>
-        {
-            if (Mode == ReadingMode.VerticalScroll)
-            {
-                UpdateActiveLayout();
-            }
-            else
-            {
-                bool shouldUpdate = false;
-                if (Mode == ReadingMode.SinglePage && node.PageIndex == CurrentPageIndex) shouldUpdate = true;
-                else if (Mode == ReadingMode.SpreadRtl || Mode == ReadingMode.SpreadLtr)
-                {
-                    int spreadIndex = (CurrentPageIndex == 0) ? 0 : (CurrentPageIndex - 1) / 2 + 1;
-                    if (node.PageIndex == 0 && spreadIndex == 0) shouldUpdate = true;
-                    else if (node.PageIndex > 0)
-                    {
-                        int nodeSpreadIndex = (node.PageIndex - 1) / 2 + 1;
-                        if (nodeSpreadIndex == spreadIndex) shouldUpdate = true;
-                    }
-                }
-
-                if (shouldUpdate)
-                {
-                    UpdateActiveLayout();
-                }
-            }
-        });
-
-        return nextY;
+        SetItems(ItemsSource as  IEnumerable);
     }
 
     /// <summary>
