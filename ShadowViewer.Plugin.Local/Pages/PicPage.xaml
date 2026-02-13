@@ -184,22 +184,21 @@
 
             </Grid>
             <!--  顶部中央悬浮的当前章节选择器  -->
-            <ComboBox
-                Margin="0,10,0,0"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top"
-                DisplayMemberPath="Title"
-                ItemsSource="{x:Bind ViewModel.Episodes, Mode=OneWay}"
-                SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}"
-                Visibility="{x:Bind ViewModel.IsMenu, Mode=OneWay}" />
+            <ComboBox  Tapped="IgnoreTapped"
+                       Margin="0,10,0,0"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Top"
+                       DisplayMemberPath="Title"
+                       ItemsSource="{x:Bind ViewModel.Episodes, Mode=OneWay}"
+                       SelectedIndex="{x:Bind ViewModel.CurrentEpisodeIndex, Mode=TwoWay}"/>
 
-            <Grid
+            <Grid Tapped="IgnoreTapped"
                 Margin="0,0,0,10"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Bottom"
                 Background="{ThemeResource AcrylicBackgroundFillColorBaseBrush}"
                 CornerRadius="5"
-                Opacity="{x:Bind ViewModel.MenuOpacity, Mode=OneWay}">
+                Opacity="{x:Bind ViewModel.MenuOpacity, Mode=OneWay}" >
                 <Border
                     x:Name="Menu"
                     Padding="20,5"

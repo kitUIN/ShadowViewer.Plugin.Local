@@ -14,8 +14,6 @@ using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.Sdk.Args;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using ShadowViewer.Plugin.Local.Controls;
 using ShadowViewer.Plugin.Local.Readers;
 
 namespace ShadowViewer.Plugin.Local.Pages;
@@ -92,6 +90,17 @@ public sealed partial class PicPage
     private void PageTapped(object sender, TappedRoutedEventArgs e)
     {
         if (sender is not Grid grid) return;
+        if (ViewModel is { TappedGridSetting: true, IsMenu: true })
+        {
+            return;
+        }
+
+        if (ViewModel.IsMenu)
+        {
+            MenuTapped();
+            return;
+        }
+
         var position = e.GetPosition(grid);
         var colStar = 0D;
         var col0 = TappedGrid.ColumnDefinitions[0].Width;
@@ -207,5 +216,10 @@ public sealed partial class PicPage
     {
         ViewModel.ScrollingPaddingEnabled =
             MangaReader.Mode == ReadingMode.VerticalScroll && !ViewModel.TappedGridSetting;
+    }
+
+    private void IgnoreTapped(object sender, TappedRoutedEventArgs e)
+    {
+        e.Handled = true;
     }
 }

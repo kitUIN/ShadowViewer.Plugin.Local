@@ -158,11 +158,8 @@ public sealed partial class MangaReader
 
         if (resetButton != null)
         {
-            resetButton.Tapped += (_, e) =>
-            {
-                ResetZoom();
-                e.Handled = true;
-            };
+            resetButton.Tapped += (_, e) => e.Handled = true;
+            resetButton.Click += (_, _) => ResetZoom();
         }
     }
 
