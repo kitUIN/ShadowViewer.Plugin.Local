@@ -11,18 +11,36 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="readers:MangaReader">
-                    <Grid>
-                        <xaml:CanvasAnimatedControl x:Name="PART_MainCanvas" />
+                    <Grid x:Name="PART_RootGrid" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                        <xaml:CanvasAnimatedControl x:Name="PART_MainCanvas" ClearColor="Transparent" />
+                        <!-- 页码信息 (左下角) -->
+                        <Border
+                            x:Name="PART_PageInfoPanel"
+                            Margin="20"
+                            Padding="12,6"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Bottom"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            IsHitTestVisible="False">
+                            <TextBlock
+                                x:Name="PART_PageInfoText"
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Text="0 / 0" />
+                        </Border>
+                        <!-- 缩放信息面板 (右下角) -->
                         <Border
                             x:Name="PART_InfoPanel"
                             Margin="20"
                             Padding="12"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
-                            Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
-                            BorderThickness="1"
                             CornerRadius="8"
+                            BorderThickness="1" 
                             IsHitTestVisible="True"
                             Visibility="Collapsed">
                             <StackPanel Width="160" Spacing="8">

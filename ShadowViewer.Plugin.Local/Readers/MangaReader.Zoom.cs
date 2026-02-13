@@ -31,6 +31,11 @@ public sealed partial class MangaReader
     private TextBlock? positionText;
 
     /// <summary>
+    /// 页码信息文本块。
+    /// </summary>
+    private TextBlock? pageInfoText;
+
+    /// <summary>
     /// 重置缩放的按钮。
     /// </summary>
     private Button? resetButton;
@@ -136,6 +141,7 @@ public sealed partial class MangaReader
         zoomText = GetTemplateChild("PART_ZoomText") as TextBlock;
         positionText = GetTemplateChild("PART_PositionText") as TextBlock;
         resetButton = GetTemplateChild("PART_ResetButton") as Button;
+        pageInfoText = GetTemplateChild("PART_PageInfoText") as TextBlock;
 
         if (zoomSlider != null)
         {

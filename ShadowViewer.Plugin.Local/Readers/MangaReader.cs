@@ -29,6 +29,11 @@ public sealed partial class MangaReader : Control
     private CanvasAnimatedControl? mainCanvas;
 
     /// <summary>
+    /// 
+    /// </summary>
+    private Grid? rootGrid;
+
+    /// <summary>
     /// 渲染引擎状态，包含摄像机位置、缩放、速度与布局节点等信息。
     /// </summary>
     private readonly EngineState state = new();
@@ -52,7 +57,7 @@ public sealed partial class MangaReader : Control
     /// 当前视口尺寸（像素）。
     /// </summary>
     private Vector2 viewSize = Vector2.Zero;
-        
+
     // Store all loaded nodes
 
     /// <summary>
@@ -164,16 +169,24 @@ public sealed partial class MangaReader : Control
             mainCanvas.Update -= MainCanvas_Update;
             mainCanvas.Draw -= MainCanvas_Draw;
         }
+
         OnApplyZoomFlyoutTemplate();
         mainCanvas = GetTemplateChild("PART_MainCanvas") as CanvasAnimatedControl;
+        rootGrid = GetTemplateChild("PART_RootGrid") as Grid;
 
         if (mainCanvas != null)
         {
+            var brush = rootGrid?.Background as Microsoft.UI.Xaml.Media.SolidColorBrush;
+            if (brush != null)
+            {
+                mainCanvas.ClearColor = brush.Color;
+            }
+
             mainCanvas.PointerPressed += MainCanvas_PointerPressed;
             mainCanvas.PointerMoved += MainCanvas_PointerMoved;
             mainCanvas.PointerReleased += MainCanvas_PointerReleased;
             mainCanvas.PointerWheelChanged += MainCanvas_PointerWheelChanged;
-            mainCanvas.SizeChanged += (_, e) => 
+            mainCanvas.SizeChanged += (_, e) =>
             {
                 bool wasZero = viewSize == Vector2.Zero;
                 viewSize = new Vector2((float)e.NewSize.Width, (float)e.NewSize.Height);
@@ -253,7 +266,7 @@ public sealed partial class MangaReader : Control
                 var centerX = (float)(node.Bounds.X + node.Bounds.Width / 2);
                 var centerY = (float)(node.Bounds.Y + node.Bounds.Height / 2);
                 var center = new Vector2(centerX, centerY);
-                     
+
                 var dist = Vector2.DistanceSquared(center, state.CameraPos);
                 if (dist < minDistance)
                 {
@@ -261,13 +274,13 @@ public sealed partial class MangaReader : Control
                     closestNode = node;
                 }
             }
-                 
+
             if (closestNode != null)
             {
                 current = closestNode.PageIndex + 1;
             }
         }
-             
+
         float currentZoom = state.Zoom;
         float relativeZoom = baseZoomScale > 0 ? currentZoom / baseZoomScale : 1.0f;
 
@@ -279,8 +292,8 @@ public sealed partial class MangaReader : Control
             lastReportedPage = current;
             lastReportedTotal = total;
             lastReportedZoom = relativeZoom;
-                 
-            this.DispatcherQueue.TryEnqueue(() => 
+
+            this.DispatcherQueue.TryEnqueue(() =>
             {
                 // 更新页码
                 int newIndex = current - 1;
@@ -289,6 +302,12 @@ public sealed partial class MangaReader : Control
                     isUpdatingInternal = true;
                     CurrentPageIndex = newIndex;
                     isUpdatingInternal = false;
+                }
+
+                // 更新页码显示
+                if (pageInfoText != null)
+                {
+                    pageInfoText.Text = $"{current} / {total}";
                 }
 
                 // 更新缩放
@@ -315,10 +334,10 @@ public sealed partial class MangaReader : Control
         if (size == Vector2.Zero) return;
 
         var center = size / 2;
-        var transform = Matrix3x2.CreateTranslation(-state.CameraPos) * 
-                        Matrix3x2.CreateScale(state.Zoom) * 
+        var transform = Matrix3x2.CreateTranslation(-state.CameraPos) *
+                        Matrix3x2.CreateScale(state.Zoom) *
                         Matrix3x2.CreateTranslation(center);
-            
+
         ds.Transform = transform;
 
         // 计算视口 (用于剔除)
@@ -348,7 +367,8 @@ public sealed partial class MangaReader : Control
                         format.FontSize = 24;
                         format.HorizontalAlignment = Microsoft.Graphics.Canvas.Text.CanvasHorizontalAlignment.Center;
                         format.VerticalAlignment = Microsoft.Graphics.Canvas.Text.CanvasVerticalAlignment.Center;
-                        ds.DrawText($"{node.PageIndex + 1}", node.Bounds, Windows.UI.Color.FromArgb(255, 200, 200, 200), format);
+                        ds.DrawText($"{node.PageIndex + 1}", node.Bounds, Windows.UI.Color.FromArgb(255, 200, 200, 200),
+                            format);
                     }
                 }
             }
@@ -375,6 +395,7 @@ public sealed partial class MangaReader : Control
                 await writer.FlushAsync();
                 writer.DetachStream();
             }
+
             stream.Seek(0);
             return await CanvasBitmap.LoadAsync(device, stream);
         }
@@ -383,6 +404,7 @@ public sealed partial class MangaReader : Control
             return null;
         }
     }
+
     /// <summary>
     /// 更新可见节点的加载状态：在可见或预加载区域内触发位图创建，移出视口则释放资源。
     /// </summary>
@@ -392,10 +414,10 @@ public sealed partial class MangaReader : Control
         if (size == Vector2.Zero) return;
 
         var center = size / 2;
-        var transform = Matrix3x2.CreateTranslation(-state.CameraPos) * 
-                        Matrix3x2.CreateScale(state.Zoom) * 
+        var transform = Matrix3x2.CreateTranslation(-state.CameraPos) *
+                        Matrix3x2.CreateScale(state.Zoom) *
                         Matrix3x2.CreateTranslation(center);
-             
+
         Matrix3x2.Invert(transform, out var inverseTransform);
         var topLeft = Vector2.Transform(Vector2.Zero, inverseTransform);
         var bottomRight = Vector2.Transform(size, inverseTransform);
@@ -465,9 +487,9 @@ public sealed partial class MangaReader : Control
     /// </summary>
     private bool IsIntersecting(Rect a, Rect b)
     {
-        return a.X < b.X + b.Width && 
-               a.X + a.Width > b.X && 
-               a.Y < b.Y + b.Height && 
+        return a.X < b.X + b.Width &&
+               a.X + a.Width > b.X &&
+               a.Y < b.Y + b.Height &&
                a.Y + a.Height > b.Y;
     }
 
@@ -484,7 +506,7 @@ public sealed partial class MangaReader : Control
             isDragging = true;
             pointerId = (int)point.PointerId;
             lastPointerPos = point.Position.ToVector2();
-            state.Velocity = Vector2.Zero; 
+            state.Velocity = Vector2.Zero;
             mainCanvas?.CapturePointer(e.Pointer);
         }
     }
@@ -538,7 +560,7 @@ public sealed partial class MangaReader : Control
 
             float oldZoom = state.Zoom;
             float zoomFactor = delta > 0 ? 1.1f : 0.9f;
-                
+
             float minZoom = 0.1f * baseZoomScale;
             float maxZoom = 5.0f * baseZoomScale;
 
@@ -551,7 +573,7 @@ public sealed partial class MangaReader : Control
             // World = (Screen - Center) / Zoom + Camera
             // (Screen - Center) / OldZoom + OldCamera = (Screen - Center) / NewZoom + NewCamera
             // NewCamera = OldCamera + (Screen - Center) * (1/OldZoom - 1/NewZoom)
-                
+
             state.CameraPos += (screenPoint - center) * (1.0f / oldZoom - 1.0f / state.Zoom);
         }
         else if (state.CurrentMode == ReadingMode.VerticalScroll)
@@ -599,7 +621,7 @@ public sealed partial class MangaReader : Control
         // 获取绑定源
         var items = ItemsSource as System.Collections.IEnumerable;
         if (items == null) return;
-            
+
         var itemList = new List<object>();
         foreach (var item in items) itemList.Add(item);
 
@@ -639,12 +661,12 @@ public sealed partial class MangaReader : Control
         // 2. 后台加载剩余图片
         if (remainingFiles.Count > 0)
         {
-            _ = Task.Run(async () => 
+            _ = Task.Run(async () =>
             {
                 foreach (var item in remainingFiles)
                 {
                     if (token.IsCancellationRequested) return;
-                        
+
                     var node = await CreateNodeAsync(item, index++);
                     if (node != null)
                     {
@@ -663,11 +685,12 @@ public sealed partial class MangaReader : Control
     /// <returns>已初始化的 <see cref="RenderNode"/> 或在失败时返回 <c>null</c>。</returns>
     private async Task<RenderNode?> CreateNodeAsync(object item, int index)
     {
-        try {
+        try
+        {
             var strategy = ImageStrategies.FirstOrDefault(s => s.CanHandle(item));
             if (strategy == null) return null;
 
-            var ctx = new ImageLoadingContext { Source = item};
+            var ctx = new ImageLoadingContext { Source = item };
             await strategy.InitImageAsync(ctx);
             var size = ctx.Size;
             if (size.IsEmpty) size = new Size(1000, 1414); // Default size if unknown
@@ -679,7 +702,11 @@ public sealed partial class MangaReader : Control
                 Ctx = ctx,
                 Bounds = new Rect(0, 0, size.Width, size.Height)
             };
-        } catch { return null; }
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -740,7 +767,7 @@ public sealed partial class MangaReader : Control
         lock (state.LayoutNodes)
         {
             state.LayoutNodes.Clear();
-                
+
             if (Mode == ReadingMode.VerticalScroll)
             {
                 float currentY = 0;
@@ -778,7 +805,7 @@ public sealed partial class MangaReader : Control
 
                         node.Bounds.X = -scaledWidth / 2.0;
                         node.Bounds.Y = currentY;
-                            
+
                         currentY += (float)scaledHeight + spacing;
                         state.LayoutNodes.Add(node);
                     }
@@ -812,11 +839,11 @@ public sealed partial class MangaReader : Control
                         // Calculate spread start index (1-based pairs: 1-2, 3-4...)
                         // If index is 1 or 2, start is 1.
                         int pairStart = ((CurrentPageIndex - 1) / 2) * 2 + 1;
-                            
+
                         if (pairStart < allNodes.Count) nodesToAdd.Add(allNodes[pairStart]);
                         if (pairStart + 1 < allNodes.Count) nodesToAdd.Add(allNodes[pairStart + 1]);
                     }
-                        
+
                     // Layout side-by-side (RTL: Right is first/lower index, Left is second/higher index)
                     if (nodesToAdd.Count == 1)
                     {
@@ -835,24 +862,24 @@ public sealed partial class MangaReader : Control
                         if (Mode == ReadingMode.SpreadRtl)
                         {
                             right = nodesToAdd[0]; // First page on Right
-                            left = nodesToAdd[1];  // Second page on Left
+                            left = nodesToAdd[1]; // Second page on Left
                         }
                         else // SpreadLTR
                         {
-                            left = nodesToAdd[0];  // First page on Left
+                            left = nodesToAdd[0]; // First page on Left
                             right = nodesToAdd[1]; // Second page on Right
                         }
-                            
+
                         float spacing = 0; // Usually spreads are tight
-                            
+
                         // Left Page Position (Left of center)
                         left.Bounds.X = -left.Bounds.Width - spacing / 2.0;
                         left.Bounds.Y = -left.Bounds.Height / 2.0;
-                            
+
                         // Right Page Position (Right of center)
                         right.Bounds.X = spacing / 2.0;
                         right.Bounds.Y = -right.Bounds.Height / 2.0;
-                            
+
                         state.LayoutNodes.Add(left);
                         state.LayoutNodes.Add(right);
                     }
