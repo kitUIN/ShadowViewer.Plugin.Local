@@ -184,6 +184,16 @@ public sealed partial class MangaReader
     private const int LayoutUpdateBatchSize = 10;
 
     /// <summary>
+    /// 并发加载的最大线程数。
+    /// </summary>
+    private const int MaxConcurrentLoads = 4;
+
+    /// <summary>
+    /// 信号量，用于控制并发加载数量。
+    /// </summary>
+    private readonly System.Threading.SemaphoreSlim loadSemaphore = new(MaxConcurrentLoads, MaxConcurrentLoads);
+
+    /// <summary>
     /// 当前批次已加载的节点数量。
     /// </summary>
     private int currentBatchLoadedCount = 0;
@@ -249,21 +259,29 @@ public sealed partial class MangaReader
             });
         }
 
-        // 5. 启动尺寸加载队列处理
-        _ = ProcessSizeLoadQueueAsync();
+        // 5. 启动尺寸加载队列处理（在后台线程）
+        _ = Task.Run(() => ProcessSizeLoadQueueAsync());
     }
 
     /// <summary>
-    /// 顺序处理尺寸加载队列，避免并发加载造成卡顿。
+    /// 并发处理尺寸加载队列，使用信号量控制并发数量。
+    /// 此方法在后台线程运行，不会阻塞 UI 线程。
     /// </summary>
     private async Task ProcessSizeLoadQueueAsync()
     {
-        if (isProcessingSizeQueue) return;
-        isProcessingSizeQueue = true;
+        // 使用 volatile read 检查状态
+        if (System.Threading.Volatile.Read(ref isProcessingSizeQueue)) return;
+        
+        lock (loadingLock)
+        {
+            if (isProcessingSizeQueue) return;
+            isProcessingSizeQueue = true;
+        }
 
         try
         {
-            currentBatchLoadedCount = 0;
+            System.Threading.Interlocked.Exchange(ref currentBatchLoadedCount, 0);
+            var loadTasks = new List<Task>();
 
             while (true)
             {
@@ -277,43 +295,74 @@ public sealed partial class MangaReader
 
                 if (node != null)
                 {
-                    await LoadNodeSizeAsync(node);
-                    
-                    // 每加载完成一个节点，增加计数
-                    if (node.IsSizeLoaded)
-                    {
-                        currentBatchLoadedCount++;
+                    // 启动并发加载任务
+                    var loadTask = LoadNodeSizeWithSemaphoreAsync(node);
+                    loadTasks.Add(loadTask);
 
-                        // 达到批次大小时，立即触发布局更新
-                        if (currentBatchLoadedCount >= LayoutUpdateBatchSize)
-                        {
-                            currentBatchLoadedCount = 0;
-                            this.DispatcherQueue.TryEnqueue(() =>
-                            {
-                                UpdateLayoutWithPageLock();
-                            });
-                        }
+                    // 如果达到最大并发数的2倍，等待一些任务完成
+                    if (loadTasks.Count >= MaxConcurrentLoads * 2)
+                    {
+                        await Task.WhenAny(loadTasks);
+                        loadTasks.RemoveAll(t => t.IsCompleted);
                     }
                 }
+            }
 
-                // 让出时间片，保持 UI 响应
-                await Task.Yield();
+            // 等待所有加载任务完成
+            if (loadTasks.Count > 0)
+            {
+                await Task.WhenAll(loadTasks);
             }
         }
         finally
         {
-            isProcessingSizeQueue = false;
+            lock (loadingLock)
+            {
+                isProcessingSizeQueue = false;
+            }
 
             // 队列处理完成后，如果还有未达到批次大小的节点，也需要更新布局
-            if (currentBatchLoadedCount > 0 || sizeLoadPendingLayout)
+            var count = System.Threading.Volatile.Read(ref currentBatchLoadedCount);
+            if (count > 0 || sizeLoadPendingLayout)
             {
-                currentBatchLoadedCount = 0;
+                System.Threading.Interlocked.Exchange(ref currentBatchLoadedCount, 0);
                 sizeLoadPendingLayout = false;
                 this.DispatcherQueue.TryEnqueue(() =>
                 {
                     UpdateLayoutWithPageLock();
                 });
             }
+        }
+    }
+
+    /// <summary>
+    /// 使用信号量控制并发的节点尺寸加载。
+    /// </summary>
+    private async Task LoadNodeSizeWithSemaphoreAsync(RenderNode node)
+    {
+        await loadSemaphore.WaitAsync();
+        try
+        {
+            await LoadNodeSizeAsync(node);
+            
+            // 每加载完成一个节点，增加计数
+            if (node.IsSizeLoaded)
+            {
+                var count = System.Threading.Interlocked.Increment(ref currentBatchLoadedCount);
+
+                // 达到批次大小时，立即触发布局更新
+                if (count % LayoutUpdateBatchSize == 0)
+                {
+                    this.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        UpdateLayoutWithPageLock();
+                    });
+                }
+            }
+        }
+        finally
+        {
+            loadSemaphore.Release();
         }
     }
 
