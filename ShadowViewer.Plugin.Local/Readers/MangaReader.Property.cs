@@ -358,10 +358,7 @@ public sealed partial class MangaReader
                 // 达到批次大小时，立即触发布局更新
                 if (count % LayoutUpdateBatchSize == 0)
                 {
-                    this.DispatcherQueue.TryEnqueue(() =>
-                    {
-                        UpdateLayoutWithPageLock();
-                    });
+                    this.DispatcherQueue.TryEnqueue(UpdateLayoutWithPageLock);
                 }
             }
         }

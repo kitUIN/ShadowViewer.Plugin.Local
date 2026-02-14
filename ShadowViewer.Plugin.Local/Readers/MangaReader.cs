@@ -164,11 +164,7 @@ public sealed partial class MangaReader : Control
             state.Velocity = Vector2.Zero;
         }
 
-        this.DispatcherQueue.TryEnqueue(() =>
-        {
-            UpdateActiveLayout();
-            CurrentPageIndex = 0;
-        });
+        this.DispatcherQueue.TryEnqueue(UpdateActiveLayout);
     }
 
     /// <summary>
@@ -266,12 +262,6 @@ public sealed partial class MangaReader : Control
         {
             EndBatchAdd();
         }
-
-        // 滚动到第一页
-        this.DispatcherQueue.TryEnqueue(() =>
-        {
-            CurrentPageIndex = 0;
-        });
     }
 
 
