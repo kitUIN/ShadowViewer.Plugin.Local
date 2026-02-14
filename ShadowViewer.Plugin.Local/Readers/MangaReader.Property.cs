@@ -177,6 +177,16 @@ public sealed partial class MangaReader
     /// </summary>
     private bool sizeLoadPendingLayout = false;
 
+    /// <summary>
+    /// 批次大小：每加载多少个节点后触发一次布局更新。
+    /// </summary>
+    private const int LayoutUpdateBatchSize = 10;
+
+    /// <summary>
+    /// 当前批次已加载的节点数量。
+    /// </summary>
+    private int currentBatchLoadedCount = 0;
+
     private void AddItems(System.Collections.IList? newItems, int startIndex)
     {
         if (newItems == null || newItems.Count == 0) return;
@@ -247,6 +257,8 @@ public sealed partial class MangaReader
 
         try
         {
+            currentBatchLoadedCount = 0;
+
             while (true)
             {
                 RenderNode? node;
@@ -260,6 +272,22 @@ public sealed partial class MangaReader
                 if (node != null)
                 {
                     await LoadNodeSizeAsync(node);
+                    
+                    // 每加载完成一个节点，增加计数
+                    if (node.IsSizeLoaded)
+                    {
+                        currentBatchLoadedCount++;
+
+                        // 达到批次大小时，立即触发布局更新
+                        if (currentBatchLoadedCount >= LayoutUpdateBatchSize)
+                        {
+                            currentBatchLoadedCount = 0;
+                            this.DispatcherQueue.TryEnqueue(() =>
+                            {
+                                UpdateActiveLayout();
+                            });
+                        }
+                    }
                 }
 
                 // 让出时间片，保持 UI 响应
@@ -270,9 +298,10 @@ public sealed partial class MangaReader
         {
             isProcessingSizeQueue = false;
 
-            // 队列处理完成后，如有需要则更新布局
-            if (sizeLoadPendingLayout)
+            // 队列处理完成后，如果还有未达到批次大小的节点，也需要更新布局
+            if (currentBatchLoadedCount > 0 || sizeLoadPendingLayout)
             {
+                currentBatchLoadedCount = 0;
                 sizeLoadPendingLayout = false;
                 this.DispatcherQueue.TryEnqueue(() =>
                 {
@@ -326,11 +355,7 @@ public sealed partial class MangaReader
 
     private static void OnCurrentPageIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not MangaReader { isUpdatingInternal: false } control || e.NewValue is not int newIndex) return;
-        if (control.Mode == ReadingMode.VerticalScroll)
-        {
-        }
-
+        if (d is not MangaReader { isUpdatingInternal: false } control || e.NewValue is not int) return;
         control.UpdateActiveLayout();
         control.ResetZoom();
     }
