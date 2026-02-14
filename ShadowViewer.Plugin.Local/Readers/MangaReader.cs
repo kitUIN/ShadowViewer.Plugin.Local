@@ -636,6 +636,32 @@ public sealed partial class MangaReader : Control
                                 try
                                 {
                                     node.Bitmap = await GetBitmap(node.Ctx.Bytes, device);
+
+                                    // If bitmap loaded, update size info and mark size-loaded so layout can use real dimensions
+                                    if (node.Bitmap != null)
+                                    {
+                                        try
+                                        {
+                                            // Use SizeInPixels to get actual pixel dimensions
+                                            var sizePixels = node.Bitmap.SizeInPixels;
+                                            node.Ctx.Size = new Windows.Foundation.Size(sizePixels.Width, sizePixels.Height);
+                                        }
+                                        catch
+                                        {
+                                            // ignore if SizeInPixels not available
+                                        }
+
+                                        node.IsSizeLoaded = true;
+
+                                        // Invalidate cached scale so layout recalculates
+                                        cachedViewHeight = 0;
+
+                                        // Request layout update on UI thread so newly-loaded page is positioned correctly
+                                        this.DispatcherQueue.TryEnqueue(() =>
+                                        {
+                                            UpdateActiveLayout();
+                                        });
+                                    }
                                 }
                                 catch
                                 {
