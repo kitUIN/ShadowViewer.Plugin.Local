@@ -1,11 +1,12 @@
+using Microsoft.UI.Xaml;
+using ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Windows.Foundation;
-using Microsoft.UI.Xaml;
-using ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 
 namespace ShadowViewer.Plugin.Local.Readers;
 
@@ -33,7 +34,7 @@ public sealed partial class MangaReader
 
     private static void OnPageSpacingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is MangaReader control && control.Mode == ReadingMode.VerticalScroll)
+        if (d is MangaReader { Mode: ReadingMode.VerticalScroll } control)
         {
             control.UpdateActiveLayout();
         }
@@ -123,27 +124,22 @@ public sealed partial class MangaReader
     /// <summary>
     /// 获取或设置要在阅读器中显示的项目源。支持实现了 <see cref="INotifyCollectionChanged"/> 的集合以接收增量更新。
     /// </summary>
-    public object ItemsSource
+    public object? ItemsSource
     {
-        get => GetValue(ItemsSourceProperty);
+        get =>  GetValue(ItemsSourceProperty);
         set => SetValue(ItemsSourceProperty, value);
     }
 
     private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is MangaReader control)
+        if (d is not MangaReader control) return;
+        if (e.OldValue is INotifyCollectionChanged oldCollection)
         {
-            control.ReloadItems();
-            if (e.OldValue is INotifyCollectionChanged oldCollection)
-            {
-                oldCollection.CollectionChanged -= control.OnItemsSourceCollectionChanged;
-            }
-
-            if (e.NewValue is INotifyCollectionChanged newCollection)
-            {
-                newCollection.CollectionChanged += control.OnItemsSourceCollectionChanged;
-            }
+            oldCollection.CollectionChanged -= control.OnItemsSourceCollectionChanged;
         }
+        if (e.NewValue is not INotifyCollectionChanged newCollection) return;
+        newCollection.CollectionChanged += control.OnItemsSourceCollectionChanged;
+        control.ReloadItems();
     }
 
     private void OnItemsSourceCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -208,7 +204,7 @@ public sealed partial class MangaReader
     /// </summary>
     private bool isUserInteracting = false;
 
-    private void AddItems(System.Collections.IList? newItems, int startIndex)
+    private void AddItems(IList? newItems, int startIndex)
     {
         if (newItems == null || newItems.Count == 0) return;
 
@@ -258,14 +254,11 @@ public sealed partial class MangaReader
         }
         else
         {
-            this.DispatcherQueue.TryEnqueue(() =>
-            {
-                UpdateActiveLayout();
-            });
+            this.DispatcherQueue.TryEnqueue(UpdateActiveLayout);
         }
 
         // 5. 启动尺寸加载队列处理（在后台线程）
-        _ = Task.Run(() => ProcessSizeLoadQueueAsync());
+        _ = Task.Run(ProcessSizeLoadQueueAsync);
     }
 
     /// <summary>
@@ -332,10 +325,7 @@ public sealed partial class MangaReader
             {
                 System.Threading.Interlocked.Exchange(ref currentBatchLoadedCount, 0);
                 sizeLoadPendingLayout = false;
-                this.DispatcherQueue.TryEnqueue(() =>
-                {
-                    UpdateLayoutWithPageLock();
-                });
+                this.DispatcherQueue.TryEnqueue(UpdateLayoutWithPageLock);
             }
         }
     }

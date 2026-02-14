@@ -9,7 +9,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Storage.Streams;
@@ -182,14 +181,9 @@ public sealed partial class MangaReader : Control
     public void EndBatchAdd()
     {
         isBatchAdding = false;
-        if (hasPendingLayoutUpdate)
-        {
-            this.DispatcherQueue.TryEnqueue(() =>
-            {
-                UpdateActiveLayout();
-            });
-            hasPendingLayoutUpdate = false;
-        }
+        if (!hasPendingLayoutUpdate) return;
+        this.DispatcherQueue.TryEnqueue(UpdateActiveLayout);
+        hasPendingLayoutUpdate = false;
     }
 
     /// <summary>
@@ -205,7 +199,7 @@ public sealed partial class MangaReader : Control
     /// 添加多个项目到阅读器。
     /// </summary>
     /// <param name="items">要添加的项目集合。</param>
-    public void AddItems(IEnumerable items)
+    public void AddItems(IEnumerable? items)
     {
         if (items == null) return;
 
@@ -626,7 +620,7 @@ public sealed partial class MangaReader : Control
     /// </summary>
     private void ReloadItems()
     {
-        SetItems(ItemsSource as  IEnumerable);
+        SetItems(ItemsSource as IEnumerable);
     }
 
     /// <summary>

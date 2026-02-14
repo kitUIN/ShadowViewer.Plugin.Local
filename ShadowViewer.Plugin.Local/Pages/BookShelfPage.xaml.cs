@@ -4,14 +4,11 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using ShadowViewer.Plugin.Local.Models;
-using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using Windows.System;
 using Windows.UI.Core;
 using ShadowPluginLoader.WinUI;
-using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.Sdk.Helpers;
@@ -27,7 +24,7 @@ public sealed partial class BookShelfPage
     /// <summary>
     /// ViewModel
     /// </summary>
-    public BookShelfViewModel ViewModel { get; private set; } = null!;
+    public BookShelfViewModel? ViewModel { get; private set; }
 
     /// <summary>
     /// 书架页面
@@ -43,8 +40,14 @@ public sealed partial class BookShelfPage
     /// <param name="e"></param>
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
-        ViewModel = DiFactory.Services.Resolve<BookShelfViewModel>();
-        if (e.Parameter is ShadowUri uri) ViewModel.NavigateTo(uri);
+        ViewModel ??= DiFactory.Services.Resolve<BookShelfViewModel>();
+        if (e.Parameter is ShadowUri uri)
+        {
+            ViewModel.NavigateTo(uri);
+            return;
+        }
+
+        ViewModel?.RefreshLocalComic();
     }
 
 
@@ -54,6 +57,7 @@ public sealed partial class BookShelfPage
     private void ShadowCommandMove_Click(object sender, RoutedEventArgs e)
     {
         HomeCommandBarFlyout.Hide();
+        if (ViewModel == null) return;
         ViewModel.LoadFolderTree();
         ViewModel.MoveTeachingTipIsOpen = true;
     }
@@ -64,6 +68,7 @@ public sealed partial class BookShelfPage
     /// </summary>
     private async void TreeViewItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
+        if (ViewModel == null) return;
         await ViewModel.MoveToPathCommand.ExecuteAsync(MoveTreeView.SelectedItem as IComicNode);
     }
 
@@ -85,6 +90,7 @@ public sealed partial class BookShelfPage
                 break;
             }
             case VirtualKey.Delete:
+                if (ViewModel == null) return;
                 ViewModel.DeleteCommand.Execute(null);
                 break;
         }
@@ -96,6 +102,6 @@ public sealed partial class BookShelfPage
     private void RefreshContainer_RefreshRequested(RefreshContainer sender, RefreshRequestedEventArgs args)
     {
         using var refreshCompletionDeferral = args.GetDeferral();
-        ViewModel.RefreshLocalComic();
+        ViewModel?.RefreshLocalComic();
     }
 }
