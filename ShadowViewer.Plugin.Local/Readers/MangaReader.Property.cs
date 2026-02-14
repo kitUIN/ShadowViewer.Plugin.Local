@@ -77,7 +77,6 @@ public sealed partial class MangaReader
             control.state.CurrentMode = (ReadingMode)e.NewValue;
             control.UpdateActiveLayout();
             control.ResetZoom();
-            control.ScrollToPage(control.CurrentPageIndex);
         }
     }
 
@@ -327,15 +326,12 @@ public sealed partial class MangaReader
 
     private static void OnCurrentPageIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is MangaReader { isUpdatingInternal: false } control && e.NewValue is int newIndex)
+        if (d is not MangaReader { isUpdatingInternal: false } control || e.NewValue is not int newIndex) return;
+        if (control.Mode == ReadingMode.VerticalScroll)
         {
-            if (control.Mode != ReadingMode.VerticalScroll)
-            {
-                control.UpdateActiveLayout();
-                control.ResetZoom();
-            }
-
-            control.ScrollToPage(newIndex);
         }
+
+        control.UpdateActiveLayout();
+        control.ResetZoom();
     }
 }

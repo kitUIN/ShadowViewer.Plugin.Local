@@ -1,7 +1,8 @@
-using System;
-using System.Numerics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System;
+using System.Linq;
+using System.Numerics;
 
 namespace ShadowViewer.Plugin.Local.Readers;
 
@@ -159,7 +160,7 @@ public sealed partial class MangaReader
         if (resetButton != null)
         {
             resetButton.Tapped += (_, e) => e.Handled = true;
-            resetButton.Click += (_, _) => ResetZoom();
+            resetButton.Click += (_, _) => ResetZoom(true);
         }
     }
 
@@ -167,7 +168,7 @@ public sealed partial class MangaReader
     /// 将缩放重置为默认状态并根据当前阅读模式重新定位摄像机与基础缩放比例。
     /// 对于滚动模式会尽量保持 X 轴为居中；对于分页模式会根据内容边界计算合适的基础缩放使内容适配视口。
     /// </summary>
-    public void ResetZoom()
+    public void ResetZoom(bool click = false)
     {
         state.Zoom = 1.0f;
         state.Velocity = Vector2.Zero;
@@ -184,16 +185,19 @@ public sealed partial class MangaReader
                 total = state.LayoutNodes.Count;
             }
 
-            if (total > 0)
+            if (total > 0 && (CurrentPageIndex == 0 || CurrentPageIndex == total - 1 || !click))
             {
-                if (CurrentPageIndex == 0)
+                RenderNode? targetNode;
+                lock (state.LayoutNodes)
                 {
-                    ScrollToPage(0);
+                    targetNode = state.LayoutNodes.FirstOrDefault(n => n.PageIndex == CurrentPageIndex);
                 }
-                else if (CurrentPageIndex == total - 1)
-                {
-                    ScrollToPage(total - 1);
-                }
+
+                if (targetNode == null) return;
+                var center = new Vector2((float)(targetNode.Bounds.X + targetNode.Bounds.Width / 2),
+                    (float)(targetNode.Bounds.Y + targetNode.Bounds.Height / 2));
+                state.CameraPos = center;
+                state.Velocity = Vector2.Zero;
             }
         }
         else

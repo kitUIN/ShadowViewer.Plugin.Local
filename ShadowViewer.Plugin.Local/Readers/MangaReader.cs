@@ -134,33 +134,6 @@ public sealed partial class MangaReader : Control
     /// </summary>
     public IEnumerable<IImageSourceStrategy> ImageStrategies { get; }
 
-    /// <summary>
-    /// 将视图平移以将指定页居中显示（仅在滚动模式下有效）。
-    /// </summary>
-    /// <param name="index">目标页索引（从 0 开始）。</param>
-    public void ScrollToPage(int index)
-    {
-        if (Mode != ReadingMode.VerticalScroll)
-        {
-            state.CameraPos = Vector2.Zero;
-            state.Velocity = Vector2.Zero;
-            return;
-        }
-
-        RenderNode? targetNode;
-        lock (state.LayoutNodes)
-        {
-            targetNode = state.LayoutNodes.FirstOrDefault(n => n.PageIndex == index);
-        }
-
-        if (targetNode != null)
-        {
-            var center = new Vector2((float)(targetNode.Bounds.X + targetNode.Bounds.Width / 2),
-                (float)(targetNode.Bounds.Y + targetNode.Bounds.Height / 2));
-            state.CameraPos = center;
-            state.Velocity = Vector2.Zero;
-        }
-    }
 
     /// <summary>
     /// 清空所有节点并释放资源。
@@ -297,36 +270,8 @@ public sealed partial class MangaReader : Control
         // 滚动到第一页
         this.DispatcherQueue.TryEnqueue(() =>
         {
-            ScrollToPage(0);
+            CurrentPageIndex = 0;
         });
-    }
-
-    /// <summary>
-    /// 将视图平移以将指定页居中显示（仅在滚动模式下有效）。
-    /// </summary>
-    /// <param name="index">目标页索引（从 0 开始）。</param>
-    private void ScrollToPageInternal(int index)
-    {
-        if (Mode != ReadingMode.VerticalScroll)
-        {
-            state.CameraPos = Vector2.Zero;
-            state.Velocity = Vector2.Zero;
-            return;
-        }
-
-        RenderNode? targetNode;
-        lock (state.LayoutNodes)
-        {
-            targetNode = state.LayoutNodes.FirstOrDefault(n => n.PageIndex == index);
-        }
-
-        if (targetNode != null)
-        {
-            var center = new Vector2((float)(targetNode.Bounds.X + targetNode.Bounds.Width / 2),
-                (float)(targetNode.Bounds.Y + targetNode.Bounds.Height / 2));
-            state.CameraPos = center;
-            state.Velocity = Vector2.Zero;
-        }
     }
 
 
@@ -636,32 +581,6 @@ public sealed partial class MangaReader : Control
                                 try
                                 {
                                     node.Bitmap = await GetBitmap(node.Ctx.Bytes, device);
-
-                                    // If bitmap loaded, update size info and mark size-loaded so layout can use real dimensions
-                                    if (node.Bitmap != null)
-                                    {
-                                        try
-                                        {
-                                            // Use SizeInPixels to get actual pixel dimensions
-                                            var sizePixels = node.Bitmap.SizeInPixels;
-                                            node.Ctx.Size = new Windows.Foundation.Size(sizePixels.Width, sizePixels.Height);
-                                        }
-                                        catch
-                                        {
-                                            // ignore if SizeInPixels not available
-                                        }
-
-                                        node.IsSizeLoaded = true;
-
-                                        // Invalidate cached scale so layout recalculates
-                                        cachedViewHeight = 0;
-
-                                        // Request layout update on UI thread so newly-loaded page is positioned correctly
-                                        this.DispatcherQueue.TryEnqueue(() =>
-                                        {
-                                            UpdateActiveLayout();
-                                        });
-                                    }
                                 }
                                 catch
                                 {
