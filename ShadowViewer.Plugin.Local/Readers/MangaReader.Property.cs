@@ -203,6 +203,11 @@ public sealed partial class MangaReader
     /// </summary>
     private bool isLayoutUpdating = false;
 
+    /// <summary>
+    /// 标记用户是否正在交互（拖拽或滚动），用于防止布局更新时自动调整摄像机位置。
+    /// </summary>
+    private bool isUserInteracting = false;
+
     private void AddItems(System.Collections.IList? newItems, int startIndex)
     {
         if (newItems == null || newItems.Count == 0) return;
@@ -375,6 +380,22 @@ public sealed partial class MangaReader
         {
             UpdateActiveLayout();
             ResetZoom(true);
+            return;
+        }
+
+        // 如果用户正在交互（拖拽/滚动），只更新布局，不调整摄像机位置
+        if (isUserInteracting)
+        {
+            // 标记正在更新布局，防止 UpdateCurrentPage 更新页码
+            isLayoutUpdating = true;
+            try
+            {
+                UpdateActiveLayout();
+            }
+            finally
+            {
+                isLayoutUpdating = false;
+            }
             return;
         }
 

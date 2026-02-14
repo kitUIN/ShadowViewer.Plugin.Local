@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Numerics;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Input;
 
 namespace ShadowViewer.Plugin.Local.Readers;
@@ -17,6 +18,7 @@ public partial class MangaReader
         if (point.Properties.IsLeftButtonPressed)
         {
             isDragging = true;
+            isUserInteracting = true;  // 标记用户开始交互
             pointerId = (int)point.PointerId;
             lastPointerPos = point.Position.ToVector2();
             state.Velocity = Vector2.Zero;
@@ -52,6 +54,7 @@ public partial class MangaReader
         if (e.Pointer.PointerId == pointerId)
         {
             isDragging = false;
+            isUserInteracting = false;  // 标记用户结束交互
             pointerId = -1;
             mainCanvas?.ReleasePointerCapture(e.Pointer);
         }
@@ -94,7 +97,15 @@ public partial class MangaReader
             // 停止惯性
             state.Velocity = Vector2.Zero;
             // 滚轮滚动
+            isUserInteracting = true;  // 标记用户正在滚动
             state.CameraPos.Y -= delta / state.Zoom;
+            
+            // 延迟清除交互标记，避免立即被布局更新打断
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(500);  // 滚轮停止后500ms清除标记
+                isUserInteracting = false;
+            });
         }
         else if (EnableMouseWheelNavigation)
         {
