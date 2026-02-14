@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Microsoft.UI.Xaml;
@@ -187,6 +188,11 @@ public sealed partial class MangaReader
     /// </summary>
     private int currentBatchLoadedCount = 0;
 
+    /// <summary>
+    /// 标记是否正在进行布局更新（用于防止页码变动）。
+    /// </summary>
+    private bool isLayoutUpdating = false;
+
     private void AddItems(System.Collections.IList? newItems, int startIndex)
     {
         if (newItems == null || newItems.Count == 0) return;
@@ -284,7 +290,7 @@ public sealed partial class MangaReader
                             currentBatchLoadedCount = 0;
                             this.DispatcherQueue.TryEnqueue(() =>
                             {
-                                UpdateActiveLayout();
+                                UpdateLayoutWithPageLock();
                             });
                         }
                     }
@@ -305,9 +311,68 @@ public sealed partial class MangaReader
                 sizeLoadPendingLayout = false;
                 this.DispatcherQueue.TryEnqueue(() =>
                 {
-                    UpdateActiveLayout();
+                    UpdateLayoutWithPageLock();
                 });
             }
+        }
+    }
+
+    /// <summary>
+    /// 更新布局，同时保持当前页码不变（锁定摄像机到当前页面）。
+    /// </summary>
+    private void UpdateLayoutWithPageLock()
+    {
+        if (Mode != ReadingMode.VerticalScroll)
+        {
+            UpdateActiveLayout();
+            ResetZoom(true);
+            return;
+        }
+
+        // 保存当前页索引
+        int targetPageIndex = CurrentPageIndex;
+        
+        // 在垂直滚动模式下，保存当前页面节点的中心点在世界坐标系中的位置
+        RenderNode? targetNode = null;
+        Vector2 oldNodeCenter = Vector2.Zero;
+        
+        lock (allNodes)
+        {
+            if (targetPageIndex >= 0 && targetPageIndex < allNodes.Count)
+            {
+                targetNode = allNodes[targetPageIndex];
+                oldNodeCenter = new Vector2(
+                    (float)(targetNode.Bounds.X + targetNode.Bounds.Width / 2),
+                    (float)(targetNode.Bounds.Y + targetNode.Bounds.Height / 2)
+                );
+            }
+        }
+
+        // 标记正在更新布局，防止 UpdateCurrentPage 更新页码
+        isLayoutUpdating = true;
+        try
+        {
+            // 更新布局（包含重新计算缩放比例）
+            UpdateActiveLayout();
+
+            // 如果有目标节点，调整摄像机位置使其保持在相同位置
+            if (targetNode != null)
+            {
+                Vector2 newNodeCenter = new Vector2(
+                    (float)(targetNode.Bounds.X + targetNode.Bounds.Width / 2),
+                    (float)(targetNode.Bounds.Y + targetNode.Bounds.Height / 2)
+                );
+
+                // 调整摄像机位置，补偿节点位置的变化
+                Vector2 offset = newNodeCenter - oldNodeCenter;
+                state.CameraPos += offset;
+            }
+
+            ResetZoom(true);
+        }
+        finally
+        {
+            isLayoutUpdating = false;
         }
     }
 

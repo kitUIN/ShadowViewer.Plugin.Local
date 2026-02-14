@@ -376,6 +376,9 @@ public sealed partial class MangaReader : Control
     /// </summary>
     private void UpdateCurrentPage()
     {
+        // 如果正在更新布局，跳过页码计算（防止页码变动）
+        if (isLayoutUpdating) return;
+
         // 简单的距离计算来确定当前页
         int total;
         int current = 1;
