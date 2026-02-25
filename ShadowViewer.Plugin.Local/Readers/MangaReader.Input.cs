@@ -37,6 +37,12 @@ public partial class MangaReader
             var currentPos = point.Position.ToVector2();
             var delta = currentPos - lastPointerPos;
 
+            bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
+            if (Mode == ReadingMode.VerticalScroll && !AllowHorizontalDragInScrollMode && !isZoomed)
+            {
+                delta.X = 0;
+            }
+
             state.CameraPos -= delta / state.Zoom;
 
             // 简单的速度计算

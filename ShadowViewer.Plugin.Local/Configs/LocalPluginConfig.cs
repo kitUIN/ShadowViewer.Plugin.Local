@@ -74,4 +74,10 @@ public partial class LocalPluginConfig
     /// </summary>
     [ObservableConfigProperty(Description = "阅读器点击区域设置")]
     private Dictionary<string, double>? tappedGridLayout;
+
+    /// <summary>
+    /// 在垂直滚动模式下是否允许水平拖拽
+    /// </summary>
+    [ObservableConfigProperty(Description = "在垂直滚动模式下是否允许水平拖拽")]
+    private bool allowHorizontalDragInScrollMode;
 }

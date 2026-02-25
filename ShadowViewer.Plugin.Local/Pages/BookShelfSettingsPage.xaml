@@ -7,7 +7,7 @@
     xmlns:i18N="using:ShadowViewer.Plugin.Local.I18n"
     xmlns:icons="using:FluentIcons.WinUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:local="using:ShadowViewer.Plugin.Local" 
+    xmlns:local="using:ShadowViewer.Plugin.Local"
     xmlns:icx="using:FluentIcons.WinUI.Markup"
     xmlns:controls1="using:ShadowViewer.Controls"
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
@@ -76,7 +76,7 @@
                 </controls:SettingsCard>
                 <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="{i18N:Locale Key=LocalReaderSetting}" />
-                <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=BookTemplate}"
+                <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=PhoneSpanOut}"
                                        Description="{i18N:Locale Key=LocalReaderModeDescription}"
                                        Header="{i18N:Locale Key=LocalReaderMode}">
                     <Button>
@@ -102,6 +102,11 @@
                             </controls1:EnumMenuFlyout>
                         </Button.Flyout>
                     </Button>
+                </controls:SettingsCard>
+                <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=BookTemplate}"
+                                       Description="{i18N:Locale Key=AllowHorizontalDragInScrollDescription}"
+                                       Header="{i18N:Locale Key=AllowHorizontalDragInScroll}">
+                    <ToggleSwitch IsOn="{x:Bind Config.AllowHorizontalDragInScrollMode}"></ToggleSwitch>
                 </controls:SettingsCard>
             </StackPanel>
         </ScrollViewer>

@@ -462,4 +462,10 @@
   <data name="SpreadLtr" xml:space="preserve">
     <value>双页模式 (从左向右)</value>
   </data>
+  <data name="AllowHorizontalDragInScrollDescription" xml:space="preserve">
+    <value>在竖直阅读模式下进行单指滑动或指针拖拽时是否允许水平拖拽</value>
+  </data>
+  <data name="AllowHorizontalDragInScroll" xml:space="preserve">
+    <value>在竖直阅读模式下是否允许水平拖拽</value>
+  </data>
 </root>

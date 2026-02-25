@@ -72,6 +72,30 @@ public sealed partial class MangaReader
         set => SetValue(EnableMouseWheelNavigationProperty, value);
     }
 
+    /// <summary>
+    /// 是否允许在垂直滚动模式下进行水平拖拽的依赖属性键。
+    /// </summary>
+    public static readonly DependencyProperty AllowHorizontalDragInScrollModeProperty =
+        DependencyProperty.Register(nameof(AllowHorizontalDragInScrollMode), typeof(bool), typeof(MangaReader),
+            new PropertyMetadata(false, OnAllowHorizontalDragInScrollModeChanged));
+
+    /// <summary>
+    /// 指示在垂直滚动模式下是否允许水平拖拽。默认为 <c>false</c>，即仅允许上下拖动。
+    /// 设置为 <c>true</c> 后可自由上下左右拖拽。
+    /// </summary>
+    public bool AllowHorizontalDragInScrollMode
+    {
+        get => (bool)GetValue(AllowHorizontalDragInScrollModeProperty);
+        set => SetValue(AllowHorizontalDragInScrollModeProperty, value);
+    }
+
+    private static void OnAllowHorizontalDragInScrollModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not MangaReader { Mode: ReadingMode.VerticalScroll } control || (bool)e.NewValue) return;
+        control.state.CameraPos.X = 0;
+        control.state.Velocity.X = 0;
+    }
+
     private static void OnModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is MangaReader control)
