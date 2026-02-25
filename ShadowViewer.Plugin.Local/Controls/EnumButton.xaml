@@ -1,0 +1,34 @@
+﻿<UserControl
+    x:Class="ShadowViewer.Plugin.Local.Controls.EnumButton"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls1="using:ShadowViewer.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:icons="using:FluentIcons.WinUI"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Button x:Name="InternalButton">
+        <Grid ColumnSpacing="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <icons:FluentIcon Grid.Column="0"
+                              Icon="{x:Bind EnumIcon(SelectedValue),Mode=OneWay}"
+                              IconVariant="{x:Bind EnumIconVariant(SelectedValue),Mode=OneWay}">
+            </icons:FluentIcon>
+            <TextBlock Grid.Column="1"
+                       Text="{x:Bind EnumText(SelectedValue), Mode=OneWay}">
+            </TextBlock>
+        </Grid>
+        <Button.Flyout>
+            <controls1:EnumMenuFlyout
+                SelectedValue="{x:Bind SelectedValue, Mode=TwoWay}"
+                TextConverter="{x:Bind TextConverter, Mode=OneWay}"
+                EnumSource="{x:Bind EnumSource}"
+                Placement="Top">
+            </controls1:EnumMenuFlyout>
+        </Button.Flyout>
+    </Button>
+</UserControl>

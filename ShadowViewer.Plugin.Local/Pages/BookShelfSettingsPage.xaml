@@ -13,9 +13,10 @@
     xmlns:enums="using:ShadowViewer.Plugin.Local.Enums"
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters"
     xmlns:converters1="using:CommunityToolkit.WinUI.Converters"
+    xmlns:readers="using:ShadowViewer.Plugin.Local.Readers"
+    xmlns:controls2="using:ShadowViewer.Plugin.Local.Controls"
     mc:Ignorable="d">
     <Page.Resources>
-        <converters:LocalReaderModeConverter x:Key="LocalReaderModeConverter" />
         <converters1:BoolNegationConverter x:Key="BoolNegationConverter" />
     </Page.Resources>
     <Grid
@@ -79,29 +80,9 @@
                 <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=PhoneSpanOut}"
                                        Description="{i18N:Locale Key=LocalReaderModeDescription}"
                                        Header="{i18N:Locale Key=LocalReaderMode}">
-                    <Button>
-                        <Grid ColumnSpacing="6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                <ColumnDefinition Width="Auto"></ColumnDefinition>
-                            </Grid.ColumnDefinitions>
-                            <icons:FluentIcon Grid.Column="0"
-                                              Icon="{x:Bind Config.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}"
-                                              IconVariant="{x:Bind Config.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
-                            </icons:FluentIcon>
-                            <TextBlock Grid.Column="1"
-                                       Text="{x:Bind Config.LocalReaderMode,Mode=OneWay,Converter={StaticResource LocalReaderModeConverter}}">
-                            </TextBlock>
-                        </Grid>
-                        <Button.Flyout>
-                            <controls1:EnumMenuFlyout
-                                SelectedValue="{x:Bind Config.LocalReaderMode, Mode=TwoWay}"
-                                TextConverter="{StaticResource LocalReaderModeConverter}"
-                                EnumSource="enums:LocalReaderMode"
-                                Placement="Top">
-                            </controls1:EnumMenuFlyout>
-                        </Button.Flyout>
-                    </Button>
+                    <controls2:EnumButton SelectedValue="{x:Bind Config.LocalReaderMode, Mode=TwoWay}"
+                                      TextConverter="{ThemeResource LocalReaderModeConverter}"
+                                      EnumSource="readers:ReadingMode" />
                 </controls:SettingsCard>
                 <controls:SettingsCard HeaderIcon="{icx:FluentIcon Icon=BookTemplate}"
                                        Description="{i18N:Locale Key=AllowHorizontalDragInScrollDescription}"

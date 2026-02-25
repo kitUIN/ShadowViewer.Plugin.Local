@@ -15,9 +15,6 @@
     xmlns:readers="using:ShadowViewer.Plugin.Local.Readers"
     xmlns:winUi="using:FluentIcons.WinUI"
     mc:Ignorable="d">
-    <Page.Resources>
-        <converters:LocalReaderModeConverter x:Key="LocalReaderModeConverter" />
-    </Page.Resources>
     <Grid
         x:Name="RootGrid"
         Background="{ThemeResource LayerFillColorDefaultBrush}"
@@ -213,28 +210,12 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource PointerOverButtonStyle}">
-                                <Grid ColumnSpacing="6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <winUi:FluentIcon
-                                        Grid.Column="0"
-                                        Icon="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=OneWay, Converter={StaticResource LocalReaderModeConverter}}"
-                                        IconVariant="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=OneWay, Converter={StaticResource LocalReaderModeConverter}}" />
-                                    <TextBlock Grid.Column="1" Text="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=OneWay, Converter={StaticResource LocalReaderModeConverter}}" />
-                                </Grid>
-                                <Button.Flyout>
-                                    <controls1:EnumMenuFlyout
-                                        Closed="ReadModeClosed"
-                                        EnumSource="readers:ReadingMode"
-                                        Placement="Top"
-                                        SelectedValue="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}"
-                                        TextConverter="{StaticResource LocalReaderModeConverter}" />
-                                </Button.Flyout>
-                            </Button>
+                            </Grid.ColumnDefinitions> 
+                           <controls:EnumButton  
+                               Grid.Column="0" ButtonStyle="{StaticResource PointerOverButtonStyle}"
+                               SelectedValue="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}"
+                               TextConverter="{ThemeResource LocalReaderModeConverter}"
+                               EnumSource="readers:ReadingMode" />
                             <!--  <ToggleButton  IsEnabled="{x:Bind ViewModel.ScrollingPaddingEnabled,Mode=OneWay}"  -->
                             <!--  IsChecked="{x:Bind ViewModel.ScrollingPaddingSetting,Mode=TwoWay}"  -->
                             <!--  Style="{StaticResource PointerOverToggleButtonStyle}"  -->

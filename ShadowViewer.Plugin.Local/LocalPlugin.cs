@@ -1,8 +1,8 @@
+using System.Collections.Generic;
 using DryIoc;
 using ShadowPluginLoader.Attributes;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Cache;
-using ShadowViewer.Plugin.Local.Constants;
 using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Plugin.Local.I18n;
 using ShadowViewer.Plugin.Local.Models;
@@ -71,6 +71,11 @@ public partial class LocalPlugin : AShadowViewerPlugin
         )).ExecuteCommand();
     }
 
+    /// <inheritdoc />
+    protected override IEnumerable<string> ResourceDictionaries { get; } =
+    [
+        "ms-plugin://ShadowViewer.Plugin.Local/Themes/Converter.xaml"
+    ];
 
     /// <inheritdoc />
     public override string DisplayName => I18N.DisplayName;
