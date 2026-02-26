@@ -473,7 +473,7 @@ public sealed partial class MangaReader
             node.Bounds.Width = node.Ctx.Size.Width;
             node.Bounds.Height = node.Ctx.Size.Height;
             node.IsSizeLoaded = true;
-
+            node.ImageStrategy = strategy;
             // 标记需要更新布局
             sizeLoadPendingLayout = true;
         }

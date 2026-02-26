@@ -20,12 +20,13 @@ public class LocalFileStrategy : IImageSourceStrategy
     /// </summary>
     /// <param name="source">要检查的资源标识（可以是 <see cref="StorageFile"/> 或字符串路径）。</param>
     /// <returns>如果可以处理该资源则返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-    public bool CanHandle(object source)
+    public virtual bool CanHandle(object source)
     {
         if (source is IUiPicture picture)
         {
             source = picture.SourcePath;
         }
+
         if (source is StorageFile) return true;
         if (source is string path)
         {
@@ -35,12 +36,33 @@ public class LocalFileStrategy : IImageSourceStrategy
             {
                 return false;
             }
+
             return Path.IsPathRooted(path) || path.StartsWith("ms-appx:") || path.StartsWith("ms-appdata:");
         }
 
         return false;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="source"></param>
+    /// <returns></returns>
+    protected async Task<StorageFile?> GetStorageFile(object source)
+    {
+        var file = source as StorageFile;
+        if (file == null)
+        {
+            file = source switch
+            {
+                string path => await StorageFile.GetFileFromPathAsync(path),
+                IUiPicture picture => await StorageFile.GetFileFromPathAsync(picture.SourcePath),
+                _ => file
+            };
+        }
+
+        return file;
+    }
 
     /// <summary>
     /// 使用提供的 <see cref="ImageLoadingContext"/> 从本地文件加载图像信息。
@@ -49,29 +71,23 @@ public class LocalFileStrategy : IImageSourceStrategy
     /// </summary>
     /// <param name="ctx">包含资源标识和用于接收加载结果的上下文。</param>
     /// <returns>表示异步初始化操作的任务。</returns>
-    public async Task InitImageAsync(ImageLoadingContext ctx)
+    public virtual async Task InitImageAsync(ImageLoadingContext ctx)
     {
-        var file = ctx.Source as StorageFile;
-        if (file == null)
-        {
-            file = ctx.Source switch
-            {
-                string path => await StorageFile.GetFileFromPathAsync(path),
-                IUiPicture picture => await StorageFile.GetFileFromPathAsync(picture.SourcePath),
-                _ => file
-            };
-        }
+        var file = await GetStorageFile(ctx.Source);
+        if (file == null) return;
+        var props = await file.Properties.GetImagePropertiesAsync();
+        ctx.Size = new Size(props.Width, props.Height);
+        using var stream = await file.OpenReadAsync();
+        using var reader = new DataReader(stream.GetInputStreamAt(0));
+        await reader.LoadAsync((uint)stream.Size);
+        var bytes = new byte[stream.Size];
+        reader.ReadBytes(bytes);
+        ctx.Bytes = bytes;
+    }
 
-        if (file != null)
-        {
-            var props = await file.Properties.GetImagePropertiesAsync();
-            ctx.Size = new Size(props.Width, props.Height);
-            using var stream = await file.OpenReadAsync();
-            using var reader = new DataReader(stream.GetInputStreamAt(0));
-            await reader.LoadAsync((uint)stream.Size);
-            var bytes = new byte[stream.Size];
-            reader.ReadBytes(bytes);
-            ctx.Bytes = bytes;
-        }
+    /// <inheritdoc />
+    public virtual Task PreviewImageAsync(ImageLoadingContext ctx)
+    {
+        return Task.CompletedTask;
     }
 }

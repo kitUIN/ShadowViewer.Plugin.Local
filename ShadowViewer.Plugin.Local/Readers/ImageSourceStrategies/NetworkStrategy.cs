@@ -29,7 +29,7 @@ public class NetworkStrategy : IImageSourceStrategy
     /// </summary>
     /// <param name="source">要检查的资源标识，通常为字符串 URL。</param>
     /// <returns>如果值为 HTTP 或 HTTPS URL 则返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-    public bool CanHandle(object source)
+    public virtual bool CanHandle(object source)
     {
         if (source is IUiPicture picture)
         {
@@ -52,7 +52,7 @@ public class NetworkStrategy : IImageSourceStrategy
     /// </summary>
     /// <param name="ctx">包含 URL 的加载上下文。</param>
     /// <returns>表示异步初始化操作的任务。</returns>
-    public async Task InitImageAsync(ImageLoadingContext ctx)
+    public virtual async Task InitImageAsync(ImageLoadingContext ctx)
     {
         var source = ctx.Source;
         if (source is IUiPicture picture)
@@ -68,5 +68,11 @@ public class NetworkStrategy : IImageSourceStrategy
             var decoder = await BitmapDecoder.CreateAsync(randomAccessStream);
             ctx.Size = new Size((int)decoder.PixelWidth, (int)decoder.PixelHeight);
         }
+    }
+    
+    /// <inheritdoc />
+    public virtual Task PreviewImageAsync(ImageLoadingContext ctx)
+    {
+        return Task.CompletedTask;
     }
 }

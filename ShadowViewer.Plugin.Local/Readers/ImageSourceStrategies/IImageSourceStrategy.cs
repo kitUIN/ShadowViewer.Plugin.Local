@@ -24,7 +24,12 @@ public interface IImageSourceStrategy
     /// 此方法通常负责准备 <see cref="ImageLoadingContext"/> 中所需的数据，但不负责直接创建 UI 资源。
     /// </summary>
     /// <param name="ctx">包含资源标识和目标尺寸等信息的加载上下文。</param>
-    /// <returns>表示异步初始化操作的任务。</returns>
     Task InitImageAsync(ImageLoadingContext ctx);
+    
+    /// <summary>
+    /// 当用户即将看到图片时,使用指定的加载上下文图像载入(阅读前后预加载时触发)
+    /// </summary>
+    /// <param name="ctx">包含资源标识和目标尺寸等信息的加载上下文。</param>
+    Task PreviewImageAsync(ImageLoadingContext ctx);
 
 }

@@ -562,6 +562,7 @@ public sealed partial class MangaReader : Control
                 {
                     nodesToLoad.Add(node);
                 }
+
                 if (node.PageIndex < minIdx) minIdx = node.PageIndex;
                 if (node.PageIndex > maxIdx) maxIdx = node.PageIndex;
             }
@@ -573,9 +574,9 @@ public sealed partial class MangaReader : Control
             const int preloadRange = 3;
             lock (allNodes)
             {
-                int start = Math.Max(0, minIdx - preloadRange);
-                int end = Math.Min(allNodes.Count - 1, maxIdx + preloadRange);
-                for (int i = start; i <= end; i++)
+                var start = Math.Max(0, minIdx - preloadRange);
+                var end = Math.Min(allNodes.Count - 1, maxIdx + preloadRange);
+                for (var i = start; i <= end; i++)
                 {
                     nodesToLoad.Add(allNodes[i]);
                 }
@@ -588,33 +589,13 @@ public sealed partial class MangaReader : Control
         {
             foreach (var node in allNodes)
             {
-                bool shouldBeLoaded = nodesToLoad.Contains(node);
-
-                if (shouldBeLoaded)
+                if (nodesToLoad.Contains(node))
                 {
                     lock (loadingLock)
                     {
-                        if (!node.IsLoaded && !loadingPages.Contains(node.PageIndex))
+                        if (!node.IsLoaded && loadingPages.Add(node.PageIndex))
                         {
-                            loadingPages.Add(node.PageIndex);
-                            _ = Task.Run(async () =>
-                            {
-                                try
-                                {
-                                    node.Bitmap = await GetBitmap(node.Ctx.Bytes, device);
-                                }
-                                catch
-                                {
-                                    // Ignore errors
-                                }
-                                finally
-                                {
-                                    lock (loadingLock)
-                                    {
-                                        loadingPages.Remove(node.PageIndex);
-                                    }
-                                }
-                            });
+                            _ = Task.Run(() => LoadBitMap(node, device));
                         }
                     }
                 }
@@ -631,6 +612,26 @@ public sealed partial class MangaReader : Control
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private async void LoadBitMap(RenderNode node, CanvasDevice device)
+    {
+        try
+        {
+            await node.ImageStrategy.PreviewImageAsync(node.Ctx);
+            node.Bitmap = await GetBitmap(node.Ctx.Bytes, device);
+        }
+        catch
+        {
+            // Ignore errors
+        }
+        finally
+        {
+            lock (loadingLock)
+            {
+                loadingPages.Remove(node.PageIndex);
             }
         }
     }
@@ -708,7 +709,7 @@ public sealed partial class MangaReader : Control
     {
         // 如果视口高度或节点数量变化较大，重新计算
         bool needRecalculate = Math.Abs(viewSize.Y - cachedViewHeight) > 1.0f
-            || Math.Abs(allNodes.Count - cachedNodeCount) > 10;
+                               || Math.Abs(allNodes.Count - cachedNodeCount) > 10;
 
         if (needRecalculate)
         {
