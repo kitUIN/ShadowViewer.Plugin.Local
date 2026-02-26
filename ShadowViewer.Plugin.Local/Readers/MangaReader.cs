@@ -549,14 +549,48 @@ public sealed partial class MangaReader : Control
 
         var device = sender.Device;
 
-        // 为了避免在 Update 线程中执行耗时操作，这里的逻辑要尽量快
+        // 确定需要加载的节点集
+        HashSet<RenderNode> nodesToLoad = new();
+        int minIdx = int.MaxValue;
+        int maxIdx = int.MinValue;
+
         lock (state.LayoutNodes)
         {
             foreach (var node in state.LayoutNodes)
             {
-                bool isVisible = IsIntersecting(loadRect, node.Bounds);
+                if (IsIntersecting(loadRect, node.Bounds))
+                {
+                    nodesToLoad.Add(node);
+                }
+                if (node.PageIndex < minIdx) minIdx = node.PageIndex;
+                if (node.PageIndex > maxIdx) maxIdx = node.PageIndex;
+            }
+        }
 
-                if (isVisible)
+        // 非滚动模式下，预加载相邻页以防止翻页空白
+        if (state.CurrentMode != ReadingMode.VerticalScroll && minIdx != int.MaxValue)
+        {
+            const int preloadRange = 3;
+            lock (allNodes)
+            {
+                int start = Math.Max(0, minIdx - preloadRange);
+                int end = Math.Min(allNodes.Count - 1, maxIdx + preloadRange);
+                for (int i = start; i <= end; i++)
+                {
+                    nodesToLoad.Add(allNodes[i]);
+                }
+            }
+        }
+
+        // 为了避免在 Update 线程中执行耗时操作，这里的逻辑要尽量快
+        // 遍历所有节点应用加载/卸载
+        lock (allNodes)
+        {
+            foreach (var node in allNodes)
+            {
+                bool shouldBeLoaded = nodesToLoad.Contains(node);
+
+                if (shouldBeLoaded)
                 {
                     lock (loadingLock)
                     {
