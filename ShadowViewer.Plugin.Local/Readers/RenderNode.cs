@@ -50,6 +50,11 @@ public class RenderNode
     public bool IsSizeLoaded { get; set; }
 
     /// <summary>
+    /// 是否预加载
+    /// </summary>
+    public bool Preloaded { get; set; }
+
+    /// <summary>
     /// 释放托管的位图资源并将其引用置空。
     /// </summary>
     public void Dispose()

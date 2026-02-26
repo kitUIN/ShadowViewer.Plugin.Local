@@ -30,6 +30,6 @@ public interface IImageSourceStrategy
     /// 当用户即将看到图片时,使用指定的加载上下文图像载入(阅读前后预加载时触发)
     /// </summary>
     /// <param name="ctx">包含资源标识和目标尺寸等信息的加载上下文。</param>
-    Task PreviewImageAsync(ImageLoadingContext ctx);
+    Task PreloadImageAsync(ImageLoadingContext ctx);
 
 }

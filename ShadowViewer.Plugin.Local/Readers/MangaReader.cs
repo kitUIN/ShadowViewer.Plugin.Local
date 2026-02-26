@@ -596,14 +596,12 @@ public sealed partial class MangaReader : Control
                 }
                 else
                 {
-                    if (node.IsLoaded)
+                    if (!node.IsLoaded) continue;
+                    lock (loadingLock)
                     {
-                        lock (loadingLock)
+                        if (!loadingPages.Contains(node.PageIndex))
                         {
-                            if (!loadingPages.Contains(node.PageIndex))
-                            {
-                                node.Dispose();
-                            }
+                            node.Dispose();
                         }
                     }
                 }
@@ -615,7 +613,11 @@ public sealed partial class MangaReader : Control
     {
         try
         {
-            await node.ImageStrategy.PreviewImageAsync(node.Ctx);
+            if (!node.Preloaded)
+            {
+                await node.ImageStrategy.PreloadImageAsync(node.Ctx);
+                node.Preloaded = true;
+            }
             node.Bitmap = await GetBitmap(node.Ctx.Bytes, device);
         }
         catch

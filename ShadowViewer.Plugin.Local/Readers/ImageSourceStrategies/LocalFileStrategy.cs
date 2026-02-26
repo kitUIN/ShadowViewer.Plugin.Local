@@ -86,7 +86,7 @@ public class LocalFileStrategy : IImageSourceStrategy
     }
 
     /// <inheritdoc />
-    public virtual Task PreviewImageAsync(ImageLoadingContext ctx)
+    public virtual Task PreloadImageAsync(ImageLoadingContext ctx)
     {
         return Task.CompletedTask;
     }
