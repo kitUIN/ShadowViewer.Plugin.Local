@@ -57,6 +57,22 @@ public sealed partial class MangaReader
     }
 
     /// <summary>
+    /// 前后预加载的页数。
+    /// </summary>
+    public static readonly DependencyProperty PreloadRangeProperty =
+        DependencyProperty.Register(nameof(PreloadRange), typeof(int), typeof(MangaReader),
+            new PropertyMetadata(3));
+
+    /// <summary>
+    /// 获取或设置前后预加载的页数。
+    /// </summary>
+    public int PreloadRange
+    {
+        get => (int)GetValue(PreloadRangeProperty);
+        set => SetValue(PreloadRangeProperty, value);
+    }
+
+    /// <summary>
     /// 是否启用鼠标滚轮进行页面导航的依赖属性键。
     /// </summary>
     public static readonly DependencyProperty EnableMouseWheelNavigationProperty =

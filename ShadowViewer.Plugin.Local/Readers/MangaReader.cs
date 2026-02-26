@@ -542,41 +542,36 @@ public sealed partial class MangaReader : Control
         var bottomRight = Vector2.Transform(size, inverseTransform);
         var viewportRect = new Rect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
 
-        // 扩展加载区域 (预加载前后距离)
-        var loadRect = viewportRect;
-        loadRect.Y -= 2000;
-        loadRect.Height += 4000;
-
         var device = sender.Device;
 
         // 确定需要加载的节点集
         HashSet<RenderNode> nodesToLoad = new();
-        int minIdx = int.MaxValue;
-        int maxIdx = int.MinValue;
+        int visibleMinIdx = int.MaxValue;
+        int visibleMaxIdx = int.MinValue;
 
         lock (state.LayoutNodes)
         {
             foreach (var node in state.LayoutNodes)
             {
-                if (IsIntersecting(loadRect, node.Bounds))
+                // 1. 首先找出物理上真实可见的节点
+                if (IsIntersecting(viewportRect, node.Bounds))
                 {
                     nodesToLoad.Add(node);
+                    if (node.PageIndex < visibleMinIdx) visibleMinIdx = node.PageIndex;
+                    if (node.PageIndex > visibleMaxIdx) visibleMaxIdx = node.PageIndex;
                 }
-
-                if (node.PageIndex < minIdx) minIdx = node.PageIndex;
-                if (node.PageIndex > maxIdx) maxIdx = node.PageIndex;
             }
         }
 
-        // 非滚动模式下，预加载相邻页以防止翻页空白
-        if (state.CurrentMode != ReadingMode.VerticalScroll && minIdx != int.MaxValue)
+        // 2. 统一预加载逻辑：根据可见页码范围，前后各扩展 PreloadRange 页
+        if (visibleMinIdx != int.MaxValue)
         {
-            const int preloadRange = 3;
+            int range = PreloadRange;
             lock (allNodes)
             {
-                var start = Math.Max(0, minIdx - preloadRange);
-                var end = Math.Min(allNodes.Count - 1, maxIdx + preloadRange);
-                for (var i = start; i <= end; i++)
+                int start = Math.Max(0, visibleMinIdx - range);
+                int end = Math.Min(allNodes.Count - 1, visibleMaxIdx + range);
+                for (int i = start; i <= end; i++)
                 {
                     nodesToLoad.Add(allNodes[i]);
                 }
