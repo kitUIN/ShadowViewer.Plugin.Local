@@ -150,6 +150,15 @@ public sealed partial class MangaReader : Control
     /// </summary>
     private float cachedViewHeight = 0;
 
+    // 翻页动画状态
+    private bool isAnimatingPageTurn = false;
+    private float pageTurnAnimCurlAmount = 0f;
+    private float pageTurnAnimTargetCurl = 0f;
+    private float pageTurnAnimVelocity = 0f;
+    private int pageTurnTargetIndex = -1;
+    private bool pageTurnCurlFromRight = false;
+    private RenderNode? pageTurnCurlingNode = null;
+
     /// <summary>
     /// 缓存缩放比例时的视口宽度。
     /// </summary>
@@ -472,31 +481,69 @@ public sealed partial class MangaReader : Control
             // 1. 物理惯性
             if (!isDragging)
             {
-                // 平移惯性
-                if (state.Velocity.LengthSquared() > 0.001f)
+                if (isAnimatingPageTurn)
                 {
-                    state.CameraPos += state.Velocity * dt;
-                    float decay = MathF.Exp(-state.Friction * dt);
-                    state.Velocity *= decay;
-                    if (state.Velocity.Length() < 1.0f) state.Velocity = Vector2.Zero;
+                    if (pageTurnAnimVelocity != 0)
+                    {
+                        pageTurnAnimCurlAmount += pageTurnAnimVelocity * dt;
+                        
+                        bool finished = false;
+                        if (pageTurnAnimVelocity > 0 && pageTurnAnimCurlAmount >= pageTurnAnimTargetCurl)
+                        {
+                            pageTurnAnimCurlAmount = pageTurnAnimTargetCurl;
+                            finished = true;
+                        }
+                        else if (pageTurnAnimVelocity < 0 && pageTurnAnimCurlAmount <= pageTurnAnimTargetCurl)
+                        {
+                            pageTurnAnimCurlAmount = pageTurnAnimTargetCurl;
+                            finished = true;
+                        }
+
+                        if (finished)
+                        {
+                            pageTurnAnimVelocity = 0;
+                            int targetIndex = pageTurnTargetIndex;
+                            this.DispatcherQueue.TryEnqueue(() =>
+                            {
+                                if (!isAnimatingPageTurn) return;
+
+                                if (targetIndex != CurrentPageIndex)
+                                {
+                                    CurrentPageIndex = targetIndex;
+                                }
+                                isAnimatingPageTurn = false;
+                            });
+                        }
+                    }
                 }
-
-                // 缩放惯性
-                if (Math.Abs(state.ZoomVelocity) > 0.001f)
+                else
                 {
-                    float oldZoom = state.Zoom;
-                    float zoomStep = 1.0f + state.ZoomVelocity * dt;
-                    
-                    float minZoom = 0.1f * baseZoomScale;
-                    float maxZoom = 5.0f * baseZoomScale;
-                    state.Zoom = Math.Clamp(state.Zoom * zoomStep, minZoom, maxZoom);
+                    // 平移惯性
+                    if (state.Velocity.LengthSquared() > 0.001f)
+                    {
+                        state.CameraPos += state.Velocity * dt;
+                        float decay = MathF.Exp(-state.Friction * dt);
+                        state.Velocity *= decay;
+                        if (state.Velocity.Length() < 1.0f) state.Velocity = Vector2.Zero;
+                    }
 
-                    // 缩放中心补偿 (使用释放时的中心点)
-                    state.CameraPos += (lastZoomCenter - viewSize / 2f) * (1.0f / oldZoom - 1.0f / state.Zoom);
+                    // 缩放惯性
+                    if (Math.Abs(state.ZoomVelocity) > 0.001f)
+                    {
+                        float oldZoom = state.Zoom;
+                        float zoomStep = 1.0f + state.ZoomVelocity * dt;
+                        
+                        float minZoom = 0.1f * baseZoomScale;
+                        float maxZoom = 5.0f * baseZoomScale;
+                        state.Zoom = Math.Clamp(state.Zoom * zoomStep, minZoom, maxZoom);
 
-                    float decay = MathF.Exp(-state.Friction * dt);
-                    state.ZoomVelocity *= decay;
-                    if (Math.Abs(state.ZoomVelocity) < 0.01f) state.ZoomVelocity = 0;
+                        // 缩放中心补偿 (使用释放时的中心点)
+                        state.CameraPos += (lastZoomCenter - viewSize / 2f) * (1.0f / oldZoom - 1.0f / state.Zoom);
+
+                        float decay = MathF.Exp(-state.Friction * dt);
+                        state.ZoomVelocity *= decay;
+                        if (Math.Abs(state.ZoomVelocity) < 0.01f) state.ZoomVelocity = 0;
+                    }
                 }
             }
 
@@ -631,45 +678,277 @@ public sealed partial class MangaReader : Control
             // 绘制节点
             lock (state.LayoutNodes)
             {
-                foreach (var node in state.LayoutNodes)
+                bool isCurling = (state.CurrentMode == ReadingMode.SpreadLtr || state.CurrentMode == ReadingMode.SpreadRtl) 
+                                 && Math.Abs(state.Zoom - baseZoomScale) <= 0.001f 
+                                 && ((isDragging && activePointers.Count == 1) || isAnimatingPageTurn);
+                
+                RenderNode? curlingNode = null;
+                bool curlFromRight = false;
+                float curlAmount = 0;
+
+                if (isCurling)
                 {
-                    if (IsIntersecting(viewportRect, node.Bounds))
+                    if (isAnimatingPageTurn)
                     {
-                        bool drew = false;
-                        node.UseBitmap(bitmap =>
+                        curlFromRight = pageTurnCurlFromRight;
+                        curlAmount = pageTurnAnimCurlAmount;
+                        curlingNode = pageTurnCurlingNode;
+                    }
+                    else
+                    {
+                        float dragDeltaX = lastPointerPos.X - dragStartPos.X;
+                        if (dragDeltaX < -10) // Drag left
                         {
-                            try
-                            {
-                                ds.DrawImage(bitmap, node.Bounds);
-                                drew = true;
-                            }
-                            catch
-                            {
-                                // 可能位图已损坏或设备丢失
-                            }
-                        });
-
-                        if (!drew)
+                            curlFromRight = true;
+                            curlAmount = -dragDeltaX / state.Zoom;
+                            curlingNode = state.LayoutNodes.OrderByDescending(n => n.Bounds.X).FirstOrDefault();
+                        }
+                        else if (dragDeltaX > 10) // Drag right
                         {
-                            // 绘制占位符
-                            ds.DrawRectangle(node.Bounds, Windows.UI.Color.FromArgb(255, 100, 100, 100));
-
-                            // 绘制页码文字
-                            using var format = new Microsoft.Graphics.Canvas.Text.CanvasTextFormat();
-                            format.FontSize = 24;
-                            format.HorizontalAlignment =
-                                Microsoft.Graphics.Canvas.Text.CanvasHorizontalAlignment.Center;
-                            format.VerticalAlignment = Microsoft.Graphics.Canvas.Text.CanvasVerticalAlignment.Center;
-                            ds.DrawText($"{node.PageIndex + 1}", node.Bounds,
-                                Windows.UI.Color.FromArgb(255, 200, 200, 200), format);
+                            curlFromRight = false;
+                            curlAmount = dragDeltaX / state.Zoom;
+                            curlingNode = state.LayoutNodes.OrderBy(n => n.Bounds.X).FirstOrDefault();
                         }
                     }
+                }
+
+                // Draw non-curling nodes first
+                foreach (var node in state.LayoutNodes)
+                {
+                    if (node == curlingNode) continue;
+                    
+                    if (IsIntersecting(viewportRect, node.Bounds))
+                    {
+                        DrawNodeNormal(ds, node);
+                    }
+                }
+
+                // Draw the curling node and the node underneath
+                if (curlingNode != null)
+                {
+                    // Find the node underneath
+                    RenderNode? nodeUnderneath = null;
+                    RenderNode? nodeBack = null;
+                    
+                    int nextIndex = curlingNode.PageIndex + (curlFromRight ? 2 : -2);
+                    int nextBackIndex = curlingNode.PageIndex + (curlFromRight ? 1 : -1);
+                    
+                    lock (allNodes)
+                    {
+                        if (nextIndex >= 0 && nextIndex < allNodes.Count)
+                        {
+                            nodeUnderneath = allNodes[nextIndex];
+                        }
+                        if (nextBackIndex >= 0 && nextBackIndex < allNodes.Count)
+                        {
+                            nodeBack = allNodes[nextBackIndex];
+                        }
+                    }
+                    
+                    // Draw the node underneath at the curling node's position
+                    if (nodeUnderneath != null)
+                    {
+                        bool drewUnder = false;
+                        nodeUnderneath.UseBitmap(bitmap =>
+                        {
+                            if (bitmap != null)
+                            {
+                                ds.DrawImage(bitmap, curlingNode.Bounds);
+                                drewUnder = true;
+                            }
+                        });
+                        if (!drewUnder)
+                        {
+                            ds.DrawRectangle(curlingNode.Bounds, Windows.UI.Color.FromArgb(255, 50, 50, 50));
+                        }
+                        
+                    }
+
+                    DrawCurledPage(ds, curlingNode, nodeBack, curlAmount, curlFromRight);
                 }
             }
         }
         catch (Exception ex)
         {
             Log.Error($"MainCanvas_Draw Error: {ex}");
+        }
+    }
+
+    private void DrawNodeNormal(CanvasDrawingSession ds, RenderNode node)
+    {
+        bool drew = false;
+        node.UseBitmap(bitmap =>
+        {
+            try
+            {
+                if (bitmap != null)
+                {
+                    ds.DrawImage(bitmap, node.Bounds);
+                    drew = true;
+                }
+            }
+            catch { }
+        });
+
+        if (!drew)
+        {
+            ds.DrawRectangle(node.Bounds, Windows.UI.Color.FromArgb(255, 100, 100, 100));
+            using var format = new Microsoft.Graphics.Canvas.Text.CanvasTextFormat();
+            format.FontSize = 24;
+            format.HorizontalAlignment = Microsoft.Graphics.Canvas.Text.CanvasHorizontalAlignment.Center;
+            format.VerticalAlignment = Microsoft.Graphics.Canvas.Text.CanvasVerticalAlignment.Center;
+            ds.DrawText($"{node.PageIndex + 1}", node.Bounds, Windows.UI.Color.FromArgb(255, 200, 200, 200), format);
+        }
+    }
+
+    private void DrawCurledPage(CanvasDrawingSession ds, RenderNode node, RenderNode? nodeUnderneath, float curlAmount, bool curlFromRight)
+    {
+        if (curlAmount <= 0)
+        {
+            DrawNodeNormal(ds, node);
+            return;
+        }
+
+        float W = (float)node.Bounds.Width;
+        float H = (float)node.Bounds.Height;
+        float X = (float)node.Bounds.X;
+        float Y = (float)node.Bounds.Y;
+
+        float R = (float)Math.Min(40.0, curlAmount / Math.PI);
+        if (R < 1.0f) R = 1.0f;
+        float L = (float)(curlAmount / 2.0 + Math.PI * R / 2.0);
+
+        bool drew = false;
+        
+        CanvasBitmap? frontBitmap = null;
+        CanvasBitmap? backBitmap = null;
+
+        node.UseBitmap(b => frontBitmap = b);
+        nodeUnderneath?.UseBitmap(b => backBitmap = b);
+
+        if (frontBitmap == null) 
+        {
+            DrawNodeNormal(ds, node);
+            return;
+        }
+        drew = true;
+
+        using var spriteBatch = ds.CreateSpriteBatch(CanvasSpriteSortMode.None, CanvasImageInterpolation.Linear, CanvasSpriteOptions.None);
+
+        float stripWidth = 2.0f;
+        int numStrips = (int)Math.Ceiling(W / stripWidth);
+
+        Action<int> drawStrip = (i) =>
+        {
+            float x = i * stripWidth;
+            float currentStripWidth = Math.Min(stripWidth, W - x);
+            if (currentStripWidth <= 0) return;
+
+            float x_prime = 0;
+            float scaleX = 1;
+            float shade = 1.0f;
+
+            if (curlFromRight)
+            {
+                float curlX = W - L;
+                float d = x - curlX;
+
+                if (d <= 0)
+                {
+                    x_prime = x;
+                    scaleX = 1;
+                    shade = 1.0f;
+                }
+                else if (d < Math.PI * R)
+                {
+                    float alpha = d / R;
+                    x_prime = curlX + R * (float)Math.Sin(alpha);
+                    scaleX = (float)Math.Cos(alpha);
+                    shade = 1.0f - 0.3f * (float)Math.Sin(alpha);
+                }
+                else
+                {
+                    x_prime = curlX - (d - (float)Math.PI * R);
+                    scaleX = -1;
+                    shade = 0.6f;
+                }
+            }
+            else
+            {
+                float curlX = L;
+                float d = curlX - x;
+
+                if (d <= 0)
+                {
+                    x_prime = x;
+                    scaleX = 1;
+                    shade = 1.0f;
+                }
+                else if (d < Math.PI * R)
+                {
+                    float alpha = d / R;
+                    x_prime = curlX - R * (float)Math.Sin(alpha);
+                    scaleX = (float)Math.Cos(alpha);
+                    shade = 1.0f - 0.3f * (float)Math.Sin(alpha);
+                }
+                else
+                {
+                    x_prime = curlX + (d - (float)Math.PI * R);
+                    scaleX = -1;
+                    shade = 0.6f;
+                }
+            }
+
+            if (Math.Abs(scaleX) < 0.001f) return;
+
+            bool isBack = scaleX < 0;
+            CanvasBitmap? currentBitmap = isBack && backBitmap != null ? backBitmap : frontBitmap;
+            
+            if (currentBitmap == null) return;
+
+            float drawScaleX = scaleX;
+            float destX = x_prime;
+            float sourceX = x;
+
+            if (isBack && backBitmap != null)
+            {
+                drawScaleX = -scaleX;
+                destX = x_prime - currentStripWidth * drawScaleX;
+                sourceX = W - x - currentStripWidth;
+            }
+
+            Rect sourceRect = new Rect(
+                (sourceX / W) * currentBitmap.Size.Width,
+                0,
+                (currentStripWidth / W) * currentBitmap.Size.Width,
+                currentBitmap.Size.Height
+            );
+
+            if (sourceRect.Width <= 0 || sourceRect.Height <= 0) return;
+
+            float scaleX_total = (currentStripWidth * drawScaleX) / (float)sourceRect.Width;
+            float scaleY_total = H / (float)sourceRect.Height;
+
+            Matrix3x2 finalTransform = Matrix3x2.CreateScale(scaleX_total, scaleY_total) * 
+                                       Matrix3x2.CreateTranslation(X + destX, Y);
+
+            Vector4 tint = new Vector4(shade, shade, shade, 1.0f);
+
+            spriteBatch.DrawFromSpriteSheet(currentBitmap, finalTransform, sourceRect, tint);
+        };
+
+        if (curlFromRight)
+        {
+            for (int i = 0; i < numStrips; i++) drawStrip(i);
+        }
+        else
+        {
+            for (int i = numStrips - 1; i >= 0; i--) drawStrip(i);
+        }
+
+        if (!drew)
+        {
+            DrawNodeNormal(ds, node);
         }
     }
 

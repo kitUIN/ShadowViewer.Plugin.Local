@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Input;
@@ -63,9 +64,21 @@ public partial class MangaReader
                 {
                     isDragging = true;
                     isUserInteracting = true;
-                    dragStartPos = pos;
                     lastPointerPos = pos;
                     state.Velocity = Vector2.Zero;
+
+                    if (isAnimatingPageTurn)
+                    {
+                        isAnimatingPageTurn = false;
+                        // Adjust dragStartPos so that the current curl amount is maintained
+                        float currentDragDelta = pageTurnAnimCurlAmount * state.Zoom;
+                        if (pageTurnCurlFromRight) currentDragDelta = -currentDragDelta;
+                        dragStartPos = new Vector2(pos.X - currentDragDelta, pos.Y);
+                    }
+                    else
+                    {
+                        dragStartPos = pos;
+                    }
                 }
                 else if (activePointers.Count == 2)
                 {
@@ -163,25 +176,63 @@ public partial class MangaReader
                         // 综合位移与速度判断 (速度暂由上一帧计算)
                         bool isSwipe = Math.Abs(totalDelta.X) > 50 || Math.Abs(state.Velocity.X * state.Zoom) > 500;
                         
+                        int target = CurrentPageIndex;
+                        bool curlFromRight = totalDelta.X < 0;
+                        float currentCurl = Math.Abs(totalDelta.X) / state.Zoom;
+                        float targetCurl = 0f;
+
                         if (isSwipe && Math.Abs(totalDelta.X) > Math.Abs(totalDelta.Y))
                         {
                             int direction = totalDelta.X > 0 ? -1 : 1;
                             int step = (state.CurrentMode == ReadingMode.SinglePage) ? 1 : 2;
-                            int target = CurrentPageIndex + (direction * step);
+                            target = CurrentPageIndex + (direction * step);
 
                             if (target < 0) target = 0;
                             if (target >= TotalPage) target = TotalPage > 0 ? TotalPage - 1 : 0;
+                        }
 
-                            if (target != CurrentPageIndex)
+                        if (Math.Abs(totalDelta.X) > 10) // Only animate if there was some curling
+                        {
+                            isAnimatingPageTurn = true;
+                            pageTurnTargetIndex = target;
+                            pageTurnCurlFromRight = curlFromRight;
+                            pageTurnAnimCurlAmount = currentCurl;
+                            
+                            lock (state.LayoutNodes)
                             {
-                                CurrentPageIndex = target;
+                                pageTurnCurlingNode = pageTurnCurlFromRight 
+                                    ? state.LayoutNodes.OrderByDescending(n => n.Bounds.X).FirstOrDefault()
+                                    : state.LayoutNodes.OrderBy(n => n.Bounds.X).FirstOrDefault();
+                                
+                                if (target != CurrentPageIndex && pageTurnCurlingNode != null)
+                                {
+                                    targetCurl = (float)pageTurnCurlingNode.Bounds.Width * 1.5f; // Full curl
+                                }
+                                else
+                                {
+                                    targetCurl = 0f; // Cancel curl
+                                }
                             }
+                            
+                            pageTurnAnimTargetCurl = targetCurl;
+                            
+                            // Calculate velocity
+                            float distance = Math.Abs(targetCurl - currentCurl);
+                            pageTurnAnimVelocity = Math.Max(1500f, distance / 0.3f); // At least 1500px/s or finish in 0.3s
+                            if (targetCurl < currentCurl) pageTurnAnimVelocity = -pageTurnAnimVelocity;
                         }
                     }
 
                     isDragging = false;
                     isUserInteracting = false;
-                    state.Velocity = -pendingDelta / 0.016f; // 初始速度方案
+                    if (!isAnimatingPageTurn)
+                    {
+                        state.Velocity = -pendingDelta / 0.016f; // 初始速度方案
+                    }
+                    else
+                    {
+                        state.Velocity = Vector2.Zero;
+                    }
                 }
                 
                 activePointers.Remove(id);
