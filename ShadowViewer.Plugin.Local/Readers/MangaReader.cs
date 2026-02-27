@@ -136,6 +136,16 @@ public sealed partial class MangaReader : Control
     private float cachedScale = 1.0f;
 
     /// <summary>
+    /// 缓存的众数高度。
+    /// </summary>
+    private double modeHeight = 0;
+
+    /// <summary>
+    /// 缓存的众数宽度。
+    /// </summary>
+    private double modeWidth = 0;
+
+    /// <summary>
     /// 缓存缩放比例时的视口高度。
     /// </summary>
     private float cachedViewHeight = 0;
@@ -744,9 +754,6 @@ public sealed partial class MangaReader : Control
         if (loadedNodes.Count == 0)
         {
             cachedScale = 1.0f;
-            cachedViewHeight = viewSize.Y;
-            cachedViewWidth = viewSize.X;
-            cachedNodeCount = allNodes.Count;
             return;
         }
 
@@ -766,8 +773,8 @@ public sealed partial class MangaReader : Control
 
         if (modeHeightGroup != null && modeWidthGroup != null)
         {
-            double modeHeight = modeHeightGroup.Key;
-            double modeWidth = modeWidthGroup.Key;
+            this.modeHeight = modeHeightGroup.Key;
+            this.modeWidth = modeWidthGroup.Key;
 
             if (modeHeight > 0 && modeWidth > 0)
             {
@@ -779,6 +786,11 @@ public sealed partial class MangaReader : Control
                 // 默认使用两者中的最小值，确保图片完整显示在视口内
                 cachedScale = Math.Min(scaleH, scaleW);
             }
+        }
+        else
+        {
+            this.modeHeight = 0;
+            this.modeWidth = 0;
         }
 
         if (Math.Abs(cachedViewHeight - viewSize.Y) > 1f || Math.Abs(cachedViewWidth - viewSize.X) > 1f)
@@ -832,8 +844,19 @@ public sealed partial class MangaReader : Control
                     foreach (var node in allNodes)
                     {
                         // 应用缩放
-                        double scaledWidth = node.Ctx.Size.Width * scale;
-                        double scaledHeight = node.Ctx.Size.Height * scale;
+                        double scaledWidth, scaledHeight;
+                        if (IsFitToModeSize && modeWidth > 0 && modeHeight > 0)
+                        {
+                            // 计算使图片适应众数尺寸区域且保留比例的缩放率
+                            double fitScale = Math.Min(modeWidth / node.Ctx.Size.Width, modeHeight / node.Ctx.Size.Height);
+                            scaledWidth = node.Ctx.Size.Width * fitScale * scale;
+                            scaledHeight = node.Ctx.Size.Height * fitScale * scale;
+                        }
+                        else
+                        {
+                            scaledWidth = node.Ctx.Size.Width * scale;
+                            scaledHeight = node.Ctx.Size.Height * scale;
+                        }
 
                         node.Bounds.Width = scaledWidth;
                         node.Bounds.Height = scaledHeight;
@@ -853,6 +876,18 @@ public sealed partial class MangaReader : Control
                     if (CurrentPageIndex >= 0 && CurrentPageIndex < allNodes.Count)
                     {
                         var node = allNodes[CurrentPageIndex];
+                        if (IsFitToModeSize && modeWidth > 0 && modeHeight > 0)
+                        {
+                            double fitScale = Math.Min(modeWidth / node.Ctx.Size.Width, modeHeight / node.Ctx.Size.Height);
+                            node.Bounds.Width = node.Ctx.Size.Width * fitScale;
+                            node.Bounds.Height = node.Ctx.Size.Height * fitScale;
+                        }
+                        else if (node.IsSizeLoaded)
+                        {
+                            node.Bounds.Width = node.Ctx.Size.Width;
+                            node.Bounds.Height = node.Ctx.Size.Height;
+                        }
+
                         // Center at (0,0)
                         node.Bounds.X = -node.Bounds.Width / 2.0;
                         node.Bounds.Y = -node.Bounds.Height / 2.0;
@@ -878,6 +913,26 @@ public sealed partial class MangaReader : Control
                         if (pairStart < allNodes.Count) nodesToAdd.Add(pairStart >= 0 ? allNodes[pairStart] : null!);
                         if (pairStart + 1 < allNodes.Count) nodesToAdd.Add(allNodes[pairStart + 1]);
                         nodesToAdd.RemoveAll(n => n == null);
+                    }
+
+                    // Apply mode size if enabled
+                    if (IsFitToModeSize && modeWidth > 0 && modeHeight > 0)
+                    {
+                        foreach (var node in nodesToAdd)
+                        {
+                            double fitScale = Math.Min(modeWidth / node.Ctx.Size.Width, modeHeight / node.Ctx.Size.Height);
+                            node.Bounds.Width = node.Ctx.Size.Width * fitScale;
+                            node.Bounds.Height = node.Ctx.Size.Height * fitScale;
+                        }
+                    }
+                    else
+                    {
+                        foreach (var node in nodesToAdd)
+                        {
+                            if (!node.IsSizeLoaded) continue;
+                            node.Bounds.Width = node.Ctx.Size.Width;
+                            node.Bounds.Height = node.Ctx.Size.Height;
+                        }
                     }
 
                     // Layout side-by-side (RTL: Right is first/lower index, Left is second/higher index)

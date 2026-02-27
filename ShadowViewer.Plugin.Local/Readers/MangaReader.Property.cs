@@ -101,6 +101,30 @@ public sealed partial class MangaReader
     }
 
     /// <summary>
+    /// 是否强制图片符合众数尺寸的依赖属性键。
+    /// </summary>
+    public static readonly DependencyProperty IsFitToModeSizeProperty =
+        DependencyProperty.Register(nameof(IsFitToModeSize), typeof(bool), typeof(MangaReader),
+            new PropertyMetadata(true, OnIsFitToModeSizeChanged));
+
+    /// <summary>
+    /// 是否强制所有图片在绘制时符合众数高度与众数宽度（强制统一页面大小）。
+    /// </summary>
+    public bool IsFitToModeSize
+    {
+        get => (bool)GetValue(IsFitToModeSizeProperty);
+        set => SetValue(IsFitToModeSizeProperty, value);
+    }
+
+    private static void OnIsFitToModeSizeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is MangaReader control)
+        {
+            control.UpdateActiveLayout();
+        }
+    }
+
+    /// <summary>
     /// 是否允许在垂直滚动模式下进行水平拖拽的依赖属性键。
     /// </summary>
     public static readonly DependencyProperty AllowHorizontalDragInScrollModeProperty =
