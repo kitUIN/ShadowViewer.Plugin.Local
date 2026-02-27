@@ -449,14 +449,18 @@ public sealed partial class MangaReader : Control
                     if (state.CurrentMode == ReadingMode.VerticalScroll && !allowHorizontalDragInScrollMode && !isZoomed)
                     {
                         deltaToApply.X = 0;
+                        state.Velocity = Vector2.Zero;
+                    }
+                    else
+                    {
+                        // 计算实时速度用于惯性开始
+                        if (isDragging)
+                        {
+                            state.Velocity = -deltaToApply / state.Zoom / dt;
+                        }
                     }
                     state.CameraPos -= deltaToApply / state.Zoom;
 
-                    // 计算实时速度用于惯性开始
-                    if (isDragging)
-                    {
-                        state.Velocity = -deltaToApply / state.Zoom / dt;
-                    }
                 }
                 else
                 {
