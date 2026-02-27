@@ -749,11 +749,12 @@ public sealed partial class MangaReader : Control
                     if (nodeUnderneath != null)
                     {
                         bool drewUnder = false;
+                        
                         nodeUnderneath.UseBitmap(bitmap =>
                         {
                             if (bitmap != null)
                             {
-                                ds.DrawImage(bitmap, curlingNode.Bounds);
+                                ds.DrawImage(bitmap, nodeUnderneath.Bounds);
                                 drewUnder = true;
                             }
                         });
@@ -1071,7 +1072,8 @@ public sealed partial class MangaReader : Control
     {
         try
         {
-            if (node == null) return;
+            // ImageStrategy为null说明还未初始化
+            if (node?.ImageStrategy == null) return;
             if (!node.Preloaded)
             {
                 await node.ImageStrategy.PreloadImageAsync(node.Ctx);
@@ -1297,30 +1299,20 @@ public sealed partial class MangaReader : Control
                     }
 
                     // Apply mode size if enabled
-                    if (IsFitToModeSize && modeWidth > 0 && modeHeight > 0)
-                    {
-                        foreach (var node in nodesToAdd)
-                        {
-                            double fitScale = Math.Min(modeWidth / node.Ctx.Size.Width, modeHeight / node.Ctx.Size.Height);
-                            node.Bounds.Width = node.Ctx.Size.Width * fitScale;
-                            node.Bounds.Height = node.Ctx.Size.Height * fitScale;
-                        }
-                    }
-                    else
-                    {
-                        foreach (var node in nodesToAdd)
-                        {
-                            if (!node.IsSizeLoaded) continue;
-                            node.Bounds.Width = node.Ctx.Size.Width;
-                            node.Bounds.Height = node.Ctx.Size.Height;
-                        }
-                    }
+                    CalculateSpreadNodeBounds(nodesToAdd);
 
                     // Layout side-by-side (RTL: Right is first/lower index, Left is second/higher index)
                     if (nodesToAdd.Count == 1)
                     {
                         var node = nodesToAdd[0];
-                        node.Bounds.X = -node.Bounds.Width / 2.0;
+                        if (state.CurrentMode == ReadingMode.SpreadRtl)
+                        {
+                            node.Bounds.X = 0; // Right side
+                        }
+                        else
+                        {
+                            node.Bounds.X = -node.Bounds.Width; // Left side
+                        }
                         node.Bounds.Y = -node.Bounds.Height / 2.0;
                         state.LayoutNodes.Add(node);
                     }
@@ -1355,6 +1347,82 @@ public sealed partial class MangaReader : Control
                         state.LayoutNodes.Add(left);
                         state.LayoutNodes.Add(right);
                     }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 计算双页模式下节点的尺寸（Bounds.Width 和 Bounds.Height）。
+    /// 确保两页等高，并根据 IsFitToModeSize 进行缩放。
+    /// </summary>
+    private void CalculateSpreadNodeBounds(List<RenderNode> nodes)
+    {
+        if (IsFitToModeSize && modeWidth > 0 && modeHeight > 0)
+        {
+            if (nodes.Count == 1)
+            {
+                var node = nodes[0];
+                double fitScale = Math.Min(modeWidth / node.Ctx.Size.Width, modeHeight / node.Ctx.Size.Height);
+                node.Bounds.Width = node.Ctx.Size.Width * fitScale;
+                node.Bounds.Height = node.Ctx.Size.Height * fitScale;
+            }
+            else if (nodes.Count == 2)
+            {
+                var node1 = nodes[0];
+                var node2 = nodes[1];
+                
+                // Scale both to modeHeight first to ensure they have the same height
+                double scale1 = modeHeight / node1.Ctx.Size.Height;
+                double scale2 = modeHeight / node2.Ctx.Size.Height;
+                
+                double width1 = node1.Ctx.Size.Width * scale1;
+                double width2 = node2.Ctx.Size.Width * scale2;
+                
+                // Check if combined width exceeds modeWidth * 2
+                double combinedWidth = width1 + width2;
+                if (combinedWidth > modeWidth * 2)
+                {
+                    double shrinkScale = (modeWidth * 2) / combinedWidth;
+                    scale1 *= shrinkScale;
+                    scale2 *= shrinkScale;
+                }
+                
+                node1.Bounds.Width = node1.Ctx.Size.Width * scale1;
+                node1.Bounds.Height = node1.Ctx.Size.Height * scale1;
+                
+                node2.Bounds.Width = node2.Ctx.Size.Width * scale2;
+                node2.Bounds.Height = node2.Ctx.Size.Height * scale2;
+            }
+        }
+        else
+        {
+            if (nodes.Count == 1)
+            {
+                var node = nodes[0];
+                if (node.IsSizeLoaded)
+                {
+                    node.Bounds.Width = node.Ctx.Size.Width;
+                    node.Bounds.Height = node.Ctx.Size.Height;
+                }
+            }
+            else if (nodes.Count == 2)
+            {
+                var node1 = nodes[0];
+                var node2 = nodes[1];
+                
+                if (node1.IsSizeLoaded && node2.IsSizeLoaded)
+                {
+                    // Scale to the same height
+                    double maxHeight = Math.Max(node1.Ctx.Size.Height, node2.Ctx.Size.Height);
+                    double scale1 = maxHeight / node1.Ctx.Size.Height;
+                    double scale2 = maxHeight / node2.Ctx.Size.Height;
+                    
+                    node1.Bounds.Width = node1.Ctx.Size.Width * scale1;
+                    node1.Bounds.Height = node1.Ctx.Size.Height * scale1;
+                    
+                    node2.Bounds.Width = node2.Ctx.Size.Width * scale2;
+                    node2.Bounds.Height = node2.Ctx.Size.Height * scale2;
                 }
             }
         }

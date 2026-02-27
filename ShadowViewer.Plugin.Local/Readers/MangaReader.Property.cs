@@ -65,7 +65,7 @@ public sealed partial class MangaReader
     /// </summary>
     public static readonly DependencyProperty PreloadRangeProperty =
         DependencyProperty.Register(nameof(PreloadRange), typeof(int), typeof(MangaReader),
-            new PropertyMetadata(3, OnPreloadRangeChanged));
+            new PropertyMetadata(4, OnPreloadRangeChanged));
 
     /// <summary>
     /// 获取或设置前后预加载的页数。
@@ -444,7 +444,7 @@ public sealed partial class MangaReader
         if (Mode != ReadingMode.VerticalScroll)
         {
             UpdateActiveLayout();
-            ResetZoom(true);
+        ResetZoom(true);
             return;
         }
 

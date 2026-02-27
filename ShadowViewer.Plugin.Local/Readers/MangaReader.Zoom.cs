@@ -207,38 +207,51 @@ public sealed partial class MangaReader
 
             if (viewSize is { X: > 0, Y: > 0 })
             {
-                double minX = double.MaxValue, minY = double.MaxValue;
-                double maxX = double.MinValue, maxY = double.MinValue;
-                bool hasNodes = false;
-
-                lock (state.LayoutNodes)
+                if (IsFitToModeSize && modeWidth > 0 && modeHeight > 0)
                 {
-                    foreach (var node in state.LayoutNodes)
-                    {
-                        hasNodes = true;
-                        if (node.Bounds.X < minX) minX = node.Bounds.X;
-                        if (node.Bounds.Y < minY) minY = node.Bounds.Y;
-                        if (node.Bounds.X + node.Bounds.Width > maxX) maxX = node.Bounds.X + node.Bounds.Width;
-                        if (node.Bounds.Y + node.Bounds.Height > maxY) maxY = node.Bounds.Y + node.Bounds.Height;
-                    }
+                    double contentWidth = state.CurrentMode == ReadingMode.SinglePage ? modeWidth : modeWidth * 2;
+                    double contentHeight = modeHeight;
+
+                    float scaleX = viewSize.X / (float)contentWidth;
+                    float scaleY = viewSize.Y / (float)contentHeight;
+                    baseZoomScale = Math.Min(scaleX, scaleY);
+                    state.Zoom = baseZoomScale;
                 }
-
-                if (hasNodes)
+                else
                 {
-                    // Calculate width/height based on distance from center (0,0)
-                    // This ensures the center point (Gap or Image Center) remains at screen center
-                    double maxDistX = Math.Max(Math.Abs(minX), Math.Abs(maxX));
-                    double maxDistY = Math.Max(Math.Abs(minY), Math.Abs(maxY));
+                    double minX = double.MaxValue, minY = double.MaxValue;
+                    double maxX = double.MinValue, maxY = double.MinValue;
+                    bool hasNodes = false;
 
-                    double contentWidth = maxDistX * 2;
-                    double contentHeight = maxDistY * 2;
-
-                    if (contentWidth > 0 && contentHeight > 0)
+                    lock (state.LayoutNodes)
                     {
-                        float scaleX = viewSize.X / (float)contentWidth;
-                        float scaleY = viewSize.Y / (float)contentHeight;
-                        baseZoomScale = Math.Min(scaleX, scaleY);
-                        state.Zoom = baseZoomScale;
+                        foreach (var node in state.LayoutNodes)
+                        {
+                            hasNodes = true;
+                            if (node.Bounds.X < minX) minX = node.Bounds.X;
+                            if (node.Bounds.Y < minY) minY = node.Bounds.Y;
+                            if (node.Bounds.X + node.Bounds.Width > maxX) maxX = node.Bounds.X + node.Bounds.Width;
+                            if (node.Bounds.Y + node.Bounds.Height > maxY) maxY = node.Bounds.Y + node.Bounds.Height;
+                        }
+                    }
+
+                    if (hasNodes)
+                    {
+                        // Calculate width/height based on distance from center (0,0)
+                        // This ensures the center point (Gap or Image Center) remains at screen center
+                        double maxDistX = Math.Max(Math.Abs(minX), Math.Abs(maxX));
+                        double maxDistY = Math.Max(Math.Abs(minY), Math.Abs(maxY));
+
+                        double contentWidth = maxDistX * 2;
+                        double contentHeight = maxDistY * 2;
+
+                        if (contentWidth > 0 && contentHeight > 0)
+                        {
+                            float scaleX = viewSize.X / (float)contentWidth;
+                            float scaleY = viewSize.Y / (float)contentHeight;
+                            baseZoomScale = Math.Min(scaleX, scaleY);
+                            state.Zoom = baseZoomScale;
+                        }
                     }
                 }
             }

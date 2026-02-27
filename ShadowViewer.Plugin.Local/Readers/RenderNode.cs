@@ -22,7 +22,7 @@ public class RenderNode
     /// <summary>
     /// ImageStrategy
     /// </summary>
-    public IImageSourceStrategy ImageStrategy { get; set; } = null!;
+    public IImageSourceStrategy? ImageStrategy { get; set; }
 
     /// <summary>
     /// Win2D 位图资源，绘制完成或加载完成后将被设置。
