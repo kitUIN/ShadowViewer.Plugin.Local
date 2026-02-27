@@ -80,4 +80,10 @@ public partial class LocalPluginConfig
     /// </summary>
     [ObservableConfigProperty(Description = "在垂直滚动模式下是否允许水平拖拽")]
     private bool allowHorizontalDragInScrollMode;
+
+    /// <summary>
+    /// 是否强制所有图片在绘制时符合众数高度与众数宽度（强制统一页面大小）。
+    /// </summary>
+    [ObservableConfigProperty(Description = "是否强制统一页面大小")]
+    private bool isFitToModeSize = true;
 }

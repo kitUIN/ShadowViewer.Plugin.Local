@@ -468,4 +468,10 @@
   <data name="AllowHorizontalDragInScroll" xml:space="preserve">
     <value>在竖直阅读模式下是否允许水平拖拽</value>
   </data>
+  <data name="IsFitToModeSizeDescription" xml:space="preserve">
+    <value>是否强制所有图片在绘制时符合众数高度与众数宽度</value>
+  </data>
+  <data name="IsFitToModeSize" xml:space="preserve">
+    <value>是否强制统一页面大小</value>
+  </data>
 </root>

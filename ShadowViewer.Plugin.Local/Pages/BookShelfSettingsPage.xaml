@@ -76,7 +76,7 @@
                 <controls:SettingsCard
                     Description="{i18N:Locale Key=LocalReaderModeDescription}"
                     Header="{i18N:Locale Key=LocalReaderMode}"
-                    HeaderIcon="{icx:FluentIcon Icon=PhoneSpanOut}">
+                    HeaderIcon="{icx:FluentIcon Icon=BookTemplate}">
                     <controls2:EnumButton
                         EnumSource="readers:ReadingMode"
                         SelectedValue="{x:Bind Config.LocalReaderMode, Mode=TwoWay}"
@@ -85,8 +85,14 @@
                 <controls:SettingsCard
                     Description="{i18N:Locale Key=AllowHorizontalDragInScrollDescription}"
                     Header="{i18N:Locale Key=AllowHorizontalDragInScroll}"
-                    HeaderIcon="{icx:FluentIcon Icon=BookTemplate}">
+                    HeaderIcon="{icx:FluentIcon Icon=PhoneSpanOut}">
                     <ToggleSwitch IsOn="{x:Bind Config.AllowHorizontalDragInScrollMode}" />
+                </controls:SettingsCard>
+                <controls:SettingsCard
+                    Description="{i18N:Locale Key=IsFitToModeSizeDescription}"
+                    Header="{i18N:Locale Key=IsFitToModeSize}"
+                    HeaderIcon="{icx:FluentIcon Icon=Ruler}">
+                    <ToggleSwitch IsOn="{x:Bind Config.IsFitToModeSize}" />
                 </controls:SettingsCard>
             </StackPanel>
         </ScrollViewer>
