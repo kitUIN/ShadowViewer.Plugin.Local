@@ -342,10 +342,11 @@ public sealed partial class MangaReader : Control
             mainCanvas.PointerMoved += MainCanvas_PointerMoved;
             mainCanvas.PointerReleased += MainCanvas_PointerReleased;
             mainCanvas.PointerWheelChanged += MainCanvas_PointerWheelChanged;
-            mainCanvas.SizeChanged += (_, e) =>
+
+            EffectiveViewportChanged += (_, e) =>
             {
                 bool wasZero = viewSize == Vector2.Zero;
-                viewSize = new Vector2((float)e.NewSize.Width, (float)e.NewSize.Height);
+                viewSize = new Vector2((float)e.EffectiveViewport.Width, (float)e.EffectiveViewport.Height);
                 if (Mode == ReadingMode.VerticalScroll)
                 {
                     UpdateActiveLayout();
@@ -544,7 +545,8 @@ public sealed partial class MangaReader : Control
                             // 绘制页码文字
                             using var format = new Microsoft.Graphics.Canvas.Text.CanvasTextFormat();
                             format.FontSize = 24;
-                            format.HorizontalAlignment = Microsoft.Graphics.Canvas.Text.CanvasHorizontalAlignment.Center;
+                            format.HorizontalAlignment =
+                                Microsoft.Graphics.Canvas.Text.CanvasHorizontalAlignment.Center;
                             format.VerticalAlignment = Microsoft.Graphics.Canvas.Text.CanvasVerticalAlignment.Center;
                             ds.DrawText($"{node.PageIndex + 1}", node.Bounds,
                                 Windows.UI.Color.FromArgb(255, 200, 200, 200), format);
@@ -674,15 +676,18 @@ public sealed partial class MangaReader : Control
         }
     }
 
-    private async void LoadBitMap(RenderNode node, CanvasDevice device)
+    private async void LoadBitMap(RenderNode? node, CanvasDevice? device)
     {
         try
         {
+            if (node == null) return;
             if (!node.Preloaded)
             {
                 await node.ImageStrategy.PreloadImageAsync(node.Ctx);
                 node.Preloaded = true;
             }
+
+            if (device == null) return;
             var bitmap = await GetBitmap(node.Ctx.Bytes, device);
             node.SetBitmap(bitmap);
         }
@@ -763,18 +768,23 @@ public sealed partial class MangaReader : Control
         {
             double modeHeight = modeHeightGroup.Key;
             double modeWidth = modeWidthGroup.Key;
-            
+
             if (modeHeight > 0 && modeWidth > 0)
             {
                 // 适应高度的缩放比例
                 float scaleH = viewSize.Y / (float)modeHeight;
                 // 适应宽度的缩放比例
                 float scaleW = viewSize.X / (float)modeWidth;
-                
-                // 默认使用高度缩放，但如果会导致宽度溢出，则切换到宽度缩放
-                // 也就是取两者中的最小值
+
+                // 默认使用两者中的最小值，确保图片完整显示在视口内
                 cachedScale = Math.Min(scaleH, scaleW);
             }
+        }
+
+        if (Math.Abs(cachedViewHeight - viewSize.Y) > 1f || Math.Abs(cachedViewWidth - viewSize.X) > 1f)
+        {
+            Log.Debug(
+                "UpdateCachedScale: ViewSize changed, new scale={CachedScale:F2}, viewSize=({ViewSizeX:F0}x{ViewSizeY:F0}), modeHeight={Key}, modeWidth={D}, sampleCount={SampleNodesCount}", cachedScale, viewSize.X, viewSize.Y, modeHeightGroup?.Key, modeWidthGroup?.Key, sampleNodes.Count);
         }
 
         cachedViewHeight = viewSize.Y;
