@@ -38,7 +38,7 @@ public partial class MangaReader
             var delta = currentPos - lastPointerPos;
 
             bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
-            if (Mode == ReadingMode.VerticalScroll && !AllowHorizontalDragInScrollMode && !isZoomed)
+            if (state.CurrentMode == ReadingMode.VerticalScroll && !allowHorizontalDragInScrollMode && !isZoomed)
             {
                 delta.X = 0;
             }

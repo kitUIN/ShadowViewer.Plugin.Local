@@ -39,6 +39,8 @@ public class RenderNode
     /// </summary>
     public ImageLoadingContext Ctx { get; init; } = null!;
 
+    private readonly object bitmapLock = new();
+
     /// <summary>
     /// 如果 <see cref="Bitmap"/> 不为 <c>null</c> 则表示已加载。
     /// </summary>
@@ -55,11 +57,39 @@ public class RenderNode
     public bool Preloaded { get; set; }
 
     /// <summary>
+    /// 提供对位图的安全访问并锁定，以便在绘制时不会被释放。
+    /// </summary>
+    public void UseBitmap(System.Action<CanvasBitmap> action)
+    {
+        lock (bitmapLock)
+        {
+            if (Bitmap != null)
+            {
+                action(Bitmap);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 设置位图。
+    /// </summary>
+    public void SetBitmap(CanvasBitmap? bitmap)
+    {
+        lock (bitmapLock)
+        {
+            Bitmap = bitmap;
+        }
+    }
+
+    /// <summary>
     /// 释放托管的位图资源并将其引用置空。
     /// </summary>
     public void Dispose()
     {
-        Bitmap?.Dispose();
-        Bitmap = null;
+        lock (bitmapLock)
+        {
+            Bitmap?.Dispose();
+            Bitmap = null;
+        }
     }
 }

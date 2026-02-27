@@ -34,9 +34,13 @@ public sealed partial class MangaReader
 
     private static void OnPageSpacingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is MangaReader { Mode: ReadingMode.VerticalScroll } control)
+        if (d is MangaReader control && e.NewValue is float val)
         {
-            control.UpdateActiveLayout();
+            control.pageSpacing = val;
+            if (control.Mode == ReadingMode.VerticalScroll)
+            {
+                control.UpdateActiveLayout();
+            }
         }
     }
 
@@ -61,7 +65,7 @@ public sealed partial class MangaReader
     /// </summary>
     public static readonly DependencyProperty PreloadRangeProperty =
         DependencyProperty.Register(nameof(PreloadRange), typeof(int), typeof(MangaReader),
-            new PropertyMetadata(3));
+            new PropertyMetadata(3, OnPreloadRangeChanged));
 
     /// <summary>
     /// 获取或设置前后预加载的页数。
@@ -70,6 +74,14 @@ public sealed partial class MangaReader
     {
         get => (int)GetValue(PreloadRangeProperty);
         set => SetValue(PreloadRangeProperty, value);
+    }
+
+    private static void OnPreloadRangeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is MangaReader control && e.NewValue is int val)
+        {
+            control.preloadRange = val;
+        }
     }
 
     /// <summary>
@@ -107,7 +119,9 @@ public sealed partial class MangaReader
 
     private static void OnAllowHorizontalDragInScrollModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not MangaReader { Mode: ReadingMode.VerticalScroll } control || (bool)e.NewValue) return;
+        if (d is not MangaReader control || e.NewValue is not bool val) return;
+        control.allowHorizontalDragInScrollMode = val;
+        if (control.Mode != ReadingMode.VerticalScroll || val) return;
         control.state.CameraPos.X = 0;
         control.state.Velocity.X = 0;
     }
