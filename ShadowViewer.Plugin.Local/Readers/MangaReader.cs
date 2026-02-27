@@ -331,6 +331,8 @@ public sealed partial class MangaReader : Control
             mainCanvas.PointerMoved -= MainCanvas_PointerMoved;
             mainCanvas.PointerReleased -= MainCanvas_PointerReleased;
             mainCanvas.PointerWheelChanged -= MainCanvas_PointerWheelChanged;
+            mainCanvas.PointerCaptureLost -= MainCanvas_PointerCaptureLost;
+            mainCanvas.PointerCanceled -= MainCanvas_PointerCanceled;
             mainCanvas.CreateResources -= MainCanvas_CreateResources;
             mainCanvas.Update -= MainCanvas_Update;
             mainCanvas.Draw -= MainCanvas_Draw;
@@ -352,6 +354,8 @@ public sealed partial class MangaReader : Control
             mainCanvas.PointerMoved += MainCanvas_PointerMoved;
             mainCanvas.PointerReleased += MainCanvas_PointerReleased;
             mainCanvas.PointerWheelChanged += MainCanvas_PointerWheelChanged;
+            mainCanvas.PointerCaptureLost += MainCanvas_PointerCaptureLost;
+            mainCanvas.PointerCanceled += MainCanvas_PointerCanceled;
 
             EffectiveViewportChanged += (_, e) =>
             {
@@ -389,13 +393,107 @@ public sealed partial class MangaReader : Control
         {
             var dt = (float)args.Timing.ElapsedTime.TotalSeconds;
 
-            // 1. 物理惯性
-            if (!isDragging && state.Velocity.LengthSquared() > 0.001f)
+            // 0. 处理输入增量 (平移与缩放)
+            Vector2 deltaToApply = Vector2.Zero;
+            float zoomToApply = 1.0f;
+            Vector2 zoomCenter = Vector2.Zero;
+
+            lock (activePointers)
             {
-                state.CameraPos += state.Velocity * dt;
-                float decay = MathF.Exp(-state.Friction * dt);
-                state.Velocity *= decay;
-                if (state.Velocity.Length() < 1.0f) state.Velocity = Vector2.Zero;
+                deltaToApply = pendingDelta;
+                pendingDelta = Vector2.Zero;
+
+                zoomToApply = pendingZoomDelta;
+                pendingZoomDelta = 1.0f;
+                zoomCenter = pendingZoomCenter;
+                
+                // 仅在此时更新 lastPointerPos 用于后续释放时的方向判断
+                if (activePointers.Count > 0)
+                {
+                    // 获取任意一个活跃指针作为参考
+                    var enumerator = activePointers.Values.GetEnumerator();
+                    if (enumerator.MoveNext()) lastPointerPos = enumerator.Current;
+                }
+            }
+
+            // 应用缩放 (模拟 ManipulationDelta)
+            if (Math.Abs(zoomToApply - 1.0f) > 0.0001f)
+            {
+                float oldZoom = state.Zoom;
+                float minZoom = 0.1f * baseZoomScale;
+                float maxZoom = 5.0f * baseZoomScale;
+                state.Zoom = Math.Clamp(state.Zoom * zoomToApply, minZoom, maxZoom);
+
+                // 缩放中心补偿 (World = (Screen - Center) / Zoom + Camera)
+                state.CameraPos += (zoomCenter - viewSize / 2f) * (1.0f / oldZoom - 1.0f / state.Zoom);
+                
+                // 计算缩放速度用于惯性
+                if (isDragging)
+                {
+                    state.ZoomVelocity = (zoomToApply - 1.0f) / dt;
+                    lastZoomCenter = zoomCenter;
+                }
+            }
+
+            // 应用平移
+            if (deltaToApply != Vector2.Zero)
+            {
+                bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
+                bool isSpreadMode = state.CurrentMode == ReadingMode.SpreadLtr || state.CurrentMode == ReadingMode.SpreadRtl;
+                
+                // 只有在非双页模式，或者已缩放的双页模式下才允许平移
+                bool canDrag = !isSpreadMode || isZoomed;
+
+                if (canDrag)
+                {
+                    if (state.CurrentMode == ReadingMode.VerticalScroll && !allowHorizontalDragInScrollMode && !isZoomed)
+                    {
+                        deltaToApply.X = 0;
+                    }
+                    state.CameraPos -= deltaToApply / state.Zoom;
+
+                    // 计算实时速度用于惯性开始
+                    if (isDragging)
+                    {
+                        state.Velocity = -deltaToApply / state.Zoom / dt;
+                    }
+                }
+                else
+                {
+                    // 在禁止平移的情况下（如双页未缩放），清空速度防止意外惯性
+                    state.Velocity = Vector2.Zero;
+                }
+            }
+
+            // 1. 物理惯性
+            if (!isDragging)
+            {
+                // 平移惯性
+                if (state.Velocity.LengthSquared() > 0.001f)
+                {
+                    state.CameraPos += state.Velocity * dt;
+                    float decay = MathF.Exp(-state.Friction * dt);
+                    state.Velocity *= decay;
+                    if (state.Velocity.Length() < 1.0f) state.Velocity = Vector2.Zero;
+                }
+
+                // 缩放惯性
+                if (Math.Abs(state.ZoomVelocity) > 0.001f)
+                {
+                    float oldZoom = state.Zoom;
+                    float zoomStep = 1.0f + state.ZoomVelocity * dt;
+                    
+                    float minZoom = 0.1f * baseZoomScale;
+                    float maxZoom = 5.0f * baseZoomScale;
+                    state.Zoom = Math.Clamp(state.Zoom * zoomStep, minZoom, maxZoom);
+
+                    // 缩放中心补偿 (使用释放时的中心点)
+                    state.CameraPos += (lastZoomCenter - viewSize / 2f) * (1.0f / oldZoom - 1.0f / state.Zoom);
+
+                    float decay = MathF.Exp(-state.Friction * dt);
+                    state.ZoomVelocity *= decay;
+                    if (Math.Abs(state.ZoomVelocity) < 0.01f) state.ZoomVelocity = 0;
+                }
             }
 
             // 2. 资源管理

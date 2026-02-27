@@ -9,60 +9,184 @@ public partial class MangaReader
 {
     // --- 输入处理 ---
 
+
+    /// <summary>
+    /// 活跃的指针及其位置。
+    /// </summary>
+    private readonly System.Collections.Generic.Dictionary<uint, Vector2> activePointers = new();
+
+    /// <summary>
+    /// 双指交互时的上一帧距离。
+    /// </summary>
+    private float lastPinchDistance = 0f;
+
+    /// <summary>
+    /// 指针移动增量累加，用于在 Update 中统一处理。
+    /// </summary>
+    private Vector2 pendingDelta = Vector2.Zero;
+
+    /// <summary>
+    /// 缩放增量累加。
+    /// </summary>
+    private float pendingZoomDelta = 1.0f;
+
+    /// <summary>
+    /// 缩放中心累加。
+    /// </summary>
+    private Vector2 pendingZoomCenter = Vector2.Zero;
+
+    /// <summary>
+    /// 上一次缩放中心，用于缩放惯性。
+    /// </summary>
+    private Vector2 lastZoomCenter = Vector2.Zero;
+
+    private Vector2 dragStartPos;
+
+    // --- 输入处理 ---
+
     /// <summary>
     /// 指针按下处理：开始拖拽并捕获指针以实现平移交互。
     /// </summary>
     private void MainCanvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         var point = e.GetCurrentPoint(mainCanvas);
-        if (point.Properties.IsLeftButtonPressed)
+        if (point.Properties.IsLeftButtonPressed || e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Touch)
         {
-            isDragging = true;
-            isUserInteracting = true;  // 标记用户开始交互
-            pointerId = (int)point.PointerId;
-            lastPointerPos = point.Position.ToVector2();
-            state.Velocity = Vector2.Zero;
+            uint id = point.PointerId;
+            Vector2 pos = point.Position.ToVector2();
+            
+            lock (activePointers)
+            {
+                activePointers[id] = pos;
+                
+                if (activePointers.Count == 1)
+                {
+                    isDragging = true;
+                    isUserInteracting = true;
+                    dragStartPos = pos;
+                    lastPointerPos = pos;
+                    state.Velocity = Vector2.Zero;
+                }
+                else if (activePointers.Count == 2)
+                {
+                    // 获取两个点计算初始距离
+                    var keys = new System.Collections.Generic.List<uint>(activePointers.Keys);
+                    lastPinchDistance = Vector2.Distance(activePointers[keys[0]], activePointers[keys[1]]);
+                }
+            }
+            
             mainCanvas?.CapturePointer(e.Pointer);
+            e.Handled = true;
         }
     }
 
     /// <summary>
-    /// 指针移动处理：在拖拽期间更新摄像机位置并计算简单速度用于惯性。
+    /// 指针移动处理：记录位置变化，统一在 Update 循环中应用。
     /// </summary>
     private void MainCanvas_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (isDragging && e.Pointer.PointerId == pointerId)
+        uint id = e.Pointer.PointerId;
+        var point = e.GetCurrentPoint(mainCanvas);
+        Vector2 currentPos = point.Position.ToVector2();
+
+        lock (activePointers)
         {
-            var point = e.GetCurrentPoint(mainCanvas);
-            var currentPos = point.Position.ToVector2();
-            var delta = currentPos - lastPointerPos;
+            if (!activePointers.ContainsKey(id)) return;
 
-            bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
-            if (state.CurrentMode == ReadingMode.VerticalScroll && !allowHorizontalDragInScrollMode && !isZoomed)
+            if (activePointers.Count == 1)
             {
-                delta.X = 0;
+                Vector2 delta = currentPos - activePointers[id];
+                
+                // 低通滤波/死区处理 (消除微小抖动)
+                if (delta.LengthSquared() > 0.1f)
+                {
+                    pendingDelta += delta;
+                }
             }
-
-            state.CameraPos -= delta / state.Zoom;
-
-            // 简单的速度计算
-            state.Velocity = -(delta / state.Zoom) / 0.016f; // 假设 60fps
-
-            lastPointerPos = currentPos;
+            else if (activePointers.Count == 2)
+            {
+                // 先更新当前点
+                activePointers[id] = currentPos;
+                
+                // 计算新的缩放和中心点
+                var keys = new System.Collections.Generic.List<uint>(activePointers.Keys);
+                Vector2 p1 = activePointers[keys[0]];
+                Vector2 p2 = activePointers[keys[1]];
+                
+                float currentDist = Vector2.Distance(p1, p2);
+                if (lastPinchDistance > 0)
+                {
+                    float deltaScale = currentDist / lastPinchDistance;
+                    pendingZoomDelta *= deltaScale;
+                    pendingZoomCenter = (p1 + p2) / 2f;
+                }
+                lastPinchDistance = currentDist;
+            }
+            
+            activePointers[id] = currentPos;
         }
     }
 
     /// <summary>
-    /// 指针释放处理：结束拖拽并释放指针捕获。
+    /// 指针释放处理：结束交互并触发翻页检测。
     /// </summary>
     private void MainCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
-        if (e.Pointer.PointerId == pointerId)
+        HandlePointerLost(e.Pointer.PointerId);
+    }
+
+    private void MainCanvas_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        HandlePointerLost(e.Pointer.PointerId);
+    }
+
+    private void MainCanvas_PointerCanceled(object sender, PointerRoutedEventArgs e)
+    {
+        HandlePointerLost(e.Pointer.PointerId);
+    }
+
+    private void HandlePointerLost(uint id)
+    {
+        lock (activePointers)
         {
-            isDragging = false;
-            isUserInteracting = false;  // 标记用户结束交互
-            pointerId = -1;
-            mainCanvas?.ReleasePointerCapture(e.Pointer);
+            if (activePointers.ContainsKey(id))
+            {
+                if (activePointers.Count == 1)
+                {
+                    // 最后一个手指离开，触发翻页或惯性
+                    Vector2 currentPos = activePointers[id];
+                    bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
+                    
+                    if (!isZoomed && (state.CurrentMode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl))
+                    {
+                        var totalDelta = currentPos - dragStartPos;
+                        // 综合位移与速度判断 (速度暂由上一帧计算)
+                        bool isSwipe = Math.Abs(totalDelta.X) > 50 || Math.Abs(state.Velocity.X * state.Zoom) > 500;
+                        
+                        if (isSwipe && Math.Abs(totalDelta.X) > Math.Abs(totalDelta.Y))
+                        {
+                            int direction = totalDelta.X > 0 ? -1 : 1;
+                            int step = (state.CurrentMode == ReadingMode.SinglePage) ? 1 : 2;
+                            int target = CurrentPageIndex + (direction * step);
+
+                            if (target < 0) target = 0;
+                            if (target >= TotalPage) target = TotalPage > 0 ? TotalPage - 1 : 0;
+
+                            if (target != CurrentPageIndex)
+                            {
+                                CurrentPageIndex = target;
+                            }
+                        }
+                    }
+
+                    isDragging = false;
+                    isUserInteracting = false;
+                    state.Velocity = -pendingDelta / 0.016f; // 初始速度方案
+                }
+                
+                activePointers.Remove(id);
+                lastPinchDistance = 0;
+            }
         }
     }
 

@@ -28,6 +28,11 @@ public class EngineState
     public Vector2 Velocity = Vector2.Zero;
 
     /// <summary>
+    /// 当前缩放变化速度，用于实现缩放惯性。
+    /// </summary>
+    public float ZoomVelocity = 0f;
+
+    /// <summary>
     /// 摩擦系数，用于每秒衰减速度（参考值）。
     /// </summary>
     public float Friction = 5.0f;
