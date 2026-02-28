@@ -1,3 +1,4 @@
+using System;
 using Microsoft.UI.Xaml;
 using ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 using System.Collections;
@@ -5,8 +6,10 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using ShadowViewer.Plugin.Local.Readers.Internal;
 
 namespace ShadowViewer.Plugin.Local.Readers;
 
@@ -238,16 +241,6 @@ public sealed partial class MangaReader
     }
 
     /// <summary>
-    /// 异步加载队列，用于顺序加载节点尺寸，避免并发。
-    /// </summary>
-    private readonly Queue<RenderNode> pendingSizeLoadQueue = new();
-
-    /// <summary>
-    /// 是否正在处理尺寸加载队列。
-    /// </summary>
-    private bool isProcessingSizeQueue = false;
-
-    /// <summary>
     /// 异步加载尺寸时是否需要更新布局。
     /// </summary>
     private bool sizeLoadPendingLayout = false;
@@ -258,19 +251,24 @@ public sealed partial class MangaReader
     private const int LayoutUpdateBatchSize = 10;
 
     /// <summary>
-    /// 并发加载的最大线程数。
+    /// 并发加载的最大消费者数量。
     /// </summary>
-    private const int MaxConcurrentLoads = 4;
+    private const int MaxConcurrentLoads = 2;
 
     /// <summary>
-    /// 信号量，用于控制并发加载数量。
+    /// 尺寸加载刷新防抖延迟（毫秒）。
     /// </summary>
-    private readonly System.Threading.SemaphoreSlim loadSemaphore = new(MaxConcurrentLoads, MaxConcurrentLoads);
+    private const int SizeLoadLayoutFlushDelayMs = 120;
 
     /// <summary>
     /// 当前批次已加载的节点数量。
     /// </summary>
     private int currentBatchLoadedCount = 0;
+
+    /// <summary>
+    /// 标记是否已调度尺寸加载的防抖布局刷新任务。
+    /// </summary>
+    private int isSizeLoadFlushScheduled;
 
     /// <summary>
     /// 标记是否正在进行布局更新（用于防止页码变动）。
@@ -318,10 +316,10 @@ public sealed partial class MangaReader
 
             TotalPage = allNodes.Count;
 
-            // 3. 将新节点加入尺寸加载队列
+            // 3. 将新节点加入尺寸加载通道
             foreach (var node in newNodes)
             {
-                pendingSizeLoadQueue.Enqueue(node);
+                TryEnqueueSizeLoad(node);
             }
         }
 
@@ -335,105 +333,93 @@ public sealed partial class MangaReader
             this.DispatcherQueue.TryEnqueue(UpdateActiveLayout);
         }
 
-        // 5. 启动尺寸加载队列处理（在后台线程）
-        _ = Task.Run(ProcessSizeLoadQueueAsync);
     }
 
     /// <summary>
-    /// 并发处理尺寸加载队列，使用信号量控制并发数量。
-    /// 此方法在后台线程运行，不会阻塞 UI 线程。
+    /// 处理尺寸加载流水线请求。
     /// </summary>
-    private async Task ProcessSizeLoadQueueAsync()
+    /// <param name="request">尺寸加载请求。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>表示尺寸加载处理的异步操作。</returns>
+    private async Task ProcessSizeLoadRequestAsync(PipelineRequest<RenderNode> request, CancellationToken cancellationToken)
     {
-        // 使用 volatile read 检查状态
-        if (System.Threading.Volatile.Read(ref isProcessingSizeQueue)) return;
-        
-        lock (loadingLock)
+        if (!sizeLoadPipeline.IsCurrentEpoch(request))
         {
-            if (isProcessingSizeQueue) return;
-            isProcessingSizeQueue = true;
+            return;
         }
 
-        try
+        // 尺寸已就绪时直接跳过，避免重复执行 InitImageAsync 带来的额外 CPU 与分配。
+        if (request.Payload.IsSizeLoaded)
         {
-            System.Threading.Interlocked.Exchange(ref currentBatchLoadedCount, 0);
-            var loadTasks = new List<Task>();
-
-            while (true)
-            {
-                RenderNode? node;
-                lock (allNodes)
-                {
-                    if (pendingSizeLoadQueue.Count == 0)
-                        break;
-                    node = pendingSizeLoadQueue.Dequeue();
-                }
-
-                if (node != null)
-                {
-                    // 启动并发加载任务
-                    var loadTask = LoadNodeSizeWithSemaphoreAsync(node);
-                    loadTasks.Add(loadTask);
-
-                    // 如果达到最大并发数的2倍，等待一些任务完成
-                    if (loadTasks.Count >= MaxConcurrentLoads * 2)
-                    {
-                        await Task.WhenAny(loadTasks);
-                        loadTasks.RemoveAll(t => t.IsCompleted);
-                    }
-                }
-            }
-
-            // 等待所有加载任务完成
-            if (loadTasks.Count > 0)
-            {
-                await Task.WhenAll(loadTasks);
-            }
+            return;
         }
-        finally
+
+        await LoadNodeSizeAsync(request.Payload, cancellationToken);
+
+        if (!request.Payload.IsSizeLoaded)
         {
-            lock (loadingLock)
+            return;
+        }
+
+        int count = Interlocked.Increment(ref currentBatchLoadedCount);
+
+        if (count % LayoutUpdateBatchSize == 0)
+        {
+            // 达到批次阈值后立即刷新，优先保障“连续新增内容可见”。
+            Interlocked.Exchange(ref currentBatchLoadedCount, 0);
+            sizeLoadPendingLayout = false;
+            this.DispatcherQueue.TryEnqueue(UpdateLayoutWithPageLock);
+        }
+        else
+        {
+            sizeLoadPendingLayout = true;
+            ScheduleSizeLoadLayoutFlush();
+        }
+    }
+
+    /// <summary>
+    /// 尝试将尺寸加载请求写入通道。
+    /// </summary>
+    /// <param name="node">待加载尺寸的节点。</param>
+    /// <returns>写入成功返回 <c>true</c>；否则返回 <c>false</c>。</returns>
+    private bool TryEnqueueSizeLoad(RenderNode node)
+    {
+        return sizeLoadPipeline.TryEnqueue(node);
+    }
+
+    /// <summary>
+    /// 调度尺寸加载后的防抖布局刷新。
+    /// </summary>
+    /// <returns>无返回值。</returns>
+    private void ScheduleSizeLoadLayoutFlush()
+    {
+        if (Interlocked.Exchange(ref isSizeLoadFlushScheduled, 1) == 1)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            try
             {
-                isProcessingSizeQueue = false;
+                await Task.Delay(SizeLoadLayoutFlushDelayMs, deferredUiWorkCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                Interlocked.Exchange(ref isSizeLoadFlushScheduled, 0);
+                return;
             }
 
-            // 队列处理完成后，如果还有未达到批次大小的节点，也需要更新布局
-            var count = System.Threading.Volatile.Read(ref currentBatchLoadedCount);
-            if (count > 0 || sizeLoadPendingLayout)
+            if (sizeLoadPendingLayout)
             {
-                System.Threading.Interlocked.Exchange(ref currentBatchLoadedCount, 0);
+                // 防抖刷新用于补齐“最后不足一个批次”的节点，避免它们长时间不参与布局。
+                Interlocked.Exchange(ref currentBatchLoadedCount, 0);
                 sizeLoadPendingLayout = false;
                 this.DispatcherQueue.TryEnqueue(UpdateLayoutWithPageLock);
             }
-        }
-    }
 
-    /// <summary>
-    /// 使用信号量控制并发的节点尺寸加载。
-    /// </summary>
-    private async Task LoadNodeSizeWithSemaphoreAsync(RenderNode node)
-    {
-        await loadSemaphore.WaitAsync();
-        try
-        {
-            await LoadNodeSizeAsync(node);
-            
-            // 每加载完成一个节点，增加计数
-            if (node.IsSizeLoaded)
-            {
-                var count = System.Threading.Interlocked.Increment(ref currentBatchLoadedCount);
-
-                // 达到批次大小时，立即触发布局更新
-                if (count % LayoutUpdateBatchSize == 0)
-                {
-                    this.DispatcherQueue.TryEnqueue(UpdateLayoutWithPageLock);
-                }
-            }
-        }
-        finally
-        {
-            loadSemaphore.Release();
-        }
+            Interlocked.Exchange(ref isSizeLoadFlushScheduled, 0);
+        });
     }
 
     /// <summary>
@@ -514,22 +500,29 @@ public sealed partial class MangaReader
     /// <summary>
     /// 异步加载节点尺寸（只获取尺寸，不加载完整图片数据）。
     /// </summary>
-    private async Task LoadNodeSizeAsync(RenderNode node)
+    /// <param name="node">待加载尺寸的节点。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>表示尺寸加载操作的异步任务。</returns>
+    private async Task LoadNodeSizeAsync(RenderNode node, CancellationToken cancellationToken)
     {
         var strategy = ImageStrategies.FirstOrDefault(s => s.CanHandle(node.Source));
         if (strategy == null) return;
 
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await strategy.InitImageAsync(node.Ctx);
+            cancellationToken.ThrowIfCancellationRequested();
 
             // 更新节点尺寸
             node.Bounds.Width = node.Ctx.Size.Width;
             node.Bounds.Height = node.Ctx.Size.Height;
             node.IsSizeLoaded = true;
             node.ImageStrategy = strategy;
-            // 标记需要更新布局
-            sizeLoadPendingLayout = true;
+        }
+        catch (OperationCanceledException)
+        {
+            // 取消属于正常生命周期事件。
         }
         catch
         {

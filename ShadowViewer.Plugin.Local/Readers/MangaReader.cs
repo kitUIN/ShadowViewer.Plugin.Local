@@ -10,6 +10,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Storage.Streams;
@@ -25,6 +26,33 @@ namespace ShadowViewer.Plugin.Local.Readers;
 /// </summary>
 public sealed partial class MangaReader : Control
 {
+    /// <summary>
+    /// 位图加载请求负载。
+    /// </summary>
+    private readonly struct BitmapLoadPayload
+    {
+        /// <summary>
+        /// 初始化 <see cref="BitmapLoadPayload"/> 的新实例。
+        /// </summary>
+        /// <param name="node">待加载的节点。</param>
+        /// <param name="device">当前可用的 Canvas 设备。</param>
+        public BitmapLoadPayload(RenderNode node, CanvasDevice? device)
+        {
+            Node = node;
+            Device = device;
+        }
+
+        /// <summary>
+        /// 获取待加载节点。
+        /// </summary>
+        public RenderNode Node { get; }
+
+        /// <summary>
+        /// 获取当前可用 Canvas 设备。
+        /// </summary>
+        public CanvasDevice? Device { get; }
+    }
+
     /// <summary>
     /// 主绘制画布（Win2D CanvasAnimatedControl）的引用。
     /// </summary>
@@ -78,6 +106,21 @@ public sealed partial class MangaReader : Control
     /// 锁对象，用于同步访问加载状态集合。
     /// </summary>
     private object loadingLock = new object();
+
+    /// <summary>
+    /// 位图加载后台流水线。
+    /// </summary>
+    private readonly ReaderBackgroundPipeline<BitmapLoadPayload> bitmapLoadPipeline;
+
+    /// <summary>
+    /// 尺寸加载后台流水线。
+    /// </summary>
+    private readonly ReaderBackgroundPipeline<RenderNode> sizeLoadPipeline;
+
+    /// <summary>
+    /// 延迟 UI 任务取消令牌源（用于防抖刷新等延迟任务）。
+    /// </summary>
+    private readonly CancellationTokenSource deferredUiWorkCts = new();
 
     /// <summary>
     /// 标记当前是否处于内部更新流程中，以避免属性回调触发循环。
@@ -176,6 +219,10 @@ public sealed partial class MangaReader : Control
     /// </summary>
     public void ClearItems()
     {
+        // 清空内容时推进流水线世代，确保旧请求结果不会污染新数据集。
+        sizeLoadPipeline.Invalidate();
+        bitmapLoadPipeline.Invalidate();
+
         lock (allNodes)
         {
             foreach (var node in allNodes)
@@ -185,6 +232,7 @@ public sealed partial class MangaReader : Control
 
             allNodes.Clear();
             TotalPage = 0;
+            loadingPages.Clear();
 
             // 重置缓存
             layoutCache.ResetAfterClearItems();
@@ -308,9 +356,32 @@ public sealed partial class MangaReader : Control
     {
         this.DefaultStyleKey = typeof(MangaReader);
         ImageStrategies = DiFactory.Services.ResolveMany<IImageSourceStrategy>();
+
+        bitmapLoadPipeline = new ReaderBackgroundPipeline<BitmapLoadPayload>(
+            capacity: 256,
+            workerCount: 1,
+            singleReader: true,
+            singleWriter: false,
+            processRequestAsync: ProcessBitmapLoadRequestAsync);
+
+        sizeLoadPipeline = new ReaderBackgroundPipeline<RenderNode>(
+            capacity: 512,
+            workerCount: MaxConcurrentLoads,
+            singleReader: false,
+            singleWriter: false,
+            processRequestAsync: ProcessSizeLoadRequestAsync);
+
+        bitmapLoadPipeline.Start();
+        sizeLoadPipeline.Start();
         this.Unloaded += MangaReader_Unloaded;
     }
 
+    /// <summary>
+    /// 控件卸载时停止画布并终止后台加载流水线。
+    /// </summary>
+    /// <param name="sender">事件发送者。</param>
+    /// <param name="e">路由事件参数。</param>
+    /// <returns>无返回值。</returns>
     private void MangaReader_Unloaded(object sender, RoutedEventArgs e)
     {
         if (mainCanvas != null)
@@ -319,6 +390,11 @@ public sealed partial class MangaReader : Control
             mainCanvas.RemoveFromVisualTree();
             mainCanvas = null;
         }
+
+        // 卸载后停止后台流水线，避免控件已退出可视树时仍有异步回写。
+        bitmapLoadPipeline.Stop();
+        sizeLoadPipeline.Stop();
+        deferredUiWorkCts.Cancel();
     }
 
     /// <summary>
@@ -1029,7 +1105,11 @@ public sealed partial class MangaReader : Control
                     {
                         if (!node.IsLoaded && loadingPages.Add(node.PageIndex))
                         {
-                            _ = Task.Run(() => LoadBitMap(node, device));
+                            // 统一经由有界通道入队，避免在 Update 线程直接创建大量后台任务。
+                            if (!TryEnqueueBitmapLoad(node, device))
+                            {
+                                loadingPages.Remove(node.PageIndex);
+                            }
                         }
                     }
                 }
@@ -1048,10 +1128,41 @@ public sealed partial class MangaReader : Control
         }
     }
 
-    private async void LoadBitMap(RenderNode? node, CanvasDevice? device)
+    /// <summary>
+    /// 尝试将位图加载请求写入后台流水线。
+    /// </summary>
+    /// <param name="node">待加载节点。</param>
+    /// <param name="device">当前可用 Canvas 设备。</param>
+    /// <returns>写入成功返回 <c>true</c>；否则返回 <c>false</c>。</returns>
+    private bool TryEnqueueBitmapLoad(RenderNode node, CanvasDevice? device)
+    {
+        return bitmapLoadPipeline.TryEnqueue(new BitmapLoadPayload(node, device));
+    }
+
+    /// <summary>
+    /// 处理位图加载流水线请求。
+    /// </summary>
+    /// <param name="request">位图加载请求。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>表示位图加载处理的异步操作。</returns>
+    private async Task ProcessBitmapLoadRequestAsync(PipelineRequest<BitmapLoadPayload> request, CancellationToken cancellationToken)
+    {
+        await LoadBitmapAsync(request.Payload.Node, request.Payload.Device, cancellationToken);
+    }
+
+    /// <summary>
+    /// 异步加载单个节点位图。
+    /// </summary>
+    /// <param name="node">待加载节点。</param>
+    /// <param name="device">当前可用 Canvas 设备。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>表示加载流程的异步操作。</returns>
+    private async Task LoadBitmapAsync(RenderNode? node, CanvasDevice? device, CancellationToken cancellationToken)
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             // ImageStrategy为null说明还未初始化
             if (node?.ImageStrategy == null) return;
             if (!node.Preloaded)
@@ -1060,9 +1171,16 @@ public sealed partial class MangaReader : Control
                 node.Preloaded = true;
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (device == null) return;
             var bitmap = await GetBitmap(node.Ctx.Bytes, device);
+            cancellationToken.ThrowIfCancellationRequested();
             node.SetBitmap(bitmap);
+        }
+        catch (OperationCanceledException)
+        {
+            // 取消属于正常生命周期行为。
         }
         catch (Exception ex)
         {
