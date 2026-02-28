@@ -1,8 +1,8 @@
 using System;
-using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Input;
+using ShadowViewer.Plugin.Local.Readers.Internal;
 
 namespace ShadowViewer.Plugin.Local.Readers;
 
@@ -10,40 +10,10 @@ public partial class MangaReader
 {
     // --- 输入处理 ---
 
-
     /// <summary>
-    /// 活跃的指针及其位置。
+    /// 输入控制器，负责指针状态与增量计算。
     /// </summary>
-    private readonly System.Collections.Generic.Dictionary<uint, Vector2> activePointers = new();
-
-    /// <summary>
-    /// 双指交互时的上一帧距离。
-    /// </summary>
-    private float lastPinchDistance = 0f;
-
-    /// <summary>
-    /// 指针移动增量累加，用于在 Update 中统一处理。
-    /// </summary>
-    private Vector2 pendingDelta = Vector2.Zero;
-
-    /// <summary>
-    /// 缩放增量累加。
-    /// </summary>
-    private float pendingZoomDelta = 1.0f;
-
-    /// <summary>
-    /// 缩放中心累加。
-    /// </summary>
-    private Vector2 pendingZoomCenter = Vector2.Zero;
-
-    /// <summary>
-    /// 上一次缩放中心，用于缩放惯性。
-    /// </summary>
-    private Vector2 lastZoomCenter = Vector2.Zero;
-
-    private Vector2 dragStartPos;
-
-    // --- 输入处理 ---
+    private readonly ReaderInputController inputController = new();
 
     /// <summary>
     /// 指针按下处理：开始拖拽并捕获指针以实现平移交互。
@@ -55,39 +25,28 @@ public partial class MangaReader
         {
             uint id = point.PointerId;
             Vector2 pos = point.Position.ToVector2();
-            
-            lock (activePointers)
-            {
-                activePointers[id] = pos;
-                
-                if (activePointers.Count == 1)
-                {
-                    isDragging = true;
-                    isUserInteracting = true;
-                    lastPointerPos = pos;
-                    state.Velocity = Vector2.Zero;
 
-                    if (isAnimatingPageTurn)
-                    {
-                        isAnimatingPageTurn = false;
-                        // Adjust dragStartPos so that the current curl amount is maintained
-                        float currentDragDelta = pageTurnAnimCurlAmount * state.Zoom;
-                        if (pageTurnCurlFromRight) currentDragDelta = -currentDragDelta;
-                        dragStartPos = new Vector2(pos.X - currentDragDelta, pos.Y);
-                    }
-                    else
-                    {
-                        dragStartPos = pos;
-                    }
-                }
-                else if (activePointers.Count == 2)
+            bool isPrimaryPointer = inputController.TryHandlePointerPressed(
+                id,
+                pos,
+                isAnimatingPageTurn,
+                pageTurnAnimCurlAmount,
+                state.Zoom,
+                pageTurnCurlFromRight);
+
+            if (isPrimaryPointer)
+            {
+                isDragging = true;
+                isUserInteracting = true;
+                lastPointerPos = pos;
+                state.Velocity = Vector2.Zero;
+
+                if (isAnimatingPageTurn)
                 {
-                    // 获取两个点计算初始距离
-                    var keys = new System.Collections.Generic.List<uint>(activePointers.Keys);
-                    lastPinchDistance = Vector2.Distance(activePointers[keys[0]], activePointers[keys[1]]);
+                    isAnimatingPageTurn = false;
                 }
             }
-            
+
             mainCanvas?.CapturePointer(e.Pointer);
             e.Handled = true;
         }
@@ -102,42 +61,7 @@ public partial class MangaReader
         var point = e.GetCurrentPoint(mainCanvas);
         Vector2 currentPos = point.Position.ToVector2();
 
-        lock (activePointers)
-        {
-            if (!activePointers.ContainsKey(id)) return;
-
-            if (activePointers.Count == 1)
-            {
-                Vector2 delta = currentPos - activePointers[id];
-                
-                // 低通滤波/死区处理 (消除微小抖动)
-                if (delta.LengthSquared() > 0.1f)
-                {
-                    pendingDelta += delta;
-                }
-            }
-            else if (activePointers.Count == 2)
-            {
-                // 先更新当前点
-                activePointers[id] = currentPos;
-                
-                // 计算新的缩放和中心点
-                var keys = new System.Collections.Generic.List<uint>(activePointers.Keys);
-                Vector2 p1 = activePointers[keys[0]];
-                Vector2 p2 = activePointers[keys[1]];
-                
-                float currentDist = Vector2.Distance(p1, p2);
-                if (lastPinchDistance > 0)
-                {
-                    float deltaScale = currentDist / lastPinchDistance;
-                    pendingZoomDelta *= deltaScale;
-                    pendingZoomCenter = (p1 + p2) / 2f;
-                }
-                lastPinchDistance = currentDist;
-            }
-            
-            activePointers[id] = currentPos;
-        }
+        inputController.HandlePointerMoved(id, currentPos);
     }
 
     /// <summary>
@@ -160,83 +84,60 @@ public partial class MangaReader
 
     private void HandlePointerLost(uint id)
     {
-        lock (activePointers)
+        var snapshot = inputController.HandlePointerLost(id);
+        if (!snapshot.IsTrackedPointer)
         {
-            if (activePointers.ContainsKey(id))
+            return;
+        }
+
+        if (snapshot.IsLastPointerLost)
+        {
+            // 最后一个手指离开，触发翻页或惯性
+            Vector2 currentPos = snapshot.PointerPosition;
+            bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
+
+            if (!isZoomed && (state.CurrentMode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl))
             {
-                if (activePointers.Count == 1)
+                var totalDelta = currentPos - inputController.DragStartPos;
+
+                // 将翻页判定集中到服务层，避免阈值和目标页策略散落在输入事件中。
+                PageTurnPlan pageTurnPlan;
+                bool hasPageTurnPlan;
+                lock (state.LayoutNodes)
                 {
-                    // 最后一个手指离开，触发翻页或惯性
-                    Vector2 currentPos = activePointers[id];
-                    bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
-                    
-                    if (!isZoomed && (state.CurrentMode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl))
-                    {
-                        var totalDelta = currentPos - dragStartPos;
-                        // 综合位移与速度判断 (速度暂由上一帧计算)
-                        bool isSwipe = Math.Abs(totalDelta.X) > 50 || Math.Abs(state.Velocity.X * state.Zoom) > 500;
-                        
-                        int target = CurrentPageIndex;
-                        bool curlFromRight = totalDelta.X < 0;
-                        float currentCurl = Math.Abs(totalDelta.X) / state.Zoom;
-                        float targetCurl = 0f;
+                    var request = new PageTurnRequest(
+                        totalDelta,
+                        state.Velocity.X,
+                        state.Zoom,
+                        CurrentPageIndex,
+                        TotalPage,
+                        state.CurrentMode,
+                        state.LayoutNodes);
 
-                        if (isSwipe && Math.Abs(totalDelta.X) > Math.Abs(totalDelta.Y))
-                        {
-                            int direction = totalDelta.X > 0 ? -1 : 1;
-                            int step = (state.CurrentMode == ReadingMode.SinglePage) ? 1 : 2;
-                            target = CurrentPageIndex + (direction * step);
-
-                            if (target < 0) target = 0;
-                            if (target >= TotalPage) target = TotalPage > 0 ? TotalPage - 1 : 0;
-                        }
-
-                        if (Math.Abs(totalDelta.X) > 10) // Only animate if there was some curling
-                        {
-                            isAnimatingPageTurn = true;
-                            pageTurnTargetIndex = target;
-                            pageTurnCurlFromRight = curlFromRight;
-                            pageTurnAnimCurlAmount = currentCurl;
-                            
-                            lock (state.LayoutNodes)
-                            {
-                                pageTurnCurlingNode = pageTurnCurlFromRight 
-                                    ? state.LayoutNodes.OrderByDescending(n => n.Bounds.X).FirstOrDefault()
-                                    : state.LayoutNodes.OrderBy(n => n.Bounds.X).FirstOrDefault();
-                                
-                                if (target != CurrentPageIndex && pageTurnCurlingNode != null)
-                                {
-                                    targetCurl = (float)pageTurnCurlingNode.Bounds.Width * 1.5f; // Full curl
-                                }
-                                else
-                                {
-                                    targetCurl = 0f; // Cancel curl
-                                }
-                            }
-                            
-                            pageTurnAnimTargetCurl = targetCurl;
-                            
-                            // Calculate velocity
-                            float distance = Math.Abs(targetCurl - currentCurl);
-                            pageTurnAnimVelocity = Math.Max(1500f, distance / 0.3f); // At least 1500px/s or finish in 0.3s
-                            if (targetCurl < currentCurl) pageTurnAnimVelocity = -pageTurnAnimVelocity;
-                        }
-                    }
-
-                    isDragging = false;
-                    isUserInteracting = false;
-                    if (!isAnimatingPageTurn)
-                    {
-                        state.Velocity = -pendingDelta / 0.016f; // 初始速度方案
-                    }
-                    else
-                    {
-                        state.Velocity = Vector2.Zero;
-                    }
+                    hasPageTurnPlan = pageTurnService.TryCreatePlan(request, out pageTurnPlan);
                 }
-                
-                activePointers.Remove(id);
-                lastPinchDistance = 0;
+
+                if (hasPageTurnPlan)
+                {
+                    isAnimatingPageTurn = true;
+                    pageTurnTargetIndex = pageTurnPlan.TargetPageIndex;
+                    pageTurnCurlFromRight = pageTurnPlan.CurlFromRight;
+                    pageTurnAnimCurlAmount = pageTurnPlan.CurrentCurl;
+                    pageTurnCurlingNode = pageTurnPlan.CurlingNode;
+                    pageTurnAnimTargetCurl = pageTurnPlan.TargetCurl;
+                    pageTurnAnimVelocity = pageTurnPlan.AnimVelocity;
+                }
+            }
+
+            isDragging = false;
+            isUserInteracting = false;
+            if (!isAnimatingPageTurn)
+            {
+                state.Velocity = -snapshot.PendingPanDelta / 0.016f; // 初始速度方案
+            }
+            else
+            {
+                state.Velocity = Vector2.Zero;
             }
         }
     }

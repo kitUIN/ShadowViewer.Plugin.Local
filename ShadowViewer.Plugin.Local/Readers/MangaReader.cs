@@ -3,6 +3,7 @@ using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ShadowPluginLoader.WinUI;
+using ShadowViewer.Plugin.Local.Readers.Internal;
 using ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 using System;
 using System.Collections;
@@ -131,24 +132,29 @@ public sealed partial class MangaReader : Control
     private bool hasPendingLayoutUpdate = false;
 
     /// <summary>
-    /// 缓存的缩放比例，避免每次重新计算。
+    /// 布局计算服务。
     /// </summary>
-    private float cachedScale = 1.0f;
+    private readonly ReaderLayoutService layoutService = new();
+
+    /// <summary>
+    /// 卷页判定与动画参数计算服务。
+    /// </summary>
+    private readonly PageTurnService pageTurnService = new();
+
+    /// <summary>
+    /// 布局缓存状态。
+    /// </summary>
+    private readonly ReaderLayoutCacheState layoutCache = new();
 
     /// <summary>
     /// 缓存的众数高度。
     /// </summary>
-    private double modeHeight = 0;
+    private double modeHeight => layoutCache.ModeHeight;
 
     /// <summary>
     /// 缓存的众数宽度。
     /// </summary>
-    private double modeWidth = 0;
-
-    /// <summary>
-    /// 缓存缩放比例时的视口高度。
-    /// </summary>
-    private float cachedViewHeight = 0;
+    private double modeWidth => layoutCache.ModeWidth;
 
     // 翻页动画状态
     private bool isAnimatingPageTurn = false;
@@ -158,16 +164,6 @@ public sealed partial class MangaReader : Control
     private int pageTurnTargetIndex = -1;
     private bool pageTurnCurlFromRight = false;
     private RenderNode? pageTurnCurlingNode = null;
-
-    /// <summary>
-    /// 缓存缩放比例时的视口宽度。
-    /// </summary>
-    private float cachedViewWidth = 0;
-
-    /// <summary>
-    /// 缓存缩放比例时的节点数量。
-    /// </summary>
-    private int cachedNodeCount = 0;
 
     /// <summary>
     /// 插件可用的图像加载策略集合（优先级按添加顺序）。
@@ -191,9 +187,7 @@ public sealed partial class MangaReader : Control
             TotalPage = 0;
 
             // 重置缓存
-            cachedScale = 1.0f;
-            cachedViewHeight = 0;
-            cachedNodeCount = 0;
+            layoutCache.ResetAfterClearItems();
         }
 
         lock (state.LayoutNodes)
@@ -406,23 +400,14 @@ public sealed partial class MangaReader : Control
             Vector2 deltaToApply = Vector2.Zero;
             float zoomToApply = 1.0f;
             Vector2 zoomCenter = Vector2.Zero;
+            var inputDelta = inputController.ConsumeFrameDelta();
+            deltaToApply = inputDelta.PanDelta;
+            zoomToApply = inputDelta.ZoomDelta;
+            zoomCenter = inputDelta.ZoomCenter;
 
-            lock (activePointers)
+            if (inputDelta.HasActivePointer)
             {
-                deltaToApply = pendingDelta;
-                pendingDelta = Vector2.Zero;
-
-                zoomToApply = pendingZoomDelta;
-                pendingZoomDelta = 1.0f;
-                zoomCenter = pendingZoomCenter;
-                
-                // 仅在此时更新 lastPointerPos 用于后续释放时的方向判断
-                if (activePointers.Count > 0)
-                {
-                    // 获取任意一个活跃指针作为参考
-                    var enumerator = activePointers.Values.GetEnumerator();
-                    if (enumerator.MoveNext()) lastPointerPos = enumerator.Current;
-                }
+                lastPointerPos = inputDelta.ActivePointerPos;
             }
 
             // 应用缩放 (模拟 ManipulationDelta)
@@ -440,7 +425,7 @@ public sealed partial class MangaReader : Control
                 if (isDragging)
                 {
                     state.ZoomVelocity = (zoomToApply - 1.0f) / dt;
-                    lastZoomCenter = zoomCenter;
+                    inputController.LastZoomCenter = zoomCenter;
                 }
             }
 
@@ -485,23 +470,18 @@ public sealed partial class MangaReader : Control
                 {
                     if (pageTurnAnimVelocity != 0)
                     {
-                        pageTurnAnimCurlAmount += pageTurnAnimVelocity * dt;
-                        
-                        bool finished = false;
-                        if (pageTurnAnimVelocity > 0 && pageTurnAnimCurlAmount >= pageTurnAnimTargetCurl)
-                        {
-                            pageTurnAnimCurlAmount = pageTurnAnimTargetCurl;
-                            finished = true;
-                        }
-                        else if (pageTurnAnimVelocity < 0 && pageTurnAnimCurlAmount <= pageTurnAnimTargetCurl)
-                        {
-                            pageTurnAnimCurlAmount = pageTurnAnimTargetCurl;
-                            finished = true;
-                        }
+                        // 将单步推进与收敛判定统一放在服务层，避免状态机细节散落在主循环。
+                        var stepResult = pageTurnService.StepAnimation(
+                            pageTurnAnimCurlAmount,
+                            pageTurnAnimTargetCurl,
+                            pageTurnAnimVelocity,
+                            dt);
 
-                        if (finished)
+                        pageTurnAnimCurlAmount = stepResult.CurlAmount;
+                        pageTurnAnimVelocity = stepResult.Velocity;
+
+                        if (stepResult.IsFinished)
                         {
-                            pageTurnAnimVelocity = 0;
                             int targetIndex = pageTurnTargetIndex;
                             this.DispatcherQueue.TryEnqueue(() =>
                             {
@@ -538,7 +518,7 @@ public sealed partial class MangaReader : Control
                         state.Zoom = Math.Clamp(state.Zoom * zoomStep, minZoom, maxZoom);
 
                         // 缩放中心补偿 (使用释放时的中心点)
-                        state.CameraPos += (lastZoomCenter - viewSize / 2f) * (1.0f / oldZoom - 1.0f / state.Zoom);
+                        state.CameraPos += (inputController.LastZoomCenter - viewSize / 2f) * (1.0f / oldZoom - 1.0f / state.Zoom);
 
                         float decay = MathF.Exp(-state.Friction * dt);
                         state.ZoomVelocity *= decay;
@@ -680,7 +660,7 @@ public sealed partial class MangaReader : Control
             {
                 bool isCurling = (state.CurrentMode == ReadingMode.SpreadLtr || state.CurrentMode == ReadingMode.SpreadRtl) 
                                  && Math.Abs(state.Zoom - baseZoomScale) <= 0.001f 
-                                 && ((isDragging && activePointers.Count == 1) || isAnimatingPageTurn);
+                                 && ((isDragging && inputController.ActivePointerCount == 1) || isAnimatingPageTurn);
                 
                 RenderNode? curlingNode = null;
                 bool curlFromRight = false;
@@ -696,7 +676,7 @@ public sealed partial class MangaReader : Control
                     }
                     else
                     {
-                        float dragDeltaX = lastPointerPos.X - dragStartPos.X;
+                        float dragDeltaX = lastPointerPos.X - inputController.DragStartPos.X;
                         if (dragDeltaX < -10) // Drag left
                         {
                             curlFromRight = true;
@@ -1120,311 +1100,17 @@ public sealed partial class MangaReader : Control
     }
 
     /// <summary>
-    /// 计算并缓存缩放比例。
-    /// </summary>
-    private void UpdateCachedScale()
-    {
-        if (allNodes.Count == 0 || viewSize.Y <= 0 || viewSize.X <= 0)
-        {
-            cachedScale = 1.0f;
-            return;
-        }
-
-        // 只采样已加载实际尺寸的节点（排除默认 200x300 的占位节点）
-        var loadedNodes = allNodes.Where(n => n.IsSizeLoaded).ToList();
-
-        // 如果没有已加载尺寸的节点，使用默认缩放
-        if (loadedNodes.Count == 0)
-        {
-            cachedScale = 1.0f;
-            return;
-        }
-
-        // 只采样前 100 个已加载的节点
-        var sampleNodes = loadedNodes.Count <= 100 ? loadedNodes : loadedNodes.Take(100).ToList();
-
-        // 计算众数高度和众数宽度
-        var modeHeightGroup = sampleNodes
-            .GroupBy(n => Math.Round(n.Ctx.Size.Height))
-            .OrderByDescending(g => g.Count())
-            .FirstOrDefault();
-
-        var modeWidthGroup = sampleNodes
-            .GroupBy(n => Math.Round(n.Ctx.Size.Width))
-            .OrderByDescending(g => g.Count())
-            .FirstOrDefault();
-
-        if (modeHeightGroup != null && modeWidthGroup != null)
-        {
-            this.modeHeight = modeHeightGroup.Key;
-            this.modeWidth = modeWidthGroup.Key;
-
-            if (modeHeight > 0 && modeWidth > 0)
-            {
-                // 适应高度的缩放比例
-                float scaleH = viewSize.Y / (float)modeHeight;
-                // 适应宽度的缩放比例
-                float scaleW = viewSize.X / (float)modeWidth;
-
-                // 默认使用两者中的最小值，确保图片完整显示在视口内
-                cachedScale = Math.Min(scaleH, scaleW);
-            }
-        }
-        else
-        {
-            this.modeHeight = 0;
-            this.modeWidth = 0;
-        }
-
-        if (Math.Abs(cachedViewHeight - viewSize.Y) > 1f || Math.Abs(cachedViewWidth - viewSize.X) > 1f)
-        {
-            Log.Debug(
-                "UpdateCachedScale: ViewSize changed, new scale={CachedScale:F2}, viewSize=({ViewSizeX:F0}x{ViewSizeY:F0}), modeHeight={Key}, modeWidth={D}, sampleCount={SampleNodesCount}", cachedScale, viewSize.X, viewSize.Y, modeHeightGroup?.Key, modeWidthGroup?.Key, sampleNodes.Count);
-        }
-
-        cachedViewHeight = viewSize.Y;
-        cachedViewWidth = viewSize.X;
-        cachedNodeCount = allNodes.Count;
-    }
-
-    /// <summary>
-    /// 获取当前缩放比例，必要时重新计算。
-    /// </summary>
-    private float GetScale()
-    {
-        // 如果视口高度、宽度或节点数量变化较大，重新计算
-        bool needRecalculate = Math.Abs(viewSize.Y - cachedViewHeight) > 1.0f
-                               || Math.Abs(viewSize.X - cachedViewWidth) > 1.0f
-                               || Math.Abs(allNodes.Count - cachedNodeCount) > 10;
-
-        if (needRecalculate)
-        {
-            UpdateCachedScale();
-        }
-
-        return cachedScale;
-    }
-
-    /// <summary>
     /// 根据当前阅读模式和视口大小计算并更新 <see cref="EngineState.LayoutNodes"/> 中的布局信息。
     /// </summary>
     private void UpdateActiveLayout()
     {
-        lock (state.LayoutNodes)
-        {
-            state.LayoutNodes.Clear();
-
-            if (state.CurrentMode == ReadingMode.VerticalScroll)
-            {
-                float currentY = 0;
-                float spacing = pageSpacing;
-                float scale;
-
-                lock (allNodes)
-                {
-                    scale = GetScale();
-
-                    foreach (var node in allNodes)
-                    {
-                        // 应用缩放
-                        double scaledWidth, scaledHeight;
-                        if (IsFitToModeSize && modeWidth > 0 && modeHeight > 0)
-                        {
-                            // 计算使图片适应众数尺寸区域且保留比例的缩放率
-                            double fitScale = Math.Min(modeWidth / node.Ctx.Size.Width, modeHeight / node.Ctx.Size.Height);
-                            scaledWidth = node.Ctx.Size.Width * fitScale * scale;
-                            scaledHeight = node.Ctx.Size.Height * fitScale * scale;
-                        }
-                        else
-                        {
-                            scaledWidth = node.Ctx.Size.Width * scale;
-                            scaledHeight = node.Ctx.Size.Height * scale;
-                        }
-
-                        node.Bounds.Width = scaledWidth;
-                        node.Bounds.Height = scaledHeight;
-
-                        node.Bounds.X = -scaledWidth / 2.0;
-                        node.Bounds.Y = currentY;
-
-                        currentY += (float)scaledHeight + spacing;
-                        state.LayoutNodes.Add(node);
-                    }
-                }
-            }
-            else if (state.CurrentMode == ReadingMode.SinglePage)
-            {
-                lock (allNodes)
-                {
-                    if (CurrentPageIndex >= 0 && CurrentPageIndex < allNodes.Count)
-                    {
-                        var node = allNodes[CurrentPageIndex];
-                        if (IsFitToModeSize && modeWidth > 0 && modeHeight > 0)
-                        {
-                            double fitScale = Math.Min(modeWidth / node.Ctx.Size.Width, modeHeight / node.Ctx.Size.Height);
-                            node.Bounds.Width = node.Ctx.Size.Width * fitScale;
-                            node.Bounds.Height = node.Ctx.Size.Height * fitScale;
-                        }
-                        else if (node.IsSizeLoaded)
-                        {
-                            node.Bounds.Width = node.Ctx.Size.Width;
-                            node.Bounds.Height = node.Ctx.Size.Height;
-                        }
-
-                        // Center at (0,0)
-                        node.Bounds.X = -node.Bounds.Width / 2.0;
-                        node.Bounds.Y = -node.Bounds.Height / 2.0;
-                        state.LayoutNodes.Add(node);
-                    }
-                }
-            }
-            else if (state.CurrentMode == ReadingMode.SpreadRtl || state.CurrentMode == ReadingMode.SpreadLtr)
-            {
-                lock (allNodes)
-                {
-                    var nodesToAdd = new List<RenderNode>();
-                    if (CurrentPageIndex == 0)
-                    {
-                        if (allNodes.Count > 0) nodesToAdd.Add(allNodes[0]);
-                    }
-                    else
-                    {
-                        // Calculate spread start index (1-based pairs: 1-2, 3-4...)
-                        // If index is 1 or 2, start is 1.
-                        int pairStart = ((CurrentPageIndex - 1) / 2) * 2 + 1;
-
-                        if (pairStart < allNodes.Count) nodesToAdd.Add(pairStart >= 0 ? allNodes[pairStart] : null!);
-                        if (pairStart + 1 < allNodes.Count) nodesToAdd.Add(allNodes[pairStart + 1]);
-                        nodesToAdd.RemoveAll(n => n == null);
-                    }
-
-                    // Apply mode size if enabled
-                    CalculateSpreadNodeBounds(nodesToAdd);
-
-                    // Layout side-by-side (RTL: Right is first/lower index, Left is second/higher index)
-                    if (nodesToAdd.Count == 1)
-                    {
-                        var node = nodesToAdd[0];
-                        if (state.CurrentMode == ReadingMode.SpreadRtl)
-                        {
-                            node.Bounds.X = 0; // Right side
-                        }
-                        else
-                        {
-                            node.Bounds.X = -node.Bounds.Width; // Left side
-                        }
-                        node.Bounds.Y = -node.Bounds.Height / 2.0;
-                        state.LayoutNodes.Add(node);
-                    }
-                    else if (nodesToAdd.Count == 2)
-                    {
-                        // Assuming RTL: Page N (Right), Page N+1 (Left)
-                        // nodesToAdd[0] is First, nodesToAdd[1] is Second
-
-                        RenderNode left, right;
-
-                        if (state.CurrentMode == ReadingMode.SpreadRtl)
-                        {
-                            right = nodesToAdd[0]; // First page on Right
-                            left = nodesToAdd[1]; // Second page on Left
-                        }
-                        else // SpreadLTR
-                        {
-                            left = nodesToAdd[0]; // First page on Left
-                            right = nodesToAdd[1]; // Second page on Right
-                        }
-
-                        float spacing = 0; // Usually spreads are tight
-
-                        // Left Page Position (Left of center)
-                        left.Bounds.X = -left.Bounds.Width - spacing / 2.0;
-                        left.Bounds.Y = -left.Bounds.Height / 2.0;
-
-                        // Right Page Position (Right of center)
-                        right.Bounds.X = spacing / 2.0;
-                        right.Bounds.Y = -right.Bounds.Height / 2.0;
-
-                        state.LayoutNodes.Add(left);
-                        state.LayoutNodes.Add(right);
-                    }
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// 计算双页模式下节点的尺寸（Bounds.Width 和 Bounds.Height）。
-    /// 确保两页等高，并根据 IsFitToModeSize 进行缩放。
-    /// </summary>
-    private void CalculateSpreadNodeBounds(List<RenderNode> nodes)
-    {
-        if (IsFitToModeSize && modeWidth > 0 && modeHeight > 0)
-        {
-            if (nodes.Count == 1)
-            {
-                var node = nodes[0];
-                double fitScale = Math.Min(modeWidth / node.Ctx.Size.Width, modeHeight / node.Ctx.Size.Height);
-                node.Bounds.Width = node.Ctx.Size.Width * fitScale;
-                node.Bounds.Height = node.Ctx.Size.Height * fitScale;
-            }
-            else if (nodes.Count == 2)
-            {
-                var node1 = nodes[0];
-                var node2 = nodes[1];
-                
-                // Scale both to modeHeight first to ensure they have the same height
-                double scale1 = modeHeight / node1.Ctx.Size.Height;
-                double scale2 = modeHeight / node2.Ctx.Size.Height;
-                
-                double width1 = node1.Ctx.Size.Width * scale1;
-                double width2 = node2.Ctx.Size.Width * scale2;
-                
-                // Check if combined width exceeds modeWidth * 2
-                double combinedWidth = width1 + width2;
-                if (combinedWidth > modeWidth * 2)
-                {
-                    double shrinkScale = (modeWidth * 2) / combinedWidth;
-                    scale1 *= shrinkScale;
-                    scale2 *= shrinkScale;
-                }
-                
-                node1.Bounds.Width = node1.Ctx.Size.Width * scale1;
-                node1.Bounds.Height = node1.Ctx.Size.Height * scale1;
-                
-                node2.Bounds.Width = node2.Ctx.Size.Width * scale2;
-                node2.Bounds.Height = node2.Ctx.Size.Height * scale2;
-            }
-        }
-        else
-        {
-            if (nodes.Count == 1)
-            {
-                var node = nodes[0];
-                if (node.IsSizeLoaded)
-                {
-                    node.Bounds.Width = node.Ctx.Size.Width;
-                    node.Bounds.Height = node.Ctx.Size.Height;
-                }
-            }
-            else if (nodes.Count == 2)
-            {
-                var node1 = nodes[0];
-                var node2 = nodes[1];
-                
-                if (node1.IsSizeLoaded && node2.IsSizeLoaded)
-                {
-                    // Scale to the same height
-                    double maxHeight = Math.Max(node1.Ctx.Size.Height, node2.Ctx.Size.Height);
-                    double scale1 = maxHeight / node1.Ctx.Size.Height;
-                    double scale2 = maxHeight / node2.Ctx.Size.Height;
-                    
-                    node1.Bounds.Width = node1.Ctx.Size.Width * scale1;
-                    node1.Bounds.Height = node1.Ctx.Size.Height * scale1;
-                    
-                    node2.Bounds.Width = node2.Ctx.Size.Width * scale2;
-                    node2.Bounds.Height = node2.Ctx.Size.Height * scale2;
-                }
-            }
-        }
+        layoutService.UpdateActiveLayout(
+            state,
+            allNodes,
+            CurrentPageIndex,
+            pageSpacing,
+            IsFitToModeSize,
+            viewSize,
+            layoutCache);
     }
 }
