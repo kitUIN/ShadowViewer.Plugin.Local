@@ -125,7 +125,27 @@ public sealed partial class MangaReader : Control
     /// <summary>
     /// 延迟 UI 任务取消令牌源（用于防抖刷新等延迟任务）。
     /// </summary>
-    private readonly CancellationTokenSource deferredUiWorkCts = new();
+    private CancellationTokenSource deferredUiWorkCts = new();
+
+    /// <summary>
+    /// SetItems 请求替换锁，确保取消与令牌替换过程原子化。
+    /// </summary>
+    private readonly object setItemsRequestLock = new();
+
+    /// <summary>
+    /// 当前 SetItems 请求的取消令牌源。
+    /// </summary>
+    private CancellationTokenSource? setItemsCts;
+
+    /// <summary>
+    /// 串行化 SetItems 流程，避免多个请求并发交错写入节点集合。
+    /// </summary>
+    private readonly SemaphoreSlim setItemsGate = new(1, 1);
+
+    /// <summary>
+    /// SetItems 请求版本号，用于快速丢弃过期请求。
+    /// </summary>
+    private int setItemsVersion;
 
     /// <summary>
     /// 标记当前是否处于内部更新流程中，以避免属性回调触发循环。
@@ -238,7 +258,11 @@ public sealed partial class MangaReader : Control
 
             allNodes.Clear();
             TotalPage = 0;
-            loadingPages.Clear();
+
+            lock (loadingLock)
+            {
+                loadingPages.Clear();
+            }
 
             // 重置缓存
             layoutCache.ResetAfterClearItems();
@@ -310,10 +334,45 @@ public sealed partial class MangaReader : Control
     /// 这是推荐的加载方式：Clear -> Add 一个个。
     /// </summary>
     /// <param name="items">要设置的项目集合。</param>
-    public async void SetItems(IEnumerable? items)
+    public void SetItems(IEnumerable? items)
+    {
+        CancellationTokenSource? oldCts;
+        CancellationTokenSource newCts = new();
+        int requestVersion;
+
+        lock (setItemsRequestLock)
+        {
+            oldCts = setItemsCts;
+            setItemsCts = newCts;
+            requestVersion = Interlocked.Increment(ref setItemsVersion);
+        }
+
+        oldCts?.Cancel();
+        oldCts?.Dispose();
+
+        _ = SetItemsCoreAsync(items, requestVersion, newCts.Token);
+    }
+
+    /// <summary>
+    /// 串行执行项目源切换，支持取消并防止旧请求覆盖新数据。
+    /// </summary>
+    /// <param name="items">要设置的项目集合。</param>
+    /// <param name="requestVersion">当前请求版本号。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>表示设置流程的异步任务。</returns>
+    private async Task SetItemsCoreAsync(IEnumerable? items, int requestVersion, CancellationToken cancellationToken)
     {
         try
         {
+            await setItemsGate.WaitAsync(cancellationToken);
+
+            try
+            {
+            if (requestVersion != Volatile.Read(ref setItemsVersion))
+            {
+                return;
+            }
+
             if (items == null)
             {
                 ClearItems();
@@ -322,6 +381,9 @@ public sealed partial class MangaReader : Control
 
             var itemList = new List<object>();
             foreach (var item in items) itemList.Add(item);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            if (requestVersion != Volatile.Read(ref setItemsVersion)) return;
 
             ClearItems();
 
@@ -336,13 +398,16 @@ public sealed partial class MangaReader : Control
             {
                 for (int i = 0; i < totalCount; i += batchSize)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (requestVersion != Volatile.Read(ref setItemsVersion)) return;
+
                     var batch = itemList.Skip(i).Take(batchSize).ToList();
                     AddItems(batch, -1);
 
                     // 让出时间片，保持 UI 响应
                     if (i + batchSize < totalCount)
                     {
-                        await Task.Delay(1);
+                        await Task.Delay(1, cancellationToken);
                     }
                 }
             }
@@ -350,6 +415,15 @@ public sealed partial class MangaReader : Control
             {
                 EndBatchAdd();
             }
+            }
+            finally
+            {
+                setItemsGate.Release();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 请求被新请求替换或控件卸载时取消属于正常行为。
         }
         catch (Exception ex)
         {
@@ -382,7 +456,25 @@ public sealed partial class MangaReader : Control
 
         bitmapLoadPipeline.Start();
         sizeLoadPipeline.Start();
+        this.Loaded += MangaReader_Loaded;
         this.Unloaded += MangaReader_Unloaded;
+    }
+
+    /// <summary>
+    /// 控件重新进入可视树时恢复后台流水线与延迟任务令牌。
+    /// </summary>
+    /// <param name="sender">事件发送者。</param>
+    /// <param name="e">路由事件参数。</param>
+    private void MangaReader_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (deferredUiWorkCts.IsCancellationRequested)
+        {
+            deferredUiWorkCts.Dispose();
+            deferredUiWorkCts = new CancellationTokenSource();
+        }
+
+        bitmapLoadPipeline.Start();
+        sizeLoadPipeline.Start();
     }
 
     /// <summary>
@@ -393,6 +485,13 @@ public sealed partial class MangaReader : Control
     /// <returns>无返回值。</returns>
     private void MangaReader_Unloaded(object sender, RoutedEventArgs e)
     {
+        lock (setItemsRequestLock)
+        {
+            setItemsCts?.Cancel();
+            setItemsCts?.Dispose();
+            setItemsCts = null;
+        }
+
         if (effectiveViewportChangedHandler != null)
         {
             EffectiveViewportChanged -= effectiveViewportChangedHandler;

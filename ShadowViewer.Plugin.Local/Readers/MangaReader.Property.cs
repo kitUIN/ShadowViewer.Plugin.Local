@@ -214,12 +214,17 @@ public sealed partial class MangaReader
     private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not MangaReader control) return;
+
         if (e.OldValue is INotifyCollectionChanged oldCollection)
         {
             oldCollection.CollectionChanged -= control.OnItemsSourceCollectionChanged;
         }
-        if (e.NewValue is not INotifyCollectionChanged newCollection) return;
-        newCollection.CollectionChanged += control.OnItemsSourceCollectionChanged;
+
+        if (e.NewValue is INotifyCollectionChanged newCollection)
+        {
+            newCollection.CollectionChanged += control.OnItemsSourceCollectionChanged;
+        }
+
         control.ReloadItems();
     }
 
