@@ -240,4 +240,22 @@ public partial class PicViewModel : ObservableObject
     {
         CurrentPageIndex = Convert.ToInt32(currentPage) - 1;
     }
+
+    /// <summary>
+    /// 释放页面离开后不再需要的资源引用，降低大图集合常驻内存的概率。
+    /// </summary>
+    public void ReleaseResources()
+    {
+        Images.Clear();
+        Episodes.Clear();
+        EpisodeCounts.Clear();
+
+        CurrentPageIndex = 0;
+        CurrentEpisodeIndex = -1;
+        IsMenu = false;
+
+        PicViewResponder = null;
+        Context = null!;
+        LastPicturePositionLoadedEvent = null;
+    }
 }

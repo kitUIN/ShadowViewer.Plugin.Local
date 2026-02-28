@@ -43,11 +43,19 @@ public sealed partial class PicPage
         autoPageTimer = DispatcherQueue.CreateTimer();
         autoPageTimer.IsRepeating = true;
         autoPageTimer.Interval = TimeSpan.FromSeconds(LocalPluginConfig.PageAutoTurnInterval);
-        autoPageTimer.Tick += ((_, _) =>
+    }
+
+    /// <summary>
+    /// 自动翻页计时器回调。
+    /// </summary>
+    /// <param name="sender">事件发送者。</param>
+    /// <param name="e">事件参数。</param>
+    private void AutoPageTimer_Tick(DispatcherQueueTimer sender, object e)
+    {
+        if (LocalPluginConfig.PageAutoTurn && !ViewModel.IsMenu)
         {
-            if (LocalPluginConfig.PageAutoTurn && !ViewModel.IsMenu) ViewModel?.NextPageCommand.Execute(null);
-        });
-        SettingsHelper.SettingChanged += SettingsHelper_SettingChanged;
+            ViewModel.NextPageCommand.Execute(null);
+        }
     }
 
     /// <summary>
@@ -74,6 +82,11 @@ public sealed partial class PicPage
     /// </summary>
     private readonly DispatcherQueueTimer autoPageTimer;
 
+    /// <summary>
+    /// 标记页面清理流程是否已执行，避免重复解绑导致的冗余操作。
+    /// </summary>
+    private bool isPageCleanupCompleted;
+
 
     /// <summary>
     /// 导航进入
@@ -82,9 +95,60 @@ public sealed partial class PicPage
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         if (e.Parameter is not PicViewArg arg) return;
+
+        // 页面可能被重用，先去重再订阅，确保事件链只保留一份。
+        autoPageTimer.Tick -= AutoPageTimer_Tick;
+        autoPageTimer.Tick += AutoPageTimer_Tick;
+        SettingsHelper.SettingChanged -= SettingsHelper_SettingChanged;
+        SettingsHelper.SettingChanged += SettingsHelper_SettingChanged;
+        Unloaded -= PicPage_Unloaded;
+        Unloaded += PicPage_Unloaded;
+
+        isPageCleanupCompleted = false;
         ViewModel.Affiliation = arg.Affiliation;
         ViewModel.Init(arg);
         autoPageTimer.Start();
+    }
+
+    /// <summary>
+    /// 导航离开时释放页面资源，避免页面实例被静态事件或计时器持续持有。
+    /// </summary>
+    /// <param name="e">导航事件参数。</param>
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        CleanupPageResources();
+        base.OnNavigatedFrom(e);
+    }
+
+    /// <summary>
+    /// 页面卸载时兜底清理，覆盖非导航触发的可视树移除场景。
+    /// </summary>
+    /// <param name="sender">事件发送者。</param>
+    /// <param name="e">路由事件参数。</param>
+    private void PicPage_Unloaded(object sender, RoutedEventArgs e)
+    {
+        CleanupPageResources();
+    }
+
+    /// <summary>
+    /// 释放页面与阅读器相关资源。
+    /// </summary>
+    private void CleanupPageResources()
+    {
+        if (isPageCleanupCompleted)
+        {
+            return;
+        }
+
+        isPageCleanupCompleted = true;
+
+        autoPageTimer.Stop();
+        autoPageTimer.Tick -= AutoPageTimer_Tick;
+        SettingsHelper.SettingChanged -= SettingsHelper_SettingChanged;
+        Unloaded -= PicPage_Unloaded;
+
+        MangaReader.ClearItems(scheduleLayoutUpdate: false);
+        ViewModel.ReleaseResources();
     }
 
     private void PageTapped(object sender, TappedRoutedEventArgs e)
