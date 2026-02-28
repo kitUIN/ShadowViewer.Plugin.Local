@@ -1,8 +1,10 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using System;
 using System.Linq;
 using System.Numerics;
+using Microsoft.UI.Xaml.Controls.Primitives;
 
 namespace ShadowViewer.Plugin.Local.Readers;
 
@@ -137,6 +139,17 @@ public sealed partial class MangaReader
     /// </summary>
     private void OnApplyZoomFlyoutTemplate()
     {
+        if (zoomSlider != null)
+        {
+            zoomSlider.ValueChanged -= ZoomSlider_ValueChanged;
+        }
+
+        if (resetButton != null)
+        {
+            resetButton.Tapped -= ResetButton_Tapped;
+            resetButton.Click -= ResetButton_Click;
+        }
+
         infoPanel = GetTemplateChild("PART_InfoPanel") as Border;
         zoomSlider = GetTemplateChild("PART_ZoomSlider") as Slider;
         zoomText = GetTemplateChild("PART_ZoomText") as TextBlock;
@@ -146,22 +159,48 @@ public sealed partial class MangaReader
 
         if (zoomSlider != null)
         {
-            zoomSlider.ValueChanged += (_, e) =>
-            {
-                if (isUpdatingZoomUi) return;
-
-                float newScale = (float)e.NewValue / 100.0f;
-                // Ensure we have a valid base scale
-                float baseScale = baseZoomScale > 0 ? baseZoomScale : 1.0f;
-                state.Zoom = newScale * baseScale;
-            };
+            zoomSlider.ValueChanged += ZoomSlider_ValueChanged;
         }
 
         if (resetButton != null)
         {
-            resetButton.Tapped += (_, e) => e.Handled = true;
-            resetButton.Click += (_, _) => ResetZoom(true);
+            resetButton.Tapped += ResetButton_Tapped;
+            resetButton.Click += ResetButton_Click;
         }
+    }
+
+    /// <summary>
+    /// 缩放滑动条变更处理：将百分比值映射为相对基准缩放比例。
+    /// </summary>
+    /// <param name="sender">事件发送者。</param>
+    /// <param name="e">值变化参数。</param>
+    private void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (isUpdatingZoomUi) return;
+
+        var newScale = (float)e.NewValue / 100.0f;
+        var baseScale = baseZoomScale > 0 ? baseZoomScale : 1.0f;
+        state.Zoom = newScale * baseScale;
+    }
+
+    /// <summary>
+    /// 重置按钮点击前处理：标记事件已处理，避免额外输入链路重复传播。
+    /// </summary>
+    /// <param name="sender">事件发送者。</param>
+    /// <param name="e">点击事件参数。</param>
+    private static void ResetButton_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// 重置按钮点击处理：恢复当前模式下的默认缩放与位置。
+    /// </summary>
+    /// <param name="sender">事件发送者。</param>
+    /// <param name="e">路由事件参数。</param>
+    private void ResetButton_Click(object sender, RoutedEventArgs e)
+    {
+        ResetZoom(true);
     }
 
     /// <summary>

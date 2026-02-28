@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Input;
 using ShadowViewer.Plugin.Local.Readers.Internal;
@@ -9,6 +10,16 @@ namespace ShadowViewer.Plugin.Local.Readers;
 public partial class MangaReader
 {
     // --- 输入处理 ---
+
+    /// <summary>
+    /// 滚轮交互去抖任务取消源，用于避免旧任务覆盖最新交互状态。
+    /// </summary>
+    private CancellationTokenSource? wheelInteractionCts;
+
+    /// <summary>
+    /// 同步滚轮去抖取消源替换过程的锁对象。
+    /// </summary>
+    private readonly object wheelInteractionLock = new();
 
     /// <summary>
     /// 输入控制器，负责指针状态与增量计算。
@@ -36,6 +47,7 @@ public partial class MangaReader
 
             if (isPrimaryPointer)
             {
+                CancelWheelInteractionClear();
                 isDragging = true;
                 isUserInteracting = true;
                 lastPointerPos = pos;
@@ -181,13 +193,8 @@ public partial class MangaReader
             // 滚轮滚动
             isUserInteracting = true;  // 标记用户正在滚动
             state.CameraPos.Y -= delta / state.Zoom;
-            
-            // 延迟清除交互标记，避免立即被布局更新打断
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(500);  // 滚轮停止后500ms清除标记
-                isUserInteracting = false;
-            });
+
+            ScheduleWheelInteractionClear();
         }
         else if (EnableMouseWheelNavigation)
         {
@@ -210,6 +217,61 @@ public partial class MangaReader
         }
 
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// 调度滚轮交互结束后的去抖清理，防止布局刷新过早夺回摄像机控制。
+    /// </summary>
+    private void ScheduleWheelInteractionClear()
+    {
+        CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(deferredUiWorkCts.Token);
+        CancellationTokenSource? oldCts;
+
+        lock (wheelInteractionLock)
+        {
+            oldCts = wheelInteractionCts;
+            wheelInteractionCts = linkedCts;
+        }
+
+        oldCts?.Cancel();
+        oldCts?.Dispose();
+
+        _ = ClearWheelInteractionAsync(linkedCts.Token);
+    }
+
+    /// <summary>
+    /// 取消并释放滚轮交互去抖任务。
+    /// </summary>
+    private void CancelWheelInteractionClear()
+    {
+        CancellationTokenSource? oldCts;
+
+        lock (wheelInteractionLock)
+        {
+            oldCts = wheelInteractionCts;
+            wheelInteractionCts = null;
+        }
+
+        oldCts?.Cancel();
+        oldCts?.Dispose();
+    }
+
+    /// <summary>
+    /// 异步等待滚轮空闲窗口并清除交互标记。
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>表示异步清理流程的任务。</returns>
+    private async Task ClearWheelInteractionAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(500, cancellationToken);
+            isUserInteracting = false;
+        }
+        catch (OperationCanceledException)
+        {
+            // 新交互开始或控件卸载时取消属于正常行为。
+        }
     }
 
 }

@@ -485,6 +485,8 @@ public sealed partial class MangaReader : Control
     /// <returns>无返回值。</returns>
     private void MangaReader_Unloaded(object sender, RoutedEventArgs e)
     {
+        CancelWheelInteractionClear();
+
         lock (setItemsRequestLock)
         {
             setItemsCts?.Cancel();
