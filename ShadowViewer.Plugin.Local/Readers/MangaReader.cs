@@ -64,6 +64,11 @@ public sealed partial class MangaReader : Control
     private Grid? rootGrid;
 
     /// <summary>
+    /// EffectiveViewportChanged 事件处理器引用，用于重复模板应用与卸载时可靠解绑。
+    /// </summary>
+    private TypedEventHandler<FrameworkElement, EffectiveViewportChangedEventArgs>? effectiveViewportChangedHandler;
+
+    /// <summary>
     /// 渲染引擎状态，包含摄像机位置、缩放、速度与布局节点等信息。
     /// </summary>
     private readonly EngineState state = new();
@@ -217,7 +222,8 @@ public sealed partial class MangaReader : Control
     /// <summary>
     /// 清空所有节点并释放资源。
     /// </summary>
-    public void ClearItems()
+    /// <param name="scheduleLayoutUpdate">是否在清理后调度一次布局更新。</param>
+    public void ClearItems(bool scheduleLayoutUpdate = true)
     {
         // 清空内容时推进流水线世代，确保旧请求结果不会污染新数据集。
         sizeLoadPipeline.Invalidate();
@@ -246,7 +252,10 @@ public sealed partial class MangaReader : Control
             state.Velocity = Vector2.Zero;
         }
 
-        this.DispatcherQueue.TryEnqueue(UpdateActiveLayout);
+        if (scheduleLayoutUpdate)
+        {
+            this.DispatcherQueue.TryEnqueue(UpdateActiveLayout);
+        }
     }
 
     /// <summary>
@@ -384,12 +393,30 @@ public sealed partial class MangaReader : Control
     /// <returns>无返回值。</returns>
     private void MangaReader_Unloaded(object sender, RoutedEventArgs e)
     {
+        if (effectiveViewportChangedHandler != null)
+        {
+            EffectiveViewportChanged -= effectiveViewportChangedHandler;
+            effectiveViewportChangedHandler = null;
+        }
+
         if (mainCanvas != null)
         {
+            mainCanvas.PointerPressed -= MainCanvas_PointerPressed;
+            mainCanvas.PointerMoved -= MainCanvas_PointerMoved;
+            mainCanvas.PointerReleased -= MainCanvas_PointerReleased;
+            mainCanvas.PointerWheelChanged -= MainCanvas_PointerWheelChanged;
+            mainCanvas.PointerCaptureLost -= MainCanvas_PointerCaptureLost;
+            mainCanvas.PointerCanceled -= MainCanvas_PointerCanceled;
+            mainCanvas.CreateResources -= MainCanvas_CreateResources;
+            mainCanvas.Update -= MainCanvas_Update;
+            mainCanvas.Draw -= MainCanvas_Draw;
             mainCanvas.Paused = true;
             mainCanvas.RemoveFromVisualTree();
             mainCanvas = null;
         }
+
+        // 卸载时主动释放节点与位图，避免页面离开后仍持有大量图像内存。
+        ClearItems(scheduleLayoutUpdate: false);
 
         // 卸载后停止后台流水线，避免控件已退出可视树时仍有异步回写。
         bitmapLoadPipeline.Stop();
@@ -417,6 +444,12 @@ public sealed partial class MangaReader : Control
             mainCanvas.Draw -= MainCanvas_Draw;
         }
 
+        if (effectiveViewportChangedHandler != null)
+        {
+            EffectiveViewportChanged -= effectiveViewportChangedHandler;
+            effectiveViewportChangedHandler = null;
+        }
+
         OnApplyZoomFlyoutTemplate();
         mainCanvas = GetTemplateChild("PART_MainCanvas") as CanvasAnimatedControl;
         rootGrid = GetTemplateChild("PART_RootGrid") as Grid;
@@ -436,7 +469,7 @@ public sealed partial class MangaReader : Control
             mainCanvas.PointerCaptureLost += MainCanvas_PointerCaptureLost;
             mainCanvas.PointerCanceled += MainCanvas_PointerCanceled;
 
-            EffectiveViewportChanged += (_, e) =>
+            effectiveViewportChangedHandler = (_, e) =>
             {
                 bool wasZero = viewSize == Vector2.Zero;
                 viewSize = new Vector2((float)e.EffectiveViewport.Width, (float)e.EffectiveViewport.Height);
@@ -449,6 +482,7 @@ public sealed partial class MangaReader : Control
                     ResetZoom();
                 }
             };
+            EffectiveViewportChanged += effectiveViewportChangedHandler;
 
             mainCanvas.CreateResources += MainCanvas_CreateResources;
             mainCanvas.Update += MainCanvas_Update;
