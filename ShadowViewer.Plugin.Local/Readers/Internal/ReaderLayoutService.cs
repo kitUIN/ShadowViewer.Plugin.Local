@@ -124,9 +124,11 @@ internal sealed class ReaderLayoutService
             {
                 lock (allNodes)
                 {
-                    if (currentPageIndex >= 0 && currentPageIndex < allNodes.Count)
+                    // 相邻页面使用相同的布局规则预计算，但不加入可见节点集合。
+                    for (int index = Math.Max(0, currentPageIndex - 1);
+                         index <= Math.Min(allNodes.Count - 1, currentPageIndex + 1); index++)
                     {
-                        var node = allNodes[currentPageIndex];
+                        var node = allNodes[index];
                         if (isFitToModeSize && cache.ModeWidth > 0 && cache.ModeHeight > 0)
                         {
                             double fitScale = Math.Min(cache.ModeWidth / node.Ctx.Size.Width, cache.ModeHeight / node.Ctx.Size.Height);
@@ -141,7 +143,7 @@ internal sealed class ReaderLayoutService
 
                         node.Bounds.X = -node.Bounds.Width / 2.0;
                         node.Bounds.Y = -node.Bounds.Height / 2.0;
-                        state.LayoutNodes.Add(node);
+                        if (index == currentPageIndex) state.LayoutNodes.Add(node);
                     }
                 }
             }
@@ -149,74 +151,52 @@ internal sealed class ReaderLayoutService
             {
                 lock (allNodes)
                 {
-                    var nodesToAdd = new List<RenderNode>();
-                    if (currentPageIndex == 0)
+                    if (currentPageIndex < 0 || currentPageIndex >= allNodes.Count) return;
+                    int pairStart = currentPageIndex == 0 ? 0 : ((currentPageIndex - 1) / 2) * 2 + 1;
+                    int previousStart = pairStart <= 1 ? 0 : pairStart - 2;
+                    int nextStart = pairStart == 0 ? 1 : pairStart + 2;
+
+                    foreach (int spreadStart in new[] { previousStart, pairStart, nextStart }.Distinct())
                     {
-                        if (allNodes.Count > 0) nodesToAdd.Add(allNodes[0]);
-                    }
-                    else
-                    {
-                        // 双页模式按 1-2、3-4 进行配对，首页单独处理可避免封面被错误并页。
-                        int pairStart = ((currentPageIndex - 1) / 2) * 2 + 1;
-
-                        if (pairStart < allNodes.Count) nodesToAdd.Add(pairStart >= 0 ? allNodes[pairStart] : null!);
-                        if (pairStart + 1 < allNodes.Count) nodesToAdd.Add(allNodes[pairStart + 1]);
-                        nodesToAdd.RemoveAll(n => n == null);
-                    }
-
-                    CalculateSpreadNodeBounds(nodesToAdd, isFitToModeSize, cache);
-
-                    if (nodesToAdd.Count == 1)
-                    {
-                        var node = nodesToAdd[0];
-                        bool placeOnRight = state.CurrentMode == ReadingMode.SpreadRtl;
-                        if (node.PageIndex == 0)
+                        if (spreadStart >= allNodes.Count) continue;
+                        var spread = new List<RenderNode> { allNodes[spreadStart] };
+                        if (spreadStart > 0 && spreadStart + 1 < allNodes.Count)
                         {
-                            // 封面与最后一个未配对页位于书脊的不同侧。
-                            placeOnRight = !placeOnRight;
+                            spread.Add(allNodes[spreadStart + 1]);
                         }
-                        if (placeOnRight)
-                        {
-                            node.Bounds.X = 0;
-                        }
-                        else
-                        {
-                            node.Bounds.X = -node.Bounds.Width;
-                        }
-                        node.Bounds.Y = -node.Bounds.Height / 2.0;
-                        state.LayoutNodes.Add(node);
-                    }
-                    else if (nodesToAdd.Count == 2)
-                    {
-                        RenderNode left;
-                        RenderNode right;
-
-                        if (state.CurrentMode == ReadingMode.SpreadRtl)
-                        {
-                            right = nodesToAdd[0];
-                            left = nodesToAdd[1];
-                        }
-                        else
-                        {
-                            left = nodesToAdd[0];
-                            right = nodesToAdd[1];
-                        }
-
-                        // 双页默认贴合排布，保留 spacing 变量是为了后续可配置扩展。
-                        float spacing = 0;
-
-                        left.Bounds.X = -left.Bounds.Width - spacing / 2.0;
-                        left.Bounds.Y = -left.Bounds.Height / 2.0;
-
-                        right.Bounds.X = spacing / 2.0;
-                        right.Bounds.Y = -right.Bounds.Height / 2.0;
-
-                        state.LayoutNodes.Add(left);
-                        state.LayoutNodes.Add(right);
+                        LayoutSpread(spread, state.CurrentMode, isFitToModeSize, cache);
+                        if (spreadStart == pairStart) state.LayoutNodes.AddRange(spread);
                     }
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 统一计算当前及相邻双页的尺寸和书脊位置。
+    /// </summary>
+    private void LayoutSpread(List<RenderNode> nodes, ReadingMode mode, bool isFitToModeSize, ReaderLayoutCacheState cache)
+    {
+        CalculateSpreadNodeBounds(nodes, isFitToModeSize, cache);
+        if (nodes.Count == 1)
+        {
+            var node = nodes[0];
+            bool placeOnRight = mode == ReadingMode.SpreadRtl;
+            if (node.PageIndex == 0) placeOnRight = !placeOnRight;
+            node.Bounds.X = placeOnRight ? 0 : -node.Bounds.Width;
+            node.Bounds.Y = -node.Bounds.Height / 2.0;
+            return;
+        }
+
+        var left = mode == ReadingMode.SpreadRtl ? nodes[1] : nodes[0];
+        var right = mode == ReadingMode.SpreadRtl ? nodes[0] : nodes[1];
+        left.Bounds.X = -left.Bounds.Width;
+        left.Bounds.Y = -left.Bounds.Height / 2.0;
+        right.Bounds.X = 0;
+        right.Bounds.Y = -right.Bounds.Height / 2.0;
+        nodes.Clear();
+        nodes.Add(left);
+        nodes.Add(right);
     }
 
     /// <summary>

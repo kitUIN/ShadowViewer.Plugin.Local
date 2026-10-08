@@ -193,6 +193,31 @@ foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
         "chapter change discards old pointer events");
 }
 
+foreach (var mode in new[] { ReadingMode.SinglePage, ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+{
+    foreach (int current in new[] { 0, 1, 3, 8 })
+    {
+        var (state, nodes) = Scene(mode, current);
+        foreach (var node in nodes) node.Bounds = new Rect(123, 456, 17, 23);
+        layout.UpdateActiveLayout(state, nodes, current, 0, false, new Vector2(2000, 1400), new ReaderLayoutCacheState());
+        int pairStart = current == 0 ? 0 : (current - 1) / 2 * 2 + 1;
+        var nearby = mode == ReadingMode.SinglePage
+            ? Enumerable.Range(Math.Max(0, current - 1), Math.Min(8, current + 1) - Math.Max(0, current - 1) + 1)
+            : Enumerable.Range(Math.Max(0, pairStart - 2), Math.Min(8, pairStart + (pairStart == 0 ? 2 : 3)) - Math.Max(0, pairStart - 2) + 1);
+        bool matches = true;
+        foreach (int index in nearby)
+        {
+            var (expected, _) = Scene(mode, index);
+            var bounds = expected.LayoutNodes.Single(n => n.PageIndex == index).Bounds;
+            matches &= nodes[index].Bounds.Equals(bounds);
+        }
+        Check($"{mode} precomputes neighbors at {current}", matches &&
+            state.LayoutNodes.All(n => mode == ReadingMode.SinglePage ? n.PageIndex == current :
+                current == 0 ? n.PageIndex == 0 : n.PageIndex == pairStart || n.PageIndex == pairStart + 1),
+            "adjacent bounds match their active layout; only current pages are visible");
+    }
+}
+
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");
 Console.WriteLine("Uses production source links; Windows/Win2D adapters record draw calls only, no native GPU or UI validation.");
 Environment.ExitCode = failed == 0 ? 0 : 1;
