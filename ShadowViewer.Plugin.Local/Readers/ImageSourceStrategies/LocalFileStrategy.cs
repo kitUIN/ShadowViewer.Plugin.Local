@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Storage;
@@ -10,7 +11,7 @@ namespace ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 
 /// <summary>
 /// 基于本地文件的图像加载策略。该策略可处理本地路径或 <see cref="StorageFile"/> 并
-/// 从文件中读取图像属性和字节数据以填充 <see cref="ImageLoadingContext"/>。
+/// 读取图像属性并记录文件路径；只有无物理路径的文件才回退到字节数据。
 /// </summary>
 public class LocalFileStrategy : IImageSourceStrategy
 {
@@ -37,57 +38,66 @@ public class LocalFileStrategy : IImageSourceStrategy
                 return false;
             }
 
-            return Path.IsPathRooted(path) || path.StartsWith("ms-appx:") || path.StartsWith("ms-appdata:");
+            return Path.IsPathRooted(path) || IsApplicationUri(path);
         }
 
         return false;
     }
 
     /// <summary>
-    /// 
+    /// 解析普通路径或应用资源 URI。
     /// </summary>
-    /// <param name="source"></param>
-    /// <returns></returns>
-    protected async Task<StorageFile?> GetStorageFile(object source)
-    {
-        var file = source as StorageFile;
-        if (file == null)
-        {
-            file = source switch
-            {
-                string path => await StorageFile.GetFileFromPathAsync(path),
-                IUiPicture picture => await StorageFile.GetFileFromPathAsync(picture.SourcePath),
-                _ => file
-            };
-        }
+    /// <param name="source">文件、路径或应用资源 URI。</param>
+    /// <returns>解析得到的文件。</returns>
+    protected Task<StorageFile?> GetStorageFile(object source) => GetStorageFile(source, CancellationToken.None);
 
-        return file;
+    /// <summary>解析文件来源，并支持取消异步读取。</summary>
+    /// <param name="source">文件、路径或应用资源 URI。</param>
+    /// <param name="cancellationToken">当前图片加载请求的取消令牌。</param>
+    /// <returns>解析得到的文件。</returns>
+    protected async Task<StorageFile?> GetStorageFile(object source, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (source is StorageFile file) return file;
+        string? path = source is IUiPicture picture ? picture.SourcePath : source as string;
+        if (string.IsNullOrWhiteSpace(path)) return null;
+        return IsApplicationUri(path)
+            ? await StorageFile.GetFileFromApplicationUriAsync(new Uri(path)).AsTask(cancellationToken)
+            : await StorageFile.GetFileFromPathAsync(path).AsTask(cancellationToken);
     }
+
+    private static bool IsApplicationUri(string path) =>
+        path.StartsWith("ms-appx:", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("ms-appdata:", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// 使用提供的 <see cref="ImageLoadingContext"/> 从本地文件加载图像信息。
     /// 该方法会尝试将 <see cref="ImageLoadingContext.Size"/> 设置为图像的尺寸，并将
-    /// <see cref="ImageLoadingContext.Bytes"/> 填充为文件的字节数据（若可读）。
+    /// <see cref="ImageLoadingContext.CachedFilePath"/> 设置为可直接打开的文件路径。
     /// </summary>
     /// <param name="ctx">包含资源标识和用于接收加载结果的上下文。</param>
     /// <returns>表示异步初始化操作的任务。</returns>
     public virtual async Task InitImageAsync(ImageLoadingContext ctx)
     {
-        var file = await GetStorageFile(ctx.Source);
+        var file = await GetStorageFile(ctx.Source, ctx.CancellationToken);
         if (file == null) return;
-        var props = await file.Properties.GetImagePropertiesAsync();
+        var props = await file.Properties.GetImagePropertiesAsync().AsTask(ctx.CancellationToken);
         ctx.Size = new Size(props.Width, props.Height);
-        using var stream = await file.OpenReadAsync();
-        using var reader = new DataReader(stream.GetInputStreamAt(0));
-        await reader.LoadAsync((uint)stream.Size);
-        var bytes = new byte[stream.Size];
-        reader.ReadBytes(bytes);
-        ctx.Bytes = bytes;
+        ctx.CachedFilePath = string.IsNullOrWhiteSpace(file.Path) ? null : file.Path;
     }
 
     /// <inheritdoc />
-    public virtual Task PreloadImageAsync(ImageLoadingContext ctx)
+    public virtual async Task PreloadImageAsync(ImageLoadingContext ctx)
     {
-        return Task.CompletedTask;
+        ctx.CancellationToken.ThrowIfCancellationRequested();
+        if (!string.IsNullOrWhiteSpace(ctx.CachedFilePath)) return;
+        var file = await GetStorageFile(ctx.Source, ctx.CancellationToken);
+        if (file == null) return;
+        using var stream = await file.OpenReadAsync().AsTask(ctx.CancellationToken);
+        using var reader = new DataReader(stream.GetInputStreamAt(0));
+        var bytes = new byte[checked((int)stream.Size)];
+        await reader.LoadAsync((uint)bytes.Length).AsTask(ctx.CancellationToken);
+        reader.ReadBytes(bytes);
+        ctx.Bytes = bytes;
     }
 }

@@ -19,5 +19,10 @@
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/ReadingMode.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/RenderNode.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/ImageSourceStrategies/ImageLoadingContext.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/ImageSourceStrategies/IImageSourceStrategy.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderBackgroundPipeline.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderImageDiskCache.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderImageWindowLoadController.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderImageLoadService.cs" />
   </ItemGroup>
 </Project>

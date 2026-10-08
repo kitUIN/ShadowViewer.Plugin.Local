@@ -13,6 +13,7 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Storage;
 using Windows.Storage.Streams;
 using DryIoc;
 using Microsoft.UI.Xaml;
@@ -27,33 +28,6 @@ namespace ShadowViewer.Plugin.Local.Readers;
 /// </summary>
 public sealed partial class MangaReader : Control
 {
-    /// <summary>
-    /// 位图加载请求负载。
-    /// </summary>
-    private readonly struct BitmapLoadPayload
-    {
-        /// <summary>
-        /// 初始化 <see cref="BitmapLoadPayload"/> 的新实例。
-        /// </summary>
-        /// <param name="node">待加载的节点。</param>
-        /// <param name="device">当前可用的 Canvas 设备。</param>
-        public BitmapLoadPayload(RenderNode node, CanvasDevice? device)
-        {
-            Node = node;
-            Device = device;
-        }
-
-        /// <summary>
-        /// 获取待加载节点。
-        /// </summary>
-        public RenderNode Node { get; }
-
-        /// <summary>
-        /// 获取当前可用 Canvas 设备。
-        /// </summary>
-        public CanvasDevice? Device { get; }
-    }
-
     /// <summary>
     /// 主绘制画布（Win2D CanvasAnimatedControl）的引用。
     /// </summary>
@@ -104,19 +78,15 @@ public sealed partial class MangaReader : Control
     // 防止重复加载
 
     /// <summary>
-    /// 正在加载的页码集合（用于避免重复触发加载）。
+    /// 图片滑动窗口加载控制器。
     /// </summary>
-    private HashSet<int> loadingPages = new HashSet<int>();
-
-    /// <summary>
-    /// 锁对象，用于同步访问加载状态集合。
-    /// </summary>
-    private object loadingLock = new object();
+    private readonly ReaderImageWindowLoadController imageWindowLoadController = new();
+    private readonly ReaderImageLoadService imageLoadService;
 
     /// <summary>
     /// 位图加载后台流水线。
     /// </summary>
-    private readonly ReaderBackgroundPipeline<BitmapLoadPayload> bitmapLoadPipeline;
+    private readonly ReaderBackgroundPipeline<ReaderImageLoadTicket> bitmapLoadPipeline;
 
     /// <summary>
     /// 尺寸加载后台流水线。
@@ -265,6 +235,7 @@ public sealed partial class MangaReader : Control
     {
         CancelPageTurn(resetInput: true);
         // 清空内容时推进流水线世代，确保旧请求结果不会污染新数据集。
+        imageWindowLoadController.Reset();
         sizeLoadPipeline.Invalidate();
         bitmapLoadPipeline.Invalidate();
 
@@ -272,20 +243,18 @@ public sealed partial class MangaReader : Control
         {
             foreach (var node in allNodes)
             {
-                node.Dispose();
+                node.Retire();
             }
 
             allNodes.Clear();
             TotalPage = 0;
 
-            lock (loadingLock)
-            {
-                loadingPages.Clear();
-            }
-
             // 重置缓存
             layoutCache.ResetAfterClearItems();
         }
+
+        sizeLoadPendingLayout = false;
+        Interlocked.Exchange(ref currentBatchLoadedCount, 0);
 
         lock (state.LayoutNodes)
         {
@@ -459,12 +428,23 @@ public sealed partial class MangaReader : Control
         this.DefaultStyleKey = typeof(MangaReader);
         ImageStrategies = DiFactory.Services.ResolveMany<IImageSourceStrategy>();
 
-        bitmapLoadPipeline = new ReaderBackgroundPipeline<BitmapLoadPayload>(
+        imageLoadService = new ReaderImageLoadService(imageWindowLoadController, GetBitmap,
+            node => this.DispatcherQueue.TryEnqueue(() =>
+            {
+                if (!node.IsRetired) UpdateLayoutWithPageLock();
+            }), ex => Log.Error($"LoadBitmap Error: {ex}"),
+            (node, context, error) => node.ImageStrategy is NetworkStrategy network &&
+                                     context.Bytes is not { Length: > 0 } && NetworkStrategy.IsCacheDecodeFailure(error)
+                ? network.InvalidateImageCacheAsync(context) : Task.CompletedTask);
+
+        bitmapLoadPipeline = new ReaderBackgroundPipeline<ReaderImageLoadTicket>(
             capacity: 256,
-            workerCount: 1,
-            singleReader: true,
+            workerCount: MaxConcurrentLoads,
+            singleReader: false,
             singleWriter: false,
-            processRequestAsync: ProcessBitmapLoadRequestAsync);
+            processRequestAsync: ProcessBitmapLoadRequestAsync,
+            onDiscarded: ticket => imageWindowLoadController.Complete(ticket, succeeded: false),
+            onError: ex => Log.Error($"Bitmap pipeline Error: {ex}"));
 
         sizeLoadPipeline = new ReaderBackgroundPipeline<RenderNode>(
             capacity: 512,
@@ -672,6 +652,8 @@ public sealed partial class MangaReader : Control
                 });
             }
 
+            if (sizeLoadPendingLayout && !isDragging && !isAnimatingPageTurn) ScheduleSizeLoadLayoutFlush();
+
             // 2. 资源管理
             UpdateVisibleNodes(sender);
 
@@ -825,33 +807,35 @@ public sealed partial class MangaReader : Control
     }
 
     /// <summary>
-    /// 从字节数组创建 Win2D 的 <see cref="CanvasBitmap"/>。若输入为空或失败返回 <c>null</c>。
+    /// 优先使用预加载 Hook 字节，否则从磁盘文件创建 Win2D 位图；异常由加载服务处理。
     /// </summary>
-    /// <param name="bytes">图像字节数组。</param>
+    /// <param name="ctx">请求上下文，包含预加载 Hook 字节或文件路径。</param>
     /// <param name="device">Canvas 设备引用。</param>
+    /// <param name="token">加载请求取消令牌。</param>
     /// <returns>加载成功的 <see cref="CanvasBitmap"/> 或 <c>null</c>。</returns>
-    private static async Task<CanvasBitmap?> GetBitmap(byte[]? bytes, CanvasDevice device)
+    private static async Task<CanvasBitmap?> GetBitmap(ImageLoadingContext ctx, CanvasDevice device, CancellationToken token)
     {
-        if (bytes == null || bytes.Length == 0) return null;
-
-        try
+        token.ThrowIfCancellationRequested();
+        // 预加载 Hook 可以用 Bytes 替换文件内容，因此优先采用它提供的字节。
+        var bytes = ctx.Bytes;
+        if (bytes is { Length: > 0 })
         {
-            using var stream = new InMemoryRandomAccessStream();
-            using (var writer = new DataWriter(stream))
+            using var memoryStream = new InMemoryRandomAccessStream();
+            using (var writer = new DataWriter(memoryStream))
             {
                 writer.WriteBytes(bytes);
-                await writer.StoreAsync();
-                await writer.FlushAsync();
+                await writer.StoreAsync().AsTask(token);
+                await writer.FlushAsync().AsTask(token);
                 writer.DetachStream();
             }
-
-            stream.Seek(0);
-            return await CanvasBitmap.LoadAsync(device, stream);
+            memoryStream.Seek(0);
+            return await CanvasBitmap.LoadAsync(device, memoryStream);
         }
-        catch (Exception)
-        {
-            return null;
-        }
+        if (string.IsNullOrWhiteSpace(ctx.CachedFilePath)) return null;
+        var file = await StorageFile.GetFileFromPathAsync(ctx.CachedFilePath).AsTask(token);
+        using var fileStream = await file.OpenReadAsync().AsTask(token);
+        // Win2D 解码完成后仍检查取消，并由加载服务释放无法发布的位图。
+        return await CanvasBitmap.LoadAsync(device, fileStream);
     }
 
     /// <summary>
@@ -874,152 +858,37 @@ public sealed partial class MangaReader : Control
 
         var device = sender.Device;
 
-        // 确定需要加载的节点集
-        HashSet<RenderNode> nodesToLoad = new();
-        int visibleMinIdx = int.MaxValue;
-        int visibleMaxIdx = int.MinValue;
-
+        List<RenderNode> layoutSnapshot;
         lock (state.LayoutNodes)
         {
-            foreach (var node in state.LayoutNodes)
-            {
-                // 1. 首先找出物理上真实可见的节点
-                if (IsIntersecting(viewportRect, node.Bounds))
-                {
-                    nodesToLoad.Add(node);
-                    if (node.PageIndex < visibleMinIdx) visibleMinIdx = node.PageIndex;
-                    if (node.PageIndex > visibleMaxIdx) visibleMaxIdx = node.PageIndex;
-                }
-            }
+            layoutSnapshot = state.LayoutNodes.ToList();
         }
 
-        // 2. 统一预加载逻辑：根据可见页码范围，前后各扩展 PreloadRange 页
-        if (visibleMinIdx != int.MaxValue)
-        {
-            int range = preloadRange;
-            lock (allNodes)
-            {
-                int start = Math.Max(0, visibleMinIdx - range);
-                int end = Math.Min(allNodes.Count - 1, visibleMaxIdx + range);
-                for (int i = start; i <= end; i++)
-                {
-                    nodesToLoad.Add(allNodes[i]);
-                }
-            }
-        }
-
-        // 为了避免在 Update 线程中执行耗时操作，这里的逻辑要尽量快
-        // 遍历所有节点应用加载/卸载
+        List<RenderNode> allNodesSnapshot;
         lock (allNodes)
         {
-            foreach (var node in allNodes)
-            {
-                if (nodesToLoad.Contains(node))
-                {
-                    lock (loadingLock)
-                    {
-                        if (!node.IsLoaded && loadingPages.Add(node.PageIndex))
-                        {
-                            // 统一经由有界通道入队，避免在 Update 线程直接创建大量后台任务。
-                            if (!TryEnqueueBitmapLoad(node, device))
-                            {
-                                loadingPages.Remove(node.PageIndex);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    if (!node.IsLoaded) continue;
-                    lock (loadingLock)
-                    {
-                        if (!loadingPages.Contains(node.PageIndex))
-                        {
-                            node.Dispose();
-                        }
-                    }
-                }
-            }
+            allNodesSnapshot = allNodes.ToList();
         }
+
+        imageWindowLoadController.UpdateWindow(
+            layoutSnapshot,
+            allNodesSnapshot,
+            viewportRect,
+            preloadRange,
+            device,
+            TryEnqueueBitmapLoad);
     }
 
     /// <summary>
     /// 尝试将位图加载请求写入后台流水线。
     /// </summary>
-    /// <param name="node">待加载节点。</param>
-    /// <param name="device">当前可用 Canvas 设备。</param>
+    /// <param name="ticket">当前窗口的节点加载请求。</param>
     /// <returns>写入成功返回 <c>true</c>；否则返回 <c>false</c>。</returns>
-    private bool TryEnqueueBitmapLoad(RenderNode node, CanvasDevice? device)
-    {
-        return bitmapLoadPipeline.TryEnqueue(new BitmapLoadPayload(node, device));
-    }
+    private bool TryEnqueueBitmapLoad(ReaderImageLoadTicket ticket) => bitmapLoadPipeline.TryEnqueue(ticket);
 
-    /// <summary>
-    /// 处理位图加载流水线请求。
-    /// </summary>
-    /// <param name="request">位图加载请求。</param>
-    /// <param name="cancellationToken">取消令牌。</param>
-    /// <returns>表示位图加载处理的异步操作。</returns>
-    private async Task ProcessBitmapLoadRequestAsync(PipelineRequest<BitmapLoadPayload> request, CancellationToken cancellationToken)
-    {
-        await LoadBitmapAsync(request.Payload.Node, request.Payload.Device, cancellationToken);
-    }
-
-    /// <summary>
-    /// 异步加载单个节点位图。
-    /// </summary>
-    /// <param name="node">待加载节点。</param>
-    /// <param name="device">当前可用 Canvas 设备。</param>
-    /// <param name="cancellationToken">取消令牌。</param>
-    /// <returns>表示加载流程的异步操作。</returns>
-    private async Task LoadBitmapAsync(RenderNode? node, CanvasDevice? device, CancellationToken cancellationToken)
-    {
-        try
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // ImageStrategy为null说明还未初始化
-            if (node?.ImageStrategy == null) return;
-            if (!node.Preloaded)
-            {
-                await node.ImageStrategy.PreloadImageAsync(node.Ctx);
-                node.Preloaded = true;
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if (device == null) return;
-            var bitmap = await GetBitmap(node.Ctx.Bytes, device);
-            cancellationToken.ThrowIfCancellationRequested();
-            node.SetBitmap(bitmap);
-        }
-        catch (OperationCanceledException)
-        {
-            // 取消属于正常生命周期行为。
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"LoadBitMap Error: {ex}");
-        }
-        finally
-        {
-            lock (loadingLock)
-            {
-                loadingPages.Remove(node.PageIndex);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 简单的矩形相交测试，用于视口剔除。
-    /// </summary>
-    private bool IsIntersecting(Rect a, Rect b)
-    {
-        return a.X < b.X + b.Width &&
-               a.X + a.Width > b.X &&
-               a.Y < b.Y + b.Height &&
-               a.Y + a.Height > b.Y;
-    }
+    /// <summary>处理位图加载请求；请求取消及结果发布由窗口加载服务统一管理。</summary>
+    private Task ProcessBitmapLoadRequestAsync(PipelineRequest<ReaderImageLoadTicket> request, CancellationToken cancellationToken) =>
+        imageLoadService.LoadAsync(request.Payload, cancellationToken);
 
     // --- 加载逻辑 ---
 

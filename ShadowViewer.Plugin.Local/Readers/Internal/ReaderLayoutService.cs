@@ -40,6 +40,7 @@ internal sealed class ReaderLayoutCacheState
     /// 获取或设置缓存对应的节点数量。
     /// </summary>
     public int CachedNodeCount { get; set; }
+    public bool IsDirty { get; set; } = true;
 
     /// <summary>
     /// 在清空内容后重置缓存状态。
@@ -49,7 +50,11 @@ internal sealed class ReaderLayoutCacheState
     {
         CachedScale = 1.0f;
         CachedViewHeight = 0;
+        CachedViewWidth = 0;
         CachedNodeCount = 0;
+        ModeWidth = 0;
+        ModeHeight = 0;
+        IsDirty = true;
     }
 }
 
@@ -81,6 +86,10 @@ internal sealed class ReaderLayoutService
         lock (state.LayoutNodes)
         {
             state.LayoutNodes.Clear();
+            if (isFitToModeSize && state.CurrentMode != ReadingMode.VerticalScroll)
+            {
+                lock (allNodes) GetScale(allNodes, viewSize, cache);
+            }
 
             if (state.CurrentMode == ReadingMode.VerticalScroll)
             {
@@ -209,7 +218,7 @@ internal sealed class ReaderLayoutService
     private float GetScale(List<RenderNode> allNodes, Vector2 viewSize, ReaderLayoutCacheState cache)
     {
         // 仅在关键维度变化时重算，避免每帧遍历节点带来的持续开销。
-        bool needRecalculate = Math.Abs(viewSize.Y - cache.CachedViewHeight) > 1.0f
+        bool needRecalculate = cache.IsDirty || Math.Abs(viewSize.Y - cache.CachedViewHeight) > 1.0f
                                || Math.Abs(viewSize.X - cache.CachedViewWidth) > 1.0f
                                || Math.Abs(allNodes.Count - cache.CachedNodeCount) > 10;
 
@@ -293,6 +302,7 @@ internal sealed class ReaderLayoutService
         cache.CachedViewHeight = viewSize.Y;
         cache.CachedViewWidth = viewSize.X;
         cache.CachedNodeCount = allNodes.Count;
+        cache.IsDirty = false;
     }
 
     /// <summary>

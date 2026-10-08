@@ -249,7 +249,7 @@ public sealed partial class MangaReader
     /// <summary>
     /// 异步加载尺寸时是否需要更新布局。
     /// </summary>
-    private bool sizeLoadPendingLayout = false;
+    private volatile bool sizeLoadPendingLayout = false;
 
     /// <summary>
     /// 批次大小：每加载多少个节点后触发一次布局更新。
@@ -299,6 +299,7 @@ public sealed partial class MangaReader
             var node = new RenderNode
             {
                 PageIndex = -1,
+                ImageStrategy = ImageStrategies.FirstOrDefault(strategy => strategy.CanHandle(item)),
                 Source = item,
                 Ctx = ctx,
                 Bounds = new Rect(0, 0, 200, 300) // 默认占位尺寸
@@ -362,7 +363,7 @@ public sealed partial class MangaReader
 
         await LoadNodeSizeAsync(request.Payload, cancellationToken);
 
-        if (!request.Payload.IsSizeLoaded)
+        if (!sizeLoadPipeline.IsCurrentEpoch(request) || request.Payload.IsRetired || !request.Payload.IsSizeLoaded)
         {
             return;
         }
@@ -374,7 +375,10 @@ public sealed partial class MangaReader
             // 达到批次阈值后立即刷新，优先保障“连续新增内容可见”。
             Interlocked.Exchange(ref currentBatchLoadedCount, 0);
             sizeLoadPendingLayout = false;
-            this.DispatcherQueue.TryEnqueue(UpdateLayoutWithPageLock);
+            this.DispatcherQueue.TryEnqueue(() =>
+            {
+                if (sizeLoadPipeline.IsCurrentEpoch(request)) UpdateLayoutWithPageLock();
+            });
         }
         else
         {
@@ -403,6 +407,7 @@ public sealed partial class MangaReader
         {
             return;
         }
+        int epoch = sizeLoadPipeline.CurrentEpoch;
 
         _ = Task.Run(async () =>
         {
@@ -416,12 +421,20 @@ public sealed partial class MangaReader
                 return;
             }
 
+            if (epoch != sizeLoadPipeline.CurrentEpoch)
+            {
+                Interlocked.Exchange(ref isSizeLoadFlushScheduled, 0);
+                return;
+            }
             if (sizeLoadPendingLayout)
             {
                 // 防抖刷新用于补齐“最后不足一个批次”的节点，避免它们长时间不参与布局。
                 Interlocked.Exchange(ref currentBatchLoadedCount, 0);
                 sizeLoadPendingLayout = false;
-                this.DispatcherQueue.TryEnqueue(UpdateLayoutWithPageLock);
+                this.DispatcherQueue.TryEnqueue(() =>
+                {
+                    if (epoch == sizeLoadPipeline.CurrentEpoch) UpdateLayoutWithPageLock();
+                });
             }
 
             Interlocked.Exchange(ref isSizeLoadFlushScheduled, 0);
@@ -433,10 +446,18 @@ public sealed partial class MangaReader
     /// </summary>
     private void UpdateLayoutWithPageLock()
     {
+        layoutCache.IsDirty = true;
+        // 延迟加载的邻页尺寸不应打断正在进行的卷页或双指交互。
+        if (isAnimatingPageTurn || isDragging)
+        {
+            sizeLoadPendingLayout = true;
+            return;
+        }
+        bool shouldFit = Math.Abs(state.Zoom - baseZoomScale) <= 0.001f && !isUserInteracting;
         if (Mode != ReadingMode.VerticalScroll)
         {
             UpdateActiveLayout();
-        ResetZoom(true);
+            if (shouldFit) ResetZoom(true);
             return;
         }
 
@@ -495,7 +516,7 @@ public sealed partial class MangaReader
                 state.CameraPos += offset;
             }
 
-            ResetZoom(true);
+            if (shouldFit) ResetZoom(true);
         }
         finally
         {
@@ -511,28 +532,14 @@ public sealed partial class MangaReader
     /// <returns>表示尺寸加载操作的异步任务。</returns>
     private async Task LoadNodeSizeAsync(RenderNode node, CancellationToken cancellationToken)
     {
-        var strategy = ImageStrategies.FirstOrDefault(s => s.CanHandle(node.Source));
-        if (strategy == null) return;
-
         try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            await strategy.InitImageAsync(node.Ctx);
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // 更新节点尺寸
-            node.Bounds.Width = node.Ctx.Size.Width;
-            node.Bounds.Height = node.Ctx.Size.Height;
-            node.IsSizeLoaded = true;
-            node.ImageStrategy = strategy;
+            await imageLoadService.InitializeAsync(node, cancellationToken);
         }
-        catch (OperationCanceledException)
-        {
-            // 取消属于正常生命周期事件。
-        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
         catch
         {
-            // 加载失败保持默认尺寸
+            // 策略保留在节点上，进入可见窗口后仍可重试初始化。
         }
     }
 

@@ -23,11 +23,13 @@ namespace Microsoft.Graphics.Canvas
     public enum CanvasSpriteSortMode { None }
     public enum CanvasImageInterpolation { Linear }
     public enum CanvasSpriteOptions { None }
+    public sealed class CanvasDevice { }
     public sealed class CanvasBitmap(int pageIndex, Size size) : IDisposable
     {
         public int PageIndex { get; } = pageIndex;
         public Size Size { get; } = size;
-        public void Dispose() { }
+        public bool IsDisposed { get; private set; }
+        public void Dispose() => IsDisposed = true;
     }
     public sealed class CanvasDrawingSession
     {
@@ -81,5 +83,4 @@ namespace ShadowViewer.Controls.Attributes
     [AttributeUsage(AttributeTargets.Field)]
     public sealed class MenuFlyoutItemIconAttribute : Attribute { public FluentIcons.Common.Icon Icon { get; set; } }
 }
-namespace ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies { public interface IImageSourceStrategy { } }
 namespace Serilog { public static class Log { public static void Debug(string message, params object?[] values) { } } }

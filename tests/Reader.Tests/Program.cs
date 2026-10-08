@@ -460,6 +460,8 @@ foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
         "symmetric pinch retains zero translation velocity at release");
 }
 
+await ImageLoadingChecks.RunAsync(Check);
+
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");
 Console.WriteLine("Uses production source links; Windows/Win2D adapters record draw calls only, no native GPU or UI validation.");
 Environment.ExitCode = failed == 0 ? 0 : 1;
