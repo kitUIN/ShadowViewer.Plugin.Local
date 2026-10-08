@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Numerics;
 using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Text;
 using ShadowViewer.Plugin.Local.Readers.Internal;
 using Windows.Foundation;
@@ -93,8 +94,55 @@ internal sealed class Win2DPageRenderer : IPageRenderer
             DrawNodeNormal(drawingSession, nodeUnderneath);
         }
 
+        DrawCurlShadow(drawingSession, curlingNode, curlAmount, curlFromRight,
+            context.LayoutNodes.Where(n => n != curlingNode).Append(nodeUnderneath).Where(n => n != null).Select(n => n!.Bounds));
         DrawCurledPage(drawingSession, curlingNode, nodeBack, curlAmount, curlFromRight);
     }
+
+    /// <summary>
+    /// 在卷页投影处绘制渐变阴影，并裁切到实际承接阴影的页面上。
+    /// </summary>
+    private static void DrawCurlShadow(CanvasDrawingSession drawingSession, RenderNode node, float amount,
+        bool fromRight, System.Collections.Generic.IEnumerable<Rect> receivers)
+    {
+        float width = (float)node.Bounds.Width;
+        amount = PageTurnService.ClampCurlAmount(amount, width);
+        if (amount <= 0 || amount >= width * 2) return;
+
+        float progress = amount / (width * 2);
+        float lift = MathF.Sin(MathF.PI * progress);
+        float radius = GetCurlRadius(amount, width);
+        float length = amount / 2 + MathF.PI * radius / 2;
+        float edge = (float)node.Bounds.X + (fromRight ? width - length + radius : length - radius);
+        float shadowWidth = Math.Min(width * 0.12f, 12 + radius) * lift;
+        if (shadowWidth <= 0) return;
+
+        using var brush = new CanvasLinearGradientBrush(drawingSession, new[]
+        {
+            new CanvasGradientStop { Position = 0, Color = Windows.UI.Color.FromArgb(0, 0, 0, 0) },
+            new CanvasGradientStop { Position = 0.5f, Color = Windows.UI.Color.FromArgb((byte)(72 * lift), 0, 0, 0) },
+            new CanvasGradientStop { Position = 1, Color = Windows.UI.Color.FromArgb(0, 0, 0, 0) }
+        })
+        {
+            StartPoint = new Vector2(edge - shadowWidth, 0),
+            EndPoint = new Vector2(edge + shadowWidth, 0)
+        };
+
+        foreach (var bounds in receivers)
+        {
+            double left = Math.Max(bounds.X, edge - shadowWidth);
+            double right = Math.Min(bounds.X + bounds.Width, edge + shadowWidth);
+            double top = Math.Max(bounds.Y, node.Bounds.Y);
+            double bottom = Math.Min(bounds.Y + bounds.Height, node.Bounds.Y + node.Bounds.Height);
+            if (right > left && bottom > top)
+            {
+                drawingSession.FillRectangle(new Rect(left, top, right - left, bottom - top), brush);
+            }
+        }
+    }
+
+    private static float GetCurlRadius(float amount, float width) =>
+        Math.Max(0, Math.Min(40f, Math.Min(amount, width * 2 - amount) / MathF.PI));
 
     /// <summary>
     /// 常规页面绘制：优先绘制位图，缺失时回退占位框。
@@ -184,7 +232,7 @@ internal sealed class Win2DPageRenderer : IPageRenderer
         float offsetY = (float)bounds.Y;
 
         // 翻到终点时曲率归零，使背面精确落在目标页上，而不残留弯曲造成错位。
-        float radius = Math.Max(0, Math.Min(40f, Math.Min(curlAmount, width * 2 - curlAmount) / MathF.PI));
+        float radius = GetCurlRadius(curlAmount, width);
         float progress = Math.Clamp(curlAmount / (width * 2), 0, 1);
 
         float curlLength = (float)(curlAmount / 2.0 + Math.PI * radius / 2.0);
@@ -223,13 +271,13 @@ internal sealed class Win2DPageRenderer : IPageRenderer
                     float alpha = d / radius;
                     transformedX = curlX + radius * (float)Math.Sin(alpha);
                     scaleX = (float)Math.Cos(alpha);
-                    shade = 1.0f - 0.3f * (float)Math.Sin(alpha);
+                    shade = 1.0f - 0.18f * (float)Math.Sin(alpha);
                 }
                 else
                 {
                     transformedX = curlX - (d - (float)Math.PI * radius);
                     scaleX = -1;
-                    shade = 0.6f;
+                    shade = 0.9f + 0.1f * progress;
                 }
             }
             else
@@ -248,13 +296,13 @@ internal sealed class Win2DPageRenderer : IPageRenderer
                     float alpha = d / radius;
                     transformedX = curlX - radius * (float)Math.Sin(alpha);
                     scaleX = (float)Math.Cos(alpha);
-                    shade = 1.0f - 0.3f * (float)Math.Sin(alpha);
+                    shade = 1.0f - 0.18f * (float)Math.Sin(alpha);
                 }
                 else
                 {
                     transformedX = curlX + (d - (float)Math.PI * radius);
                     scaleX = -1;
-                    shade = 0.6f;
+                    shade = 0.9f + 0.1f * progress;
                 }
             }
 

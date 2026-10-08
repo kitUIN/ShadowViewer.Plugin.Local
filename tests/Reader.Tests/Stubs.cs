@@ -12,7 +12,11 @@ namespace Windows.Foundation
 }
 namespace Windows.UI
 {
-    public struct Color { public static Color FromArgb(byte a, byte r, byte g, byte b) => default; }
+    public struct Color
+    {
+        public byte A, R, G, B;
+        public static Color FromArgb(byte a, byte r, byte g, byte b) => new() { A = a, R = r, G = g, B = b };
+    }
 }
 namespace Microsoft.Graphics.Canvas
 {
@@ -29,6 +33,10 @@ namespace Microsoft.Graphics.Canvas
     {
         public List<(int Page, Rect Bounds)> Images { get; } = [];
         public List<(int Page, Matrix3x2 Transform, Rect Source)> Sprites { get; } = [];
+        public List<Vector4> Tints { get; } = [];
+        public List<(Rect Bounds, Vector2 Start, Vector2 End, Brushes.CanvasGradientStop[] Stops)> Shadows { get; } = [];
+        public void FillRectangle(Rect rect, Brushes.CanvasLinearGradientBrush brush) =>
+            Shadows.Add((rect, brush.StartPoint, brush.EndPoint, brush.Stops));
         public void DrawImage(CanvasBitmap bitmap, Rect rect) => Images.Add((bitmap.PageIndex, rect));
         public void DrawRectangle(Rect rect, Windows.UI.Color color) { }
         public void DrawText(string text, Rect rect, Windows.UI.Color color, Text.CanvasTextFormat format) { }
@@ -36,7 +44,22 @@ namespace Microsoft.Graphics.Canvas
     }
     public sealed class CanvasSpriteBatch(CanvasDrawingSession session) : IDisposable
     {
-        public void DrawFromSpriteSheet(CanvasBitmap bitmap, Matrix3x2 transform, Rect rect, Vector4 tint) => session.Sprites.Add((bitmap.PageIndex, transform, rect));
+        public void DrawFromSpriteSheet(CanvasBitmap bitmap, Matrix3x2 transform, Rect rect, Vector4 tint)
+        {
+            session.Sprites.Add((bitmap.PageIndex, transform, rect));
+            session.Tints.Add(tint);
+        }
+        public void Dispose() { }
+    }
+}
+namespace Microsoft.Graphics.Canvas.Brushes
+{
+    public struct CanvasGradientStop { public float Position; public Windows.UI.Color Color; }
+    public sealed class CanvasLinearGradientBrush(Microsoft.Graphics.Canvas.CanvasDrawingSession session, CanvasGradientStop[] stops) : IDisposable
+    {
+        public CanvasGradientStop[] Stops { get; } = stops;
+        public Vector2 StartPoint { get; set; }
+        public Vector2 EndPoint { get; set; }
         public void Dispose() { }
     }
 }

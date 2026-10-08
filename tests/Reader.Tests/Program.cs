@@ -267,6 +267,29 @@ foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
     }
 }
 
+foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+{
+    foreach (int sign in new[] { -1, 1 })
+    {
+        var (state, nodes) = Scene(mode, 3);
+        var plan = Plan(state, 3, new Vector2(sign * 100, 0));
+        var mid = DrawPlan(state, nodes, plan, plan.TargetCurl / 2);
+        var nearEnd = DrawPlan(state, nodes, plan, plan.TargetCurl * 0.98f);
+        var end = DrawPlan(state, nodes, plan, plan.TargetCurl);
+        var start = DrawPlan(state, nodes, plan, 0);
+        bool clipped = mid.Shadows.All(s => nodes.Where(n => n != plan.CurlingNode).Any(n =>
+            s.Bounds.X >= n.Bounds.X && s.Bounds.X + s.Bounds.Width <= n.Bounds.X + n.Bounds.Width &&
+            s.Bounds.Y >= n.Bounds.Y && s.Bounds.Y + s.Bounds.Height <= n.Bounds.Y + n.Bounds.Height));
+        Check($"{mode} {sign} curl shadow is clipped and fades at endpoints",
+            mid.Shadows.Count > 0 && clipped && start.Shadows.Count == 0 && end.Shadows.Count == 0 &&
+            nearEnd.Shadows.All(s => s.Stops[1].Color.A < mid.Shadows[0].Stops[1].Color.A) &&
+            mid.Shadows.All(s => s.Stops[0].Color.A == 0 && s.Stops[^1].Color.A == 0),
+            $"mid-turn shadows {mid.Shadows.Count}, clipped {clipped}");
+        Check($"{mode} {sign} completed page has no residual dark tint",
+            end.Tints.All(t => t == Vector4.One), "back page returns to full brightness");
+    }
+}
+
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");
 Console.WriteLine("Uses production source links; Windows/Win2D adapters record draw calls only, no native GPU or UI validation.");
 Environment.ExitCode = failed == 0 ? 0 : 1;
