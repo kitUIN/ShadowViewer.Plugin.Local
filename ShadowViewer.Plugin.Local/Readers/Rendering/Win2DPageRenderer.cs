@@ -21,7 +21,7 @@ internal sealed class Win2DPageRenderer : IPageRenderer
 
         bool isCurling = (context.Mode == ReadingMode.SpreadLtr || context.Mode == ReadingMode.SpreadRtl)
                          && Math.Abs(context.Zoom - context.BaseZoomScale) <= 0.001f
-                         && ((context.IsDragging && context.ActivePointerCount == 1) || context.IsAnimatingPageTurn);
+                         && ((context.IsDragging && context.ActivePointerCount == 1 && context.IsPageTurnGesture) || context.IsAnimatingPageTurn);
 
         RenderNode? curlingNode = null;
         bool curlFromRight = false;

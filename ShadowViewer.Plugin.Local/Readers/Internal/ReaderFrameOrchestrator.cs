@@ -53,27 +53,26 @@ internal sealed class ReaderFrameOrchestrator
 
             state.CameraPos += (zoomCenter - viewSize / 2f) * (1.0f / oldZoom - 1.0f / state.Zoom);
 
-            if (isDragging && deltaTime > 0)
-            {
-                state.ZoomVelocity = (zoomToApply - 1.0f) / deltaTime;
-                lastZoomCenter = zoomCenter;
-            }
+            // 双指缩放只跟随当前输入，不在松手后继续改变倍率。
+            state.ZoomVelocity = 0;
+            lastZoomCenter = zoomCenter;
+        }
+
+        bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
+        bool isSpreadMode = state.CurrentMode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl;
+        if (state.CurrentMode == ReadingMode.VerticalScroll && !allowHorizontalDragInScrollMode && !isZoomed)
+        {
+            deltaToApply.X = 0;
+            state.Velocity.X = 0;
         }
 
         if (deltaToApply != Vector2.Zero)
         {
-            bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
-            bool isSpreadMode = state.CurrentMode == ReadingMode.SpreadLtr || state.CurrentMode == ReadingMode.SpreadRtl;
-            bool canDrag = !isSpreadMode || isZoomed;
+            bool canDrag = !isSpreadMode || isZoomed || !inputDelta.IsPageTurnGesture;
 
             if (canDrag)
             {
-                if (state.CurrentMode == ReadingMode.VerticalScroll && !allowHorizontalDragInScrollMode && !isZoomed)
-                {
-                    deltaToApply.X = 0;
-                    state.Velocity = Vector2.Zero;
-                }
-                else if (isDragging && deltaTime > 0)
+                if (isDragging && deltaTime > 0)
                 {
                     state.Velocity = -deltaToApply / state.Zoom / deltaTime;
                 }

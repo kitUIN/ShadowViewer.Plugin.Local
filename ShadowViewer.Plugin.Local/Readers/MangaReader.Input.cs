@@ -137,9 +137,16 @@ public partial class MangaReader
 
             isDragging = false;
             isUserInteracting = false;
+            state.ZoomVelocity = 0;
             if (!isAnimatingPageTurn)
             {
-                state.Velocity = -snapshot.PendingPanDelta / 0.016f; // 初始速度方案
+                bool isSpread = state.CurrentMode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl;
+                state.Velocity = canceled || (!isZoomed && isSpread && snapshot.IsPageTurnGesture)
+                    ? Vector2.Zero : -snapshot.Velocity / state.Zoom;
+                if (!isZoomed && state.CurrentMode == ReadingMode.VerticalScroll && !allowHorizontalDragInScrollMode)
+                {
+                    state.Velocity.X = 0;
+                }
             }
             else
             {

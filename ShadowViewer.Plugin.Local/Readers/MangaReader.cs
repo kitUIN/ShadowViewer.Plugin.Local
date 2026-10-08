@@ -812,7 +812,8 @@ public sealed partial class MangaReader : Control
                     pageTurnCurlFromRight,
                     pageTurnCurlingNode,
                     layoutSnapshot,
-                    allNodesSnapshot);
+                    allNodesSnapshot,
+                    inputController.IsPageTurnGesture);
             }
 
             pageRenderer.Draw(renderContext);

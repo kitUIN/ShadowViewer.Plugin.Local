@@ -18,13 +18,16 @@ internal readonly struct InputFrameDelta
     /// <param name="zoomCenter">本帧缩放中心点（屏幕坐标）。</param>
     /// <param name="hasPointer">是否存在活跃指针。</param>
     /// <param name="pointerPos">任意一个活跃指针位置（用于拖拽参考）。</param>
-    public InputFrameDelta(Vector2 panDelta, float zoomDelta, Vector2 zoomCenter, bool hasPointer, Vector2 pointerPos)
+    /// <param name="isPageTurnGesture">是否始终为单指翻页手势。</param>
+    public InputFrameDelta(Vector2 panDelta, float zoomDelta, Vector2 zoomCenter, bool hasPointer, Vector2 pointerPos,
+        bool isPageTurnGesture = true)
     {
         PanDelta = panDelta;
         ZoomDelta = zoomDelta;
         ZoomCenter = zoomCenter;
         HasActivePointer = hasPointer;
         ActivePointerPos = pointerPos;
+        IsPageTurnGesture = isPageTurnGesture;
     }
 
     /// <summary>
@@ -51,6 +54,9 @@ internal readonly struct InputFrameDelta
     /// 获取任意一个活跃指针位置。
     /// </summary>
     public Vector2 ActivePointerPos { get; }
+
+    /// <summary>获取本次交互是否始终为单指；双指结束后的剩余指针仍用于平移。</summary>
+    public bool IsPageTurnGesture { get; }
 }
 
 /// <summary>
@@ -137,6 +143,7 @@ internal sealed class ReaderInputController
             pendingZoomCenter = Vector2.Zero;
             pointerVelocity = Vector2.Zero;
             lastPinchDistance = 0;
+            lastPinchCenter = Vector2.Zero;
             hadMultiplePointers = false;
             DragStartPos = Vector2.Zero;
         }
@@ -150,6 +157,9 @@ internal sealed class ReaderInputController
     /// 双指缩放时上一帧指距，用于计算缩放倍率。
     /// </summary>
     private float lastPinchDistance;
+    private Vector2 lastPinchCenter;
+    private Vector2 pinchVelocitySampleCenter;
+    private double pinchVelocitySampleTime;
 
     /// <summary>
     /// 待消费的平移增量缓存。
@@ -189,6 +199,38 @@ internal sealed class ReaderInputController
                 return activePointers.Count;
             }
         }
+    }
+
+    /// <summary>获取当前交互是否可以显示单指卷页。</summary>
+    public bool IsPageTurnGesture
+    {
+        get { lock (activePointers) return !hadMultiplePointers; }
+    }
+
+    private void ResetPinchBaseline()
+    {
+        var positions = new List<Vector2>(activePointers.Values);
+        lastPinchDistance = Vector2.Distance(positions[0], positions[1]);
+        lastPinchCenter = (positions[0] + positions[1]) / 2;
+        pendingZoomCenter = lastPinchCenter;
+        pendingDelta = Vector2.Zero;
+        pendingZoomDelta = 1;
+        lastPointerTime = getTimestamp();
+        pinchVelocitySampleTime = lastPointerTime;
+        pinchVelocitySampleCenter = lastPinchCenter;
+        pointerVelocity = Vector2.Zero;
+    }
+
+    private void UpdatePinchVelocity()
+    {
+        double now = getTimestamp();
+        double elapsed = now - pinchVelocitySampleTime;
+        // 在帧消费或松手时对完整的中心位移采样，避免两条指针事件之间的速度尖峰。
+        if (elapsed < 1.0 / 120) return;
+        pointerVelocity = (lastPinchCenter - pinchVelocitySampleCenter) / (float)elapsed;
+        pinchVelocitySampleCenter = lastPinchCenter;
+        pinchVelocitySampleTime = now;
+        lastPointerTime = now;
     }
 
     /// <summary>
@@ -231,13 +273,14 @@ internal sealed class ReaderInputController
                 return true;
             }
 
-            if (activePointers.Count == 2)
+            if (activePointers.Count >= 2)
             {
                 hadMultiplePointers = true;
                 pointerVelocity = Vector2.Zero;
-                // 双指刚形成时记录初始距离，后续移动按距离比值累乘更稳定。
-                var keys = new List<uint>(activePointers.Keys);
-                lastPinchDistance = Vector2.Distance(activePointers[keys[0]], activePointers[keys[1]]);
+                // 指针数量变化时重建基准，避免把单指卷页或第三指的位移带入双指手势。
+                pendingDelta = Vector2.Zero;
+                pendingZoomDelta = 1;
+                if (activePointers.Count == 2) ResetPinchBaseline();
             }
 
             return false;
@@ -281,15 +324,19 @@ internal sealed class ReaderInputController
                 Vector2 p2 = activePointers[keys[1]];
 
                 float currentDist = Vector2.Distance(p1, p2);
-                if (lastPinchDistance > 0)
+                Vector2 center = (p1 + p2) / 2f;
+                Vector2 delta = center - lastPinchCenter;
+                pendingDelta += delta;
+                if (lastPinchDistance > 0 && currentDist > 0)
                 {
                     // 使用倍率累乘而非直接覆盖，能更好保留一帧内多次指针事件的总效果。
                     float deltaScale = currentDist / lastPinchDistance;
                     pendingZoomDelta *= deltaScale;
-                    pendingZoomCenter = (p1 + p2) / 2f;
+                    // 本帧起始中心保持不变，帧末中心的变化通过 PanDelta 应用。
                 }
 
                 lastPinchDistance = currentDist;
+                lastPinchCenter = center;
             }
 
             activePointers[id] = currentPos;
@@ -304,6 +351,7 @@ internal sealed class ReaderInputController
     {
         lock (activePointers)
         {
+            if (activePointers.Count == 2) UpdatePinchVelocity();
             Vector2 panDelta = pendingDelta;
             pendingDelta = Vector2.Zero;
 
@@ -311,17 +359,18 @@ internal sealed class ReaderInputController
             pendingZoomDelta = 1.0f;
 
             Vector2 zoomCenter = pendingZoomCenter;
+            pendingZoomCenter = lastPinchCenter;
 
             if (activePointers.Count > 0)
             {
                 var enumerator = activePointers.Values.GetEnumerator();
                 if (enumerator.MoveNext())
                 {
-                    return new InputFrameDelta(panDelta, zoomDelta, zoomCenter, true, enumerator.Current);
+                    return new InputFrameDelta(panDelta, zoomDelta, zoomCenter, true, enumerator.Current, !hadMultiplePointers);
                 }
             }
 
-            return new InputFrameDelta(panDelta, zoomDelta, zoomCenter, false, Vector2.Zero);
+            return new InputFrameDelta(panDelta, zoomDelta, zoomCenter, false, Vector2.Zero, !hadMultiplePointers);
         }
     }
 
@@ -340,6 +389,7 @@ internal sealed class ReaderInputController
             }
 
             bool isLastPointerLost = activePointers.Count == 1;
+            if (activePointers.Count == 2) UpdatePinchVelocity();
             Vector2 pointerPos = activePointers[id];
             Vector2 panDelta = pendingDelta;
             Vector2 velocity = getTimestamp() - lastPointerTime <= 0.12 ? pointerVelocity : Vector2.Zero;
@@ -356,8 +406,9 @@ internal sealed class ReaderInputController
                     DragStartPos = remainingPos;
                 }
                 lastPointerTime = getTimestamp();
-                pointerVelocity = Vector2.Zero;
+                pointerVelocity = velocity;
             }
+            else if (activePointers.Count == 2) ResetPinchBaseline();
 
             return new PointerLostSnapshot(true, isLastPointerLost, pointerPos, panDelta, velocity, isPageTurnGesture);
         }

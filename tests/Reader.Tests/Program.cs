@@ -352,6 +352,114 @@ foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
         "continued drag uses source spread 1/2 rather than pending target 3/4");
 }
 
+foreach (var mode in new[] { ReadingMode.VerticalScroll, ReadingMode.SinglePage, ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+{
+    foreach (bool allowHorizontal in new[] { false, true })
+    {
+        double time = 0;
+        var input = new ReaderInputController(() => time);
+        var state = new EngineState { CurrentMode = mode };
+        var frame = new ReaderFrameOrchestrator();
+        input.TryHandlePointerPressed(1, new Vector2(600, 500), false, 0, 1, false);
+        input.TryHandlePointerPressed(2, new Vector2(1000, 500), false, 0, 1, false);
+        time = 0.016;
+        input.HandlePointerMoved(1, new Vector2(660, 540));
+        input.HandlePointerMoved(2, new Vector2(1060, 540));
+        var delta = input.ConsumeFrameDelta();
+        frame.Step(state, delta, 0.016f, 1, new Vector2(2000, 1400), true, allowHorizontal,
+            false, 0, 0, 0, Vector2.Zero, service);
+        float expectedX = mode == ReadingMode.VerticalScroll && !allowHorizontal ? 0 : -60;
+        Check($"{mode} two-finger pan (horizontal {allowHorizontal})",
+            Vector2.Distance(state.CameraPos, new Vector2(expectedX, -40)) < 0.001f &&
+            Math.Abs(state.Zoom - 1) < 0.0001f && !delta.IsPageTurnGesture,
+            $"camera {state.CameraPos}, zoom {state.Zoom}; constant finger distance");
+        input.HandlePointerLost(2);
+        input.HandlePointerMoved(1, new Vector2(680, 560));
+        var remaining = input.ConsumeFrameDelta();
+        Check($"{mode} remaining finger continues to pan",
+            remaining.PanDelta == new Vector2(20, 20) && !remaining.IsPageTurnGesture && !input.IsPageTurnGesture,
+            "lifting one finger does not introduce a jump or a page-turn gesture");
+        var release = input.HandlePointerLost(1);
+        Check($"{mode} two-finger release cannot navigate", !release.IsPageTurnGesture && input.ActivePointerCount == 0,
+            "gesture identity retained through sequential release");
+    }
+}
+{
+    var input = new ReaderInputController();
+    var state = new EngineState { CurrentMode = ReadingMode.SpreadLtr };
+    var frame = new ReaderFrameOrchestrator();
+    var view = new Vector2(2000, 1400);
+    var initialCenter = new Vector2(800, 500);
+    var worldAnchor = initialCenter - view / 2;
+    input.TryHandlePointerPressed(1, new Vector2(600, 500), false, 0, 1, false);
+    input.TryHandlePointerPressed(2, new Vector2(1000, 500), false, 0, 1, false);
+    input.HandlePointerMoved(1, new Vector2(500, 540));
+    input.HandlePointerMoved(2, new Vector2(1200, 540));
+    var delta = input.ConsumeFrameDelta();
+    frame.Step(state, delta, 1f / 60, 1, view, true, true, false, 0, 0, 0, Vector2.Zero, service);
+    var screenAnchor = view / 2 + (worldAnchor - state.CameraPos) * state.Zoom;
+    Check("Combined pinch and pan anchors content to finger centroid",
+        Math.Abs(state.Zoom - 1.75f) < 0.001f && Vector2.Distance(screenAnchor, new Vector2(850, 540)) < 0.001f,
+        $"zoom {state.Zoom}, original content anchor now at {screenAnchor}");
+    input.HandlePointerMoved(1, new Vector2(570, 560));
+    input.HandlePointerMoved(2, new Vector2(1270, 560));
+    var next = input.ConsumeFrameDelta();
+    frame.Step(state, next, 1f / 60, 1, view, true, true, false, 0, 0, 0, Vector2.Zero, service);
+    screenAnchor = view / 2 + (worldAnchor - state.CameraPos) * state.Zoom;
+    Check("Pinch and pan remain anchored across frame boundaries",
+        Math.Abs(state.Zoom - 1.75f) < 0.001f && Vector2.Distance(screenAnchor, new Vector2(920, 560)) < 0.001f,
+        $"anchor {screenAnchor}, no extra scaling while translating");
+    state.Velocity = Vector2.Zero;
+    float releasedZoom = state.Zoom;
+    frame.Step(state, new InputFrameDelta(Vector2.Zero, 1, Vector2.Zero, false, Vector2.Zero, false),
+        1f / 60, 1, view, false, true, false, 0, 0, 0, Vector2.Zero, service);
+    Check("Pinch stops scaling without zoom inertia", state.Zoom == releasedZoom && state.ZoomVelocity == 0,
+        $"released zoom {state.Zoom}, zoom velocity {state.ZoomVelocity}");
+    input.TryHandlePointerPressed(3, new Vector2(1500, 800), false, 0, 1, false);
+    input.HandlePointerMoved(1, new Vector2(590, 570));
+    input.HandlePointerLost(3);
+    var rebased = input.ConsumeFrameDelta();
+    Check("Three-to-two pointer transition resets pinch baseline",
+        rebased.PanDelta == Vector2.Zero && rebased.ZoomDelta == 1,
+        "resuming two fingers introduces no phantom movement or scaling");
+}
+foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+{
+    var (state, nodes) = Scene(mode, 3);
+    var drawing = new CanvasDrawingSession();
+    renderer.Draw(new PageRenderContext(drawing, new Rect(-1100, -800, 2200, 1600), mode, 1, 1,
+        true, false, 1, new Vector2(-300, 0), Vector2.Zero, 0, false, null, state.LayoutNodes, nodes, false));
+    Check($"{mode} remaining finger never renders a curl after multitouch",
+        drawing.Sprites.Count == 0 && drawing.Shadows.Count == 0 && drawing.Images.Count == 2,
+        "renderer keeps the normal spread while a two-finger gesture becomes one finger");
+}
+
+{
+    double time = 0;
+    var input = new ReaderInputController(() => time);
+    input.TryHandlePointerPressed(1, new Vector2(600, 500), false, 0, 1, false);
+    input.TryHandlePointerPressed(2, new Vector2(1000, 500), false, 0, 1, false);
+    time = 0.016;
+    input.HandlePointerMoved(1, new Vector2(660, 540));
+    time = 0.01601;
+    input.HandlePointerMoved(2, new Vector2(1060, 540));
+    input.HandlePointerLost(2);
+    var release = input.HandlePointerLost(1);
+    Check("Closely spaced touch events do not spike release velocity", release.Velocity.Length() < 5000,
+        $"second pointer arrived 10 microseconds later; release speed {release.Velocity.Length():F0}px/s");
+    time = 0;
+    input.Reset();
+    input.TryHandlePointerPressed(1, new Vector2(600, 500), false, 0, 1, false);
+    input.TryHandlePointerPressed(2, new Vector2(1000, 500), false, 0, 1, false);
+    time = 0.016;
+    input.HandlePointerMoved(1, new Vector2(500, 500));
+    time = 0.01601;
+    input.HandlePointerMoved(2, new Vector2(1100, 500));
+    input.HandlePointerLost(2);
+    Check("Stationary-centroid pinch cannot launch pan inertia", input.HandlePointerLost(1).Velocity == Vector2.Zero,
+        "symmetric pinch retains zero translation velocity at release");
+}
+
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");
 Console.WriteLine("Uses production source links; Windows/Win2D adapters record draw calls only, no native GPU or UI validation.");
 Environment.ExitCode = failed == 0 ? 0 : 1;
