@@ -290,6 +290,68 @@ foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
     }
 }
 
+foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+{
+    foreach (var transition in new[] { (From: 0, To: 1), (From: 1, To: 0), (From: 3, To: 5), (From: 3, To: 1), (From: 7, To: 8) })
+    {
+        var (state, nodes) = Scene(mode, transition.From, transition.To == 8 ? 8 + 1 : 9);
+        bool created = service.TryCreateAutomaticPlan(transition.From, transition.To, nodes.Count, mode, 1, 1, state.LayoutNodes, out var plan);
+        // 7 和 8 属于同一双页，不应播放动画。
+        bool sameSpread = transition.From == 7;
+        Check($"{mode} automatic page request {transition.From}->{transition.To}", created != sameSpread &&
+            (!created || plan.CurrentCurl == 0 && plan.TargetPageIndex == transition.To &&
+                PageTurnService.GetPageDirection(plan.CurlFromRight, mode) == Math.Sign(transition.To - transition.From)),
+            $"created {created}, target {plan.TargetPageIndex}");
+        if (!created) continue;
+        float amount = plan.CurrentCurl, speed = plan.AnimVelocity;
+        bool finished = false;
+        for (int frame = 0; frame < 60 && !finished; frame++)
+        {
+            var step = service.StepAnimation(amount, plan.TargetCurl, speed, 1f / 60);
+            amount = step.CurlAmount; speed = step.Velocity; finished = step.IsFinished;
+        }
+        Check($"{mode} automatic {transition.From}->{transition.To} converges", finished && amount == plan.TargetCurl,
+            $"starts at zero, ends at {amount}");
+    }
+    var (currentState, _) = Scene(mode, 3);
+    Check($"{mode} automatic animation rejects jumps, zoom and invalid requests",
+        !service.TryCreateAutomaticPlan(3, 8, 9, mode, 1, 1, currentState.LayoutNodes, out _) &&
+        !service.TryCreateAutomaticPlan(3, 5, 9, mode, 2, 1, currentState.LayoutNodes, out _) &&
+        !service.TryCreateAutomaticPlan(3, -1, 9, mode, 1, 1, currentState.LayoutNodes, out _) &&
+        !service.TryCreateAutomaticPlan(3, 9, 9, mode, 1, 1, currentState.LayoutNodes, out _) &&
+        !service.TryCreateAutomaticPlan(5, 7, 9, mode, 1, 1, currentState.LayoutNodes, out _),
+        "direct navigation remains available outside adjacent unzoomed spreads");
+}
+
+foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+{
+    var (state, nodes) = Scene(mode, 3);
+    var control = new MangaReader(state, nodes, 3);
+    control.CurrentPageIndex = 5;
+    Check($"{mode} automatic request preserves old layout until completion",
+        control.AnimationActive && control.TargetIndex == 5 && state.LayoutNodes.Any(n => n.PageIndex == 3),
+        "requested index 5, visible spread remains 3/4 during animation");
+    control.FinishAnimation();
+    Check($"{mode} automatic completion applies layout exactly once",
+        !control.AnimationActive && control.CurrentPageIndex == 5 && state.LayoutNodes.All(n => n.PageIndex is 5 or 6),
+        "completion does not restart an automatic animation");
+    control.StartGesture(Plan(state, 5, new Vector2(mode == ReadingMode.SpreadLtr ? -100 : 100, 0)));
+    control.FinishAnimation();
+    Check($"{mode} gesture completion does not replay automatic animation",
+        !control.AnimationActive && control.CurrentPageIndex == 7 && state.LayoutNodes.All(n => n.PageIndex is 7 or 8),
+        "gesture target becomes the final visible spread");
+    control.CurrentPageIndex = 5;
+    control.CurrentPageIndex = 1;
+    Check($"{mode} a new request cancels an in-flight automatic turn",
+        !control.AnimationActive && control.CurrentPageIndex == 1 && state.LayoutNodes.All(n => n.PageIndex is 1 or 2),
+        "latest request wins and applies immediately");
+    control.CurrentPageIndex = 3;
+    control.InterruptAnimation();
+    Check($"{mode} pointer takeover restores the visible source index",
+        !control.AnimationActive && control.CurrentPageIndex == 1 && state.LayoutNodes.All(n => n.PageIndex is 1 or 2),
+        "continued drag uses source spread 1/2 rather than pending target 3/4");
+}
+
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");
 Console.WriteLine("Uses production source links; Windows/Win2D adapters record draw calls only, no native GPU or UI validation.");
 Environment.ExitCode = failed == 0 ? 0 : 1;

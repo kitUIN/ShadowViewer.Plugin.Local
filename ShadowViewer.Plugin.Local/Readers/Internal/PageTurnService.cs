@@ -232,6 +232,36 @@ internal sealed class PageTurnService
     }
 
     /// <summary>
+    /// 为点击、滚轮或命令触发的相邻双页切换创建从零开始的自动动画。
+    /// </summary>
+    public bool TryCreateAutomaticPlan(int currentIndex, int targetIndex, int totalPage, ReadingMode mode,
+        float zoom, float baseZoom, IReadOnlyList<RenderNode> layoutNodes, out PageTurnPlan plan)
+    {
+        plan = default;
+        if (mode is not (ReadingMode.SpreadLtr or ReadingMode.SpreadRtl) ||
+            zoom <= 0 || !float.IsFinite(zoom) || Math.Abs(zoom - baseZoom) > 0.001f ||
+            currentIndex < 0 || currentIndex >= totalPage || targetIndex < 0 || targetIndex >= totalPage ||
+            layoutNodes.Count == 0) return false;
+
+        int currentStart = GetSpreadStart(currentIndex);
+        int targetStart = GetSpreadStart(targetIndex);
+        int nextStart = currentStart == 0 ? 1 : currentStart + 2;
+        int previousStart = currentStart <= 1 ? 0 : currentStart - 2;
+        if (targetStart == currentStart || (targetStart != nextStart && targetStart != previousStart) ||
+            layoutNodes.Any(n => GetSpreadStart(n.PageIndex) != currentStart)) return false;
+
+        bool fromRight = (targetStart > currentStart) == (mode == ReadingMode.SpreadLtr);
+        var node = fromRight ? layoutNodes.MaxBy(n => n.Bounds.X) : layoutNodes.MinBy(n => n.Bounds.X);
+        float targetCurl = ClampCurlAmount(float.MaxValue, node!.Bounds.Width);
+        if (targetCurl <= 0) return false;
+        plan = new PageTurnPlan(targetIndex, fromRight, 0, targetCurl,
+            Math.Max(MinCurlVelocity, targetCurl / TargetDurationSeconds), node);
+        return true;
+    }
+
+    private static int GetSpreadStart(int index) => index == 0 ? 0 : (index - 1) / 2 * 2 + 1;
+
+    /// <summary>
     /// 尝试根据当前手势创建卷页动画计划。
     /// </summary>
     /// <param name="request">卷页判定输入参数。</param>

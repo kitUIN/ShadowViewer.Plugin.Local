@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/PageTurnService.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/MangaReader.PageTurn.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderFrameOrchestrator.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderInputController.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderLayoutService.cs" />

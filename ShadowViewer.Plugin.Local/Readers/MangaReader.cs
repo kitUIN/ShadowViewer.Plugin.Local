@@ -667,11 +667,7 @@ public sealed partial class MangaReader : Control
                     lock (pageTurnLock)
                     {
                         if (!isAnimatingPageTurn || animationVersion != pageTurnVersion) return;
-                        CancelPageTurn();
-                        if (targetIndex != CurrentPageIndex)
-                        {
-                            CurrentPageIndex = targetIndex;
-                        }
+                        CompletePageTurn(targetIndex);
                     }
                 });
             }

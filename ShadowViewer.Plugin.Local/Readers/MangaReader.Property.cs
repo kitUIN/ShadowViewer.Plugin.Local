@@ -554,9 +554,8 @@ public sealed partial class MangaReader
 
     private static void OnCurrentPageIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not MangaReader { isUpdatingInternal: false } control || e.NewValue is not int) return;
-        control.CancelPageTurn(resetInput: true);
-        control.UpdateActiveLayout();
-        control.ResetZoom();
+        if (d is not MangaReader { isUpdatingInternal: false } control || e.NewValue is not int targetIndex ||
+            control.isCompletingPageTurn) return;
+        if (e.OldValue is int currentIndex) control.HandleCurrentPageIndexChanged(currentIndex, targetIndex);
     }
 }

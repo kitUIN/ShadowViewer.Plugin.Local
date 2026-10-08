@@ -47,7 +47,7 @@ public partial class MangaReader
 
             if (isPrimaryPointer)
             {
-                CancelPageTurn();
+                InterruptPageTurn();
                 CancelWheelInteractionClear();
                 isDragging = true;
                 isUserInteracting = true;
@@ -131,17 +131,7 @@ public partial class MangaReader
 
                 if (hasPageTurnPlan)
                 {
-                    lock (pageTurnLock)
-                    {
-                        pageTurnVersion++;
-                        isAnimatingPageTurn = true;
-                        pageTurnTargetIndex = pageTurnPlan.TargetPageIndex;
-                        pageTurnCurlFromRight = pageTurnPlan.CurlFromRight;
-                        pageTurnAnimCurlAmount = pageTurnPlan.CurrentCurl;
-                        pageTurnCurlingNode = pageTurnPlan.CurlingNode;
-                        pageTurnAnimTargetCurl = pageTurnPlan.TargetCurl;
-                        pageTurnAnimVelocity = pageTurnPlan.AnimVelocity;
-                    }
+                    StartPageTurn(pageTurnPlan);
                 }
             }
 
