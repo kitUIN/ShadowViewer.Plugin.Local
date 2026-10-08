@@ -218,6 +218,32 @@ foreach (var mode in new[] { ReadingMode.SinglePage, ReadingMode.SpreadLtr, Read
     }
 }
 
+foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+{
+    foreach (int sign in new[] { -1, 1 })
+    {
+        var (state, nodes) = Scene(mode, 3);
+        foreach (var node in nodes) node.Ctx.Size = new Size(600 + node.PageIndex * 73, 900 + node.PageIndex * 91);
+        layout.UpdateActiveLayout(state, nodes, 3, 0, false, new Vector2(2000, 1400), new ReaderLayoutCacheState());
+        var plan = Plan(state, 3, new Vector2(sign * 100, 0));
+        int direction = PageTurnService.GetPageDirection(plan.CurlFromRight, mode);
+        var underneath = nodes[plan.CurlingNode!.PageIndex + direction * 2];
+        var back = nodes[plan.CurlingNode.PageIndex + direction];
+        var drawing = DrawPlan(state, nodes, plan, plan.TargetCurl);
+        Check($"{mode} {sign} underlying page keeps target bounds",
+            drawing.Images.Single(i => i.Page == underneath.PageIndex).Bounds.Equals(underneath.Bounds),
+            $"different page sizes: expected {underneath.Bounds}");
+        var strips = drawing.Sprites.Where(s => s.Page == back.PageIndex).ToList();
+        float minX = strips.Min(s => s.Transform.M31);
+        float maxX = strips.Max(s => s.Transform.M31 + (float)s.Source.Width * s.Transform.M11);
+        Check($"{mode} {sign} completed reverse aligns with target layout",
+            Math.Abs(minX - back.Bounds.X) < 0.01 && Math.Abs(maxX - back.Bounds.X - back.Bounds.Width) < 0.01 &&
+            strips.All(s => Math.Abs(s.Transform.M32 - back.Bounds.Y) < 0.01 &&
+                Math.Abs(s.Source.Height * s.Transform.M22 - back.Bounds.Height) < 0.01),
+            $"expected {back.Bounds}, sprite X extent {minX:F2}..{maxX:F2}");
+    }
+}
+
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");
 Console.WriteLine("Uses production source links; Windows/Win2D adapters record draw calls only, no native GPU or UI validation.");
 Environment.ExitCode = failed == 0 ? 0 : 1;

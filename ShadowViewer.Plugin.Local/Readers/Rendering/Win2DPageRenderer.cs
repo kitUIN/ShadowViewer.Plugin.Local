@@ -89,8 +89,8 @@ internal sealed class Win2DPageRenderer : IPageRenderer
 
         if (nodeUnderneath != null)
         {
-            // 预加载页还未参与布局，底页应占据当前卷起页面的位置。
-            DrawNodeNormal(drawingSession, nodeUnderneath, curlingNode.Bounds);
+            // 相邻页已按目标双页预排版，保留其尺寸和书脊位置，避免拉伸或翻页结束时跳位。
+            DrawNodeNormal(drawingSession, nodeUnderneath);
         }
 
         DrawCurledPage(drawingSession, curlingNode, nodeBack, curlAmount, curlFromRight);
@@ -157,12 +157,12 @@ internal sealed class Win2DPageRenderer : IPageRenderer
             bool drewBack = false;
             nodeUnderneath?.UseBitmap(backBitmap =>
             {
-                DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, curlAmount, curlFromRight);
+                DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, nodeUnderneath.Bounds, curlAmount, curlFromRight);
                 drewBack = true;
             });
             if (!drewBack)
             {
-                DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, null, curlAmount, curlFromRight);
+                DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, null, node.Bounds, curlAmount, curlFromRight);
             }
             drew = true;
         });
@@ -174,7 +174,7 @@ internal sealed class Win2DPageRenderer : IPageRenderer
 
     // 位图锁在整个绘制过程中持有，避免清空章节时释放仍在使用的纹理。
     private static void DrawCurledBitmap(CanvasDrawingSession drawingSession, Rect bounds, CanvasBitmap frontBitmap,
-        CanvasBitmap? backBitmap, float curlAmount, bool curlFromRight)
+        CanvasBitmap? backBitmap, Rect backBounds, float curlAmount, bool curlFromRight)
     {
 
         float width = (float)bounds.Width;
@@ -182,11 +182,9 @@ internal sealed class Win2DPageRenderer : IPageRenderer
         float offsetX = (float)bounds.X;
         float offsetY = (float)bounds.Y;
 
-        float radius = (float)Math.Min(40.0, curlAmount / Math.PI);
-        if (radius < 1.0f)
-        {
-            radius = 1.0f;
-        }
+        // 翻到终点时曲率归零，使背面精确落在目标页上，而不残留弯曲造成错位。
+        float radius = Math.Max(0, Math.Min(40f, Math.Min(curlAmount, width * 2 - curlAmount) / MathF.PI));
+        float progress = Math.Clamp(curlAmount / (width * 2), 0, 1);
 
         float curlLength = (float)(curlAmount / 2.0 + Math.PI * radius / 2.0);
 
@@ -213,13 +211,13 @@ internal sealed class Win2DPageRenderer : IPageRenderer
                 float curlX = width - curlLength;
                 float d = x - curlX;
 
-                if (d <= 0)
+                if (d <= 0 && curlAmount < width * 2)
                 {
                     transformedX = x;
                     scaleX = 1;
                     shade = 1.0f;
                 }
-                else if (d < Math.PI * radius)
+                else if (radius > 0 && d < Math.PI * radius)
                 {
                     float alpha = d / radius;
                     transformedX = curlX + radius * (float)Math.Sin(alpha);
@@ -238,13 +236,13 @@ internal sealed class Win2DPageRenderer : IPageRenderer
                 float curlX = curlLength;
                 float d = curlX - x;
 
-                if (d <= 0)
+                if (d <= 0 && curlAmount < width * 2)
                 {
                     transformedX = x;
                     scaleX = 1;
                     shade = 1.0f;
                 }
-                else if (d < Math.PI * radius)
+                else if (radius > 0 && d < Math.PI * radius)
                 {
                     float alpha = d / radius;
                     transformedX = curlX - radius * (float)Math.Sin(alpha);
@@ -293,11 +291,24 @@ internal sealed class Win2DPageRenderer : IPageRenderer
                 return;
             }
 
-            float totalScaleX = (currentStripWidth * drawScaleX) / (float)sourceRect.Width;
-            float totalScaleY = height / (float)sourceRect.Height;
+            float renderedHeight = height;
+            float renderedY = offsetY;
+            float renderedX = offsetX + destX;
+            float widthScale = 1;
+            if (isBack && backBitmap != null)
+            {
+                // 尺寸不同的背面逐步过渡到预计算布局，水平缩放以书脊为锚点。
+                widthScale = 1 + ((float)backBounds.Width / width - 1) * progress;
+                renderedHeight += ((float)backBounds.Height - height) * progress;
+                renderedY += ((float)backBounds.Y - offsetY) * progress;
+                float spineX = curlFromRight ? offsetX : offsetX + width;
+                renderedX = spineX + (renderedX - spineX) * widthScale;
+            }
+            float totalScaleX = (currentStripWidth * drawScaleX * widthScale) / (float)sourceRect.Width;
+            float totalScaleY = renderedHeight / (float)sourceRect.Height;
 
             Matrix3x2 finalTransform = Matrix3x2.CreateScale(totalScaleX, totalScaleY) *
-                                       Matrix3x2.CreateTranslation(offsetX + destX, offsetY);
+                                       Matrix3x2.CreateTranslation(renderedX, renderedY);
 
             Vector4 tint = new(shade, shade, shade, 1.0f);
             spriteBatch.DrawFromSpriteSheet(currentBitmap, finalTransform, sourceRect, tint);
