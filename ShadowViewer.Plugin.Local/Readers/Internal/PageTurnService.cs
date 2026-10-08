@@ -222,6 +222,16 @@ internal sealed class PageTurnService
     }
 
     /// <summary>
+    /// 将卷曲量限制在页面能够完全翻过的距离内，供拖拽绘制和释放动画共用。
+    /// </summary>
+    public static float ClampCurlAmount(float amount, double pageWidth)
+    {
+        float maxCurl = (float)pageWidth * FullCurlScale;
+        if (!float.IsFinite(amount) || !float.IsFinite(maxCurl) || maxCurl <= 0) return 0;
+        return Math.Clamp(amount, 0, maxCurl);
+    }
+
+    /// <summary>
     /// 尝试根据当前手势创建卷页动画计划。
     /// </summary>
     /// <param name="request">卷页判定输入参数。</param>
@@ -249,11 +259,11 @@ internal sealed class PageTurnService
         }
 
         bool curlFromRight = request.TotalDelta.X < 0;
-        float currentCurl = absX / request.Zoom;
-
         RenderNode? curlingNode = curlFromRight
             ? request.LayoutNodes.OrderByDescending(n => n.Bounds.X).FirstOrDefault()
             : request.LayoutNodes.OrderBy(n => n.Bounds.X).FirstOrDefault();
+
+        float currentCurl = ClampCurlAmount(absX / request.Zoom, curlingNode?.Bounds.Width ?? 0);
 
         float targetCurl = 0f;
         if (targetIndex != request.CurrentPageIndex && curlingNode != null)

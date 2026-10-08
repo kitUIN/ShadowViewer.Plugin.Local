@@ -145,6 +145,7 @@ internal sealed class Win2DPageRenderer : IPageRenderer
     /// <param name="curlFromRight">是否从右侧卷起。</param>
     private static void DrawCurledPage(CanvasDrawingSession drawingSession, RenderNode node, RenderNode? nodeUnderneath, float curlAmount, bool curlFromRight)
     {
+        curlAmount = PageTurnService.ClampCurlAmount(curlAmount, node.Bounds.Width);
         if (curlAmount <= 0)
         {
             DrawNodeNormal(drawingSession, node);

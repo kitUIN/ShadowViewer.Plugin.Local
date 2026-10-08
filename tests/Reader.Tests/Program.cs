@@ -244,6 +244,29 @@ foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
     }
 }
 
+foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+{
+    foreach (int sign in new[] { -1, 1 })
+    {
+        var (state, nodes) = Scene(mode, 3);
+        var plan = Plan(state, 3, new Vector2(sign * 10000, 0));
+        float maxCurl = (float)plan.CurlingNode!.Bounds.Width * 2;
+        var clamped = DrawPlan(state, nodes, plan, maxCurl);
+        var excess = DrawPlan(state, nodes, plan, maxCurl * 5);
+        var dragging = new CanvasDrawingSession();
+        renderer.Draw(new PageRenderContext(dragging, new Rect(-1100, -800, 2200, 1600), mode,
+            1, 1, true, false, 1, new Vector2(sign * 10000, 0), Vector2.Zero, 0, false, null, state.LayoutNodes, nodes));
+        Check($"{mode} {sign} excessive curl stops at page distance",
+            plan.CurrentCurl == maxCurl && plan.TargetCurl == maxCurl &&
+            excess.Sprites.SequenceEqual(clamped.Sprites) && dragging.Sprites.SequenceEqual(clamped.Sprites),
+            $"drag and animation capped at {maxCurl}");
+        var step = service.StepAnimation(plan.CurrentCurl, plan.TargetCurl, plan.AnimVelocity, 1f / 60);
+        Check($"{mode} {sign} release at limit completes without moving back",
+            step.IsFinished && step.CurlAmount == maxCurl && step.Velocity == 0,
+            $"curl {step.CurlAmount}");
+    }
+}
+
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");
 Console.WriteLine("Uses production source links; Windows/Win2D adapters record draw calls only, no native GPU or UI validation.");
 Environment.ExitCode = failed == 0 ? 0 : 1;
