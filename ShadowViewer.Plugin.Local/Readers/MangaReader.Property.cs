@@ -157,6 +157,7 @@ public sealed partial class MangaReader
     {
         if (d is MangaReader control)
         {
+            control.CancelPageTurn(resetInput: true);
             control.state.CurrentMode = (ReadingMode)e.NewValue;
             control.UpdateActiveLayout();
             control.ResetZoom();
@@ -554,6 +555,7 @@ public sealed partial class MangaReader
     private static void OnCurrentPageIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not MangaReader { isUpdatingInternal: false } control || e.NewValue is not int) return;
+        control.CancelPageTurn(resetInput: true);
         control.UpdateActiveLayout();
         control.ResetZoom();
     }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Numerics;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Text;
+using ShadowViewer.Plugin.Local.Readers.Internal;
 using Windows.Foundation;
 
 namespace ShadowViewer.Plugin.Local.Readers.Rendering;
@@ -72,8 +73,9 @@ internal sealed class Win2DPageRenderer : IPageRenderer
         RenderNode? nodeUnderneath = null;
         RenderNode? nodeBack = null;
 
-        int nextIndex = curlingNode.PageIndex + (curlFromRight ? 2 : -2);
-        int nextBackIndex = curlingNode.PageIndex + (curlFromRight ? 1 : -1);
+        int pageDirection = PageTurnService.GetPageDirection(curlFromRight, context.Mode);
+        int nextIndex = curlingNode.PageIndex + pageDirection * 2;
+        int nextBackIndex = curlingNode.PageIndex + pageDirection;
 
         if (nextIndex >= 0 && nextIndex < context.AllNodes.Count)
         {
@@ -87,18 +89,8 @@ internal sealed class Win2DPageRenderer : IPageRenderer
 
         if (nodeUnderneath != null)
         {
-            bool drewUnder = false;
-
-            nodeUnderneath.UseBitmap(bitmap =>
-            {
-                drawingSession.DrawImage(bitmap, nodeUnderneath.Bounds);
-                drewUnder = true;
-            });
-
-            if (!drewUnder)
-            {
-                drawingSession.DrawRectangle(curlingNode.Bounds, Windows.UI.Color.FromArgb(255, 50, 50, 50));
-            }
+            // 预加载页还未参与布局，底页应占据当前卷起页面的位置。
+            DrawNodeNormal(drawingSession, nodeUnderneath, curlingNode.Bounds);
         }
 
         DrawCurledPage(drawingSession, curlingNode, nodeBack, curlAmount, curlFromRight);
@@ -109,14 +101,16 @@ internal sealed class Win2DPageRenderer : IPageRenderer
     /// </summary>
     /// <param name="drawingSession">当前绘制会话。</param>
     /// <param name="node">待绘制节点。</param>
-    private static void DrawNodeNormal(CanvasDrawingSession drawingSession, RenderNode node)
+    /// <param name="targetBounds">可选的绘制位置，不修改预加载节点的布局。</param>
+    private static void DrawNodeNormal(CanvasDrawingSession drawingSession, RenderNode node, Rect? targetBounds = null)
     {
+        Rect bounds = targetBounds ?? node.Bounds;
         bool drew = false;
         node.UseBitmap(bitmap =>
         {
             try
             {
-                drawingSession.DrawImage(bitmap, node.Bounds);
+                drawingSession.DrawImage(bitmap, bounds);
                 drew = true;
             }
             catch
@@ -130,7 +124,7 @@ internal sealed class Win2DPageRenderer : IPageRenderer
             return;
         }
 
-        drawingSession.DrawRectangle(node.Bounds, Windows.UI.Color.FromArgb(255, 100, 100, 100));
+        drawingSession.DrawRectangle(bounds, Windows.UI.Color.FromArgb(255, 100, 100, 100));
         using var format = new CanvasTextFormat
         {
             FontSize = 24,
@@ -138,7 +132,7 @@ internal sealed class Win2DPageRenderer : IPageRenderer
             VerticalAlignment = CanvasVerticalAlignment.Center
         };
 
-        drawingSession.DrawText($"{node.PageIndex + 1}", node.Bounds, Windows.UI.Color.FromArgb(255, 200, 200, 200), format);
+        drawingSession.DrawText($"{node.PageIndex + 1}", bounds, Windows.UI.Color.FromArgb(255, 200, 200, 200), format);
     }
 
     /// <summary>
@@ -157,10 +151,36 @@ internal sealed class Win2DPageRenderer : IPageRenderer
             return;
         }
 
-        float width = (float)node.Bounds.Width;
-        float height = (float)node.Bounds.Height;
-        float offsetX = (float)node.Bounds.X;
-        float offsetY = (float)node.Bounds.Y;
+        bool drew = false;
+        node.UseBitmap(frontBitmap =>
+        {
+            bool drewBack = false;
+            nodeUnderneath?.UseBitmap(backBitmap =>
+            {
+                DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, curlAmount, curlFromRight);
+                drewBack = true;
+            });
+            if (!drewBack)
+            {
+                DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, null, curlAmount, curlFromRight);
+            }
+            drew = true;
+        });
+        if (!drew)
+        {
+            DrawNodeNormal(drawingSession, node);
+        }
+    }
+
+    // 位图锁在整个绘制过程中持有，避免清空章节时释放仍在使用的纹理。
+    private static void DrawCurledBitmap(CanvasDrawingSession drawingSession, Rect bounds, CanvasBitmap frontBitmap,
+        CanvasBitmap? backBitmap, float curlAmount, bool curlFromRight)
+    {
+
+        float width = (float)bounds.Width;
+        float height = (float)bounds.Height;
+        float offsetX = (float)bounds.X;
+        float offsetY = (float)bounds.Y;
 
         float radius = (float)Math.Min(40.0, curlAmount / Math.PI);
         if (radius < 1.0f)
@@ -169,18 +189,6 @@ internal sealed class Win2DPageRenderer : IPageRenderer
         }
 
         float curlLength = (float)(curlAmount / 2.0 + Math.PI * radius / 2.0);
-
-        CanvasBitmap? frontBitmap = null;
-        CanvasBitmap? backBitmap = null;
-
-        node.UseBitmap(bitmap => frontBitmap = bitmap);
-        nodeUnderneath?.UseBitmap(bitmap => backBitmap = bitmap);
-
-        if (frontBitmap == null)
-        {
-            DrawNodeNormal(drawingSession, node);
-            return;
-        }
 
         using var spriteBatch = drawingSession.CreateSpriteBatch(CanvasSpriteSortMode.None, CanvasImageInterpolation.Linear, CanvasSpriteOptions.None);
 

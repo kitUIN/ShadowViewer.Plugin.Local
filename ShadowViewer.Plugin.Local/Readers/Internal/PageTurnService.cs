@@ -20,6 +20,7 @@ internal readonly struct PageTurnRequest
     /// <param name="totalPage">总页数。</param>
     /// <param name="mode">当前阅读模式。</param>
     /// <param name="layoutNodes">当前布局节点集合。</param>
+    /// <param name="isCanceled">是否只回弹而不切换页码。</param>
     public PageTurnRequest(
         Vector2 totalDelta,
         float velocityX,
@@ -27,7 +28,8 @@ internal readonly struct PageTurnRequest
         int currentPageIndex,
         int totalPage,
         ReadingMode mode,
-        IReadOnlyList<RenderNode> layoutNodes)
+        IReadOnlyList<RenderNode> layoutNodes,
+        bool isCanceled = false)
     {
         TotalDelta = totalDelta;
         VelocityX = velocityX;
@@ -36,6 +38,7 @@ internal readonly struct PageTurnRequest
         TotalPage = totalPage;
         Mode = mode;
         LayoutNodes = layoutNodes;
+        IsCanceled = isCanceled;
     }
 
     /// <summary>
@@ -72,6 +75,11 @@ internal readonly struct PageTurnRequest
     /// 获取当前布局节点集合。
     /// </summary>
     public IReadOnlyList<RenderNode> LayoutNodes { get; }
+
+    /// <summary>
+    /// 获取手势是否被取消；取消的手势只回弹，不切换页码。
+    /// </summary>
+    public bool IsCanceled { get; }
 }
 
 /// <summary>
@@ -202,7 +210,16 @@ internal sealed class PageTurnService
     /// <summary>
     /// 全卷曲目标倍率。
     /// </summary>
-    private const float FullCurlScale = 1.5f;
+    private const float FullCurlScale = 2f;
+
+    /// <summary>
+    /// 将物理卷曲方向转换为当前阅读顺序中的页码方向。
+    /// </summary>
+    public static int GetPageDirection(bool curlFromRight, ReadingMode mode)
+    {
+        int direction = curlFromRight ? 1 : -1;
+        return mode == ReadingMode.SpreadRtl ? -direction : direction;
+    }
 
     /// <summary>
     /// 尝试根据当前手势创建卷页动画计划。
@@ -213,19 +230,20 @@ internal sealed class PageTurnService
     public bool TryCreatePlan(PageTurnRequest request, out PageTurnPlan plan)
     {
         float absX = Math.Abs(request.TotalDelta.X);
-        if (absX <= MinCurlDistanceThreshold || request.Zoom <= 0)
+        if (absX <= MinCurlDistanceThreshold || request.Zoom <= 0 || request.TotalPage <= 0 || request.LayoutNodes.Count == 0)
         {
             plan = default;
             return false;
         }
 
         // 仅当水平意图明显时允许翻页，避免垂直拖动误触发分页跳转。
-        bool isSwipe = absX > SwipeDistanceThreshold || Math.Abs(request.VelocityX * request.Zoom) > SwipeVelocityThreshold;
+        bool isSwipe = !request.IsCanceled &&
+                       (absX > SwipeDistanceThreshold || Math.Abs(request.VelocityX * request.Zoom) > SwipeVelocityThreshold);
 
         int targetIndex = request.CurrentPageIndex;
         if (isSwipe && absX > Math.Abs(request.TotalDelta.Y))
         {
-            int direction = request.TotalDelta.X > 0 ? -1 : 1;
+            int direction = GetPageDirection(request.TotalDelta.X < 0, request.Mode);
             int step = request.Mode == ReadingMode.SinglePage ? 1 : 2;
             targetIndex = ClampPageIndex(request.CurrentPageIndex + direction * step, request.TotalPage);
         }

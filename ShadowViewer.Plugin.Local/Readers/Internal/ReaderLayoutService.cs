@@ -169,7 +169,13 @@ internal sealed class ReaderLayoutService
                     if (nodesToAdd.Count == 1)
                     {
                         var node = nodesToAdd[0];
-                        if (state.CurrentMode == ReadingMode.SpreadRtl)
+                        bool placeOnRight = state.CurrentMode == ReadingMode.SpreadRtl;
+                        if (node.PageIndex == 0)
+                        {
+                            // 封面与最后一个未配对页位于书脊的不同侧。
+                            placeOnRight = !placeOnRight;
+                        }
+                        if (placeOnRight)
                         {
                             node.Bounds.X = 0;
                         }

@@ -47,16 +47,13 @@ public partial class MangaReader
 
             if (isPrimaryPointer)
             {
+                CancelPageTurn();
                 CancelWheelInteractionClear();
                 isDragging = true;
                 isUserInteracting = true;
                 lastPointerPos = pos;
                 state.Velocity = Vector2.Zero;
 
-                if (isAnimatingPageTurn)
-                {
-                    isAnimatingPageTurn = false;
-                }
             }
 
             mainCanvas?.CapturePointer(e.Pointer);
@@ -81,20 +78,21 @@ public partial class MangaReader
     /// </summary>
     private void MainCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
+        inputController.HandlePointerMoved(e.Pointer.PointerId, e.GetCurrentPoint(mainCanvas).Position.ToVector2());
         HandlePointerLost(e.Pointer.PointerId);
     }
 
     private void MainCanvas_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
     {
-        HandlePointerLost(e.Pointer.PointerId);
+        HandlePointerLost(e.Pointer.PointerId, canceled: true);
     }
 
     private void MainCanvas_PointerCanceled(object sender, PointerRoutedEventArgs e)
     {
-        HandlePointerLost(e.Pointer.PointerId);
+        HandlePointerLost(e.Pointer.PointerId, canceled: true);
     }
 
-    private void HandlePointerLost(uint id)
+    private void HandlePointerLost(uint id, bool canceled = false)
     {
         var snapshot = inputController.HandlePointerLost(id);
         if (!snapshot.IsTrackedPointer)
@@ -108,7 +106,8 @@ public partial class MangaReader
             Vector2 currentPos = snapshot.PointerPosition;
             bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
 
-            if (!isZoomed && (state.CurrentMode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl))
+            if (!isZoomed && snapshot.IsPageTurnGesture &&
+                (state.CurrentMode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl))
             {
                 var totalDelta = currentPos - inputController.DragStartPos;
 
@@ -119,25 +118,30 @@ public partial class MangaReader
                 {
                     var request = new PageTurnRequest(
                         totalDelta,
-                        state.Velocity.X,
+                        snapshot.Velocity.X / state.Zoom,
                         state.Zoom,
                         CurrentPageIndex,
                         TotalPage,
                         state.CurrentMode,
-                        state.LayoutNodes);
+                        state.LayoutNodes,
+                        canceled);
 
                     hasPageTurnPlan = pageTurnService.TryCreatePlan(request, out pageTurnPlan);
                 }
 
                 if (hasPageTurnPlan)
                 {
-                    isAnimatingPageTurn = true;
-                    pageTurnTargetIndex = pageTurnPlan.TargetPageIndex;
-                    pageTurnCurlFromRight = pageTurnPlan.CurlFromRight;
-                    pageTurnAnimCurlAmount = pageTurnPlan.CurrentCurl;
-                    pageTurnCurlingNode = pageTurnPlan.CurlingNode;
-                    pageTurnAnimTargetCurl = pageTurnPlan.TargetCurl;
-                    pageTurnAnimVelocity = pageTurnPlan.AnimVelocity;
+                    lock (pageTurnLock)
+                    {
+                        pageTurnVersion++;
+                        isAnimatingPageTurn = true;
+                        pageTurnTargetIndex = pageTurnPlan.TargetPageIndex;
+                        pageTurnCurlFromRight = pageTurnPlan.CurlFromRight;
+                        pageTurnAnimCurlAmount = pageTurnPlan.CurrentCurl;
+                        pageTurnCurlingNode = pageTurnPlan.CurlingNode;
+                        pageTurnAnimTargetCurl = pageTurnPlan.TargetCurl;
+                        pageTurnAnimVelocity = pageTurnPlan.AnimVelocity;
+                    }
                 }
             }
 
@@ -165,6 +169,7 @@ public partial class MangaReader
 
         if (isCtrlPressed)
         {
+            CancelPageTurn(resetInput: true);
             var screenPoint = point.Position.ToVector2();
             var center = viewSize / 2;
 

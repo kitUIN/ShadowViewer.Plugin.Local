@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/PageTurnService.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderFrameOrchestrator.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderInputController.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderLayoutService.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderUiSyncService.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Rendering/Win2DPageRenderer.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Rendering/IPageRenderer.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/EngineState.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/ReadingMode.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/RenderNode.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/ImageSourceStrategies/ImageLoadingContext.cs" />
+  </ItemGroup>
+</Project>

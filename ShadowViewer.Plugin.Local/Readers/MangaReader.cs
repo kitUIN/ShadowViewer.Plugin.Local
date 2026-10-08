@@ -241,6 +241,8 @@ public sealed partial class MangaReader : Control
     private double modeWidth => layoutCache.ModeWidth;
 
     // 翻页动画状态
+    private readonly object pageTurnLock = new();
+    private int pageTurnVersion;
     private bool isAnimatingPageTurn = false;
     private float pageTurnAnimCurlAmount = 0f;
     private float pageTurnAnimTargetCurl = 0f;
@@ -261,6 +263,7 @@ public sealed partial class MangaReader : Control
     /// <param name="scheduleLayoutUpdate">是否在清理后调度一次布局更新。</param>
     public void ClearItems(bool scheduleLayoutUpdate = true)
     {
+        CancelPageTurn(resetInput: true);
         // 清空内容时推进流水线世代，确保旧请求结果不会污染新数据集。
         sizeLoadPipeline.Invalidate();
         bitmapLoadPipeline.Invalidate();
@@ -630,38 +633,46 @@ public sealed partial class MangaReader : Control
             }
 
             // 1. 纯状态更新（输入 + 物理 + 卷页推进）
-            var frameStep = frameOrchestrator.Step(
-                state,
-                inputDelta,
-                dt,
-                baseZoomScale,
-                viewSize,
-                isDragging,
-                allowHorizontalDragInScrollMode,
-                isAnimatingPageTurn,
-                pageTurnAnimCurlAmount,
-                pageTurnAnimTargetCurl,
-                pageTurnAnimVelocity,
-                inputController.LastZoomCenter,
-                pageTurnService);
+            ReaderFrameStepResult frameStep;
+            int animationVersion;
+            int targetIndex;
+            lock (pageTurnLock)
+            {
+                animationVersion = pageTurnVersion;
+                targetIndex = pageTurnTargetIndex;
+                frameStep = frameOrchestrator.Step(
+                    state,
+                    inputDelta,
+                    dt,
+                    baseZoomScale,
+                    viewSize,
+                    isDragging,
+                    allowHorizontalDragInScrollMode,
+                    isAnimatingPageTurn,
+                    pageTurnAnimCurlAmount,
+                    pageTurnAnimTargetCurl,
+                    pageTurnAnimVelocity,
+                    inputController.LastZoomCenter,
+                    pageTurnService);
 
-            pageTurnAnimCurlAmount = frameStep.PageTurnAnimCurlAmount;
-            pageTurnAnimVelocity = frameStep.PageTurnAnimVelocity;
-            inputController.LastZoomCenter = frameStep.LastZoomCenter;
+                pageTurnAnimCurlAmount = frameStep.PageTurnAnimCurlAmount;
+                pageTurnAnimVelocity = frameStep.PageTurnAnimVelocity;
+                inputController.LastZoomCenter = frameStep.LastZoomCenter;
+            }
 
             if (frameStep.PageTurnFinished)
             {
-                int targetIndex = pageTurnTargetIndex;
                 this.DispatcherQueue.TryEnqueue(() =>
                 {
-                    if (!isAnimatingPageTurn) return;
-
-                    if (targetIndex != CurrentPageIndex)
+                    lock (pageTurnLock)
                     {
-                        CurrentPageIndex = targetIndex;
+                        if (!isAnimatingPageTurn || animationVersion != pageTurnVersion) return;
+                        CancelPageTurn();
+                        if (targetIndex != CurrentPageIndex)
+                        {
+                            CurrentPageIndex = targetIndex;
+                        }
                     }
-
-                    isAnimatingPageTurn = false;
                 });
             }
 
@@ -686,6 +697,12 @@ public sealed partial class MangaReader : Control
     /// </summary>
     private void SyncUiState()
     {
+        int syncVersion;
+        lock (pageTurnLock)
+        {
+            if (isAnimatingPageTurn) return;
+            syncVersion = pageTurnVersion;
+        }
         int total;
         lock (allNodes)
         {
@@ -719,6 +736,7 @@ public sealed partial class MangaReader : Control
 
         this.DispatcherQueue.TryEnqueue(() =>
         {
+            if (syncVersion != Volatile.Read(ref pageTurnVersion)) return;
             int newIndex = snapshot.CurrentPage - 1;
             if (newIndex != CurrentPageIndex)
             {
@@ -780,22 +798,26 @@ public sealed partial class MangaReader : Control
                 allNodesSnapshot = allNodes.ToList();
             }
 
-            var renderContext = new PageRenderContext(
-                ds,
-                viewportRect,
-                state.CurrentMode,
-                state.Zoom,
-                baseZoomScale,
-                isDragging,
-                isAnimatingPageTurn,
-                inputController.ActivePointerCount,
-                lastPointerPos,
-                inputController.DragStartPos,
-                pageTurnAnimCurlAmount,
-                pageTurnCurlFromRight,
-                pageTurnCurlingNode,
-                layoutSnapshot,
-                allNodesSnapshot);
+            PageRenderContext renderContext;
+            lock (pageTurnLock)
+            {
+                renderContext = new PageRenderContext(
+                    ds,
+                    viewportRect,
+                    state.CurrentMode,
+                    state.Zoom,
+                    baseZoomScale,
+                    isDragging,
+                    isAnimatingPageTurn,
+                    inputController.ActivePointerCount,
+                    lastPointerPos,
+                    inputController.DragStartPos,
+                    pageTurnAnimCurlAmount,
+                    pageTurnCurlFromRight,
+                    pageTurnCurlingNode,
+                    layoutSnapshot,
+                    allNodesSnapshot);
+            }
 
             pageRenderer.Draw(renderContext);
         }

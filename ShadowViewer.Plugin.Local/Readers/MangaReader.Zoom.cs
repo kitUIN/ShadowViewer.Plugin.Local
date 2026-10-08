@@ -178,6 +178,8 @@ public sealed partial class MangaReader
     {
         if (isUpdatingZoomUi) return;
 
+        CancelPageTurn(resetInput: true);
+
         var newScale = (float)e.NewValue / 100.0f;
         var baseScale = baseZoomScale > 0 ? baseZoomScale : 1.0f;
         state.Zoom = newScale * baseScale;
@@ -209,6 +211,7 @@ public sealed partial class MangaReader
     /// </summary>
     public void ResetZoom(bool click = false)
     {
+        CancelPageTurn(resetInput: true);
         state.Zoom = 1.0f;
         state.Velocity = Vector2.Zero;
         baseZoomScale = 1.0f;

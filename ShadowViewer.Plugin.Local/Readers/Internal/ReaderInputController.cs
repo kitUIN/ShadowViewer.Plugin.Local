@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace ShadowViewer.Plugin.Local.Readers.Internal;
@@ -63,12 +65,17 @@ internal readonly struct PointerLostSnapshot
     /// <param name="lastPointerLost">是否为最后一个活跃指针离开。</param>
     /// <param name="pointerPos">离开时指针位置。</param>
     /// <param name="pendingPanDelta">当前尚未消费的平移增量。</param>
-    public PointerLostSnapshot(bool tracked, bool lastPointerLost, Vector2 pointerPos, Vector2 pendingPanDelta)
+    /// <param name="velocity">释放前的屏幕移动速度。</param>
+    /// <param name="isPageTurnGesture">是否始终为单指手势。</param>
+    public PointerLostSnapshot(bool tracked, bool lastPointerLost, Vector2 pointerPos, Vector2 pendingPanDelta,
+        Vector2 velocity = default, bool isPageTurnGesture = true)
     {
         IsTrackedPointer = tracked;
         IsLastPointerLost = lastPointerLost;
         PointerPosition = pointerPos;
         PendingPanDelta = pendingPanDelta;
+        Velocity = velocity;
+        IsPageTurnGesture = isPageTurnGesture;
     }
 
     /// <summary>
@@ -90,6 +97,16 @@ internal readonly struct PointerLostSnapshot
     /// 获取尚未消费的平移增量。
     /// </summary>
     public Vector2 PendingPanDelta { get; }
+
+    /// <summary>
+    /// 释放前的屏幕移动速度，与摄像机是否允许平移无关。
+    /// </summary>
+    public Vector2 Velocity { get; }
+
+    /// <summary>
+    /// 本次交互是否始终为单指手势。
+    /// </summary>
+    public bool IsPageTurnGesture { get; }
 }
 
 /// <summary>
@@ -97,6 +114,33 @@ internal readonly struct PointerLostSnapshot
 /// </summary>
 internal sealed class ReaderInputController
 {
+    private readonly Func<double> getTimestamp;
+    private double lastPointerTime;
+    private Vector2 pointerVelocity;
+    private bool hadMultiplePointers;
+
+    public ReaderInputController(Func<double>? getTimestamp = null)
+    {
+        this.getTimestamp = getTimestamp ?? (() => (double)Stopwatch.GetTimestamp() / Stopwatch.Frequency);
+    }
+
+    /// <summary>
+    /// 丢弃内容切换前的指针与待处理输入。
+    /// </summary>
+    public void Reset()
+    {
+        lock (activePointers)
+        {
+            activePointers.Clear();
+            pendingDelta = Vector2.Zero;
+            pendingZoomDelta = 1f;
+            pendingZoomCenter = Vector2.Zero;
+            pointerVelocity = Vector2.Zero;
+            lastPinchDistance = 0;
+            hadMultiplePointers = false;
+            DragStartPos = Vector2.Zero;
+        }
+    }
     /// <summary>
     /// 活跃指针集合，键为指针 ID，值为当前屏幕坐标。
     /// </summary>
@@ -165,6 +209,9 @@ internal sealed class ReaderInputController
 
             if (activePointers.Count == 1)
             {
+                lastPointerTime = getTimestamp();
+                pointerVelocity = Vector2.Zero;
+                hadMultiplePointers = false;
                 if (wasAnimatingPageTurn)
                 {
                     // 为了在动画被打断时保持卷曲连续性，需要回推拖拽起点而不是直接用当前坐标。
@@ -186,6 +233,8 @@ internal sealed class ReaderInputController
 
             if (activePointers.Count == 2)
             {
+                hadMultiplePointers = true;
+                pointerVelocity = Vector2.Zero;
                 // 双指刚形成时记录初始距离，后续移动按距离比值累乘更稳定。
                 var keys = new List<uint>(activePointers.Keys);
                 lastPinchDistance = Vector2.Distance(activePointers[keys[0]], activePointers[keys[1]]);
@@ -217,6 +266,10 @@ internal sealed class ReaderInputController
                 if (delta.LengthSquared() > 0.1f)
                 {
                     pendingDelta += delta;
+                    double now = getTimestamp();
+                    double elapsed = now - lastPointerTime;
+                    pointerVelocity = elapsed > 0 ? delta / (float)elapsed : Vector2.Zero;
+                    lastPointerTime = now;
                 }
             }
             else if (activePointers.Count == 2)
@@ -289,12 +342,24 @@ internal sealed class ReaderInputController
             bool isLastPointerLost = activePointers.Count == 1;
             Vector2 pointerPos = activePointers[id];
             Vector2 panDelta = pendingDelta;
+            Vector2 velocity = getTimestamp() - lastPointerTime <= 0.12 ? pointerVelocity : Vector2.Zero;
+            bool isPageTurnGesture = !hadMultiplePointers;
 
             // 指针集合状态在此一次性更新，保证上层读取到的快照与后续状态一致。
             activePointers.Remove(id);
             lastPinchDistance = 0;
 
-            return new PointerLostSnapshot(true, isLastPointerLost, pointerPos, panDelta);
+            if (activePointers.Count == 1)
+            {
+                foreach (var remainingPos in activePointers.Values)
+                {
+                    DragStartPos = remainingPos;
+                }
+                lastPointerTime = getTimestamp();
+                pointerVelocity = Vector2.Zero;
+            }
+
+            return new PointerLostSnapshot(true, isLastPointerLost, pointerPos, panDelta, velocity, isPageTurnGesture);
         }
     }
 }
