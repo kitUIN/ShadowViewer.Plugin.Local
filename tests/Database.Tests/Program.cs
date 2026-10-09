@@ -26,7 +26,13 @@ var tests = new (string Name, Func<Task> Run)[]
     ("An older component refuses a database with newer migration history", NewerDatabase),
     ("Migration backup includes committed WAL data", WalBackup),
     ("Versioned migrations upgrade an existing library once", IncrementalUpgrade),
-    ("Failed version upgrade rolls back DDL and keeps a readable backup", FailedUpgrade)
+    ("Failed version upgrade rolls back DDL and keeps a readable backup", FailedUpgrade),
+    ("Bookshelf tags and authors match any selection and combine with other conditions", () => BookShelfFilters(BookShelfFilterChecks.TagsAndAuthors)),
+    ("Bookshelf creation date ranges include the full end day and allow open bounds", () => BookShelfFilters(BookShelfFilterChecks.CreationDates)),
+    ("Bookshelf reading states and percentage boundaries handle missing records", () => BookShelfFilters(BookShelfFilterChecks.Progress)),
+    ("Bookshelf last read uses actual reading activity and history without treating imports as reads", () => BookShelfFilters(BookShelfFilterChecks.LastRead)),
+    ("Bookshelf rejects inverted dates and invalid percentage ranges", () => BookShelfFilters(BookShelfFilterChecks.InvalidRanges)),
+    ("Bookshelf filter edits remain a draft and reset restores all entries", () => BookShelfFilters(BookShelfFilterChecks.EditAndReset))
 };
 var failed = 0;
 try
@@ -99,6 +105,16 @@ Task FreshDatabase()
     var backups = Directory.GetFiles(testDirectory, "fresh.sqlite.*.bak").Length;
     Initialize(path);
     Check(Directory.GetFiles(testDirectory, "fresh.sqlite.*.bak").Length == backups, "Unchanged startup made another backup.");
+    return Task.CompletedTask;
+}
+
+Task BookShelfFilters(Action<LocalDbContext> check)
+{
+    var path = DatabasePath("filter-" + Guid.NewGuid().ToString("N"));
+    Initialize(path);
+    using var db = LocalFactory(path).CreateDbContext();
+    BookShelfFilterChecks.Seed(db);
+    check(db);
     return Task.CompletedTask;
 }
 

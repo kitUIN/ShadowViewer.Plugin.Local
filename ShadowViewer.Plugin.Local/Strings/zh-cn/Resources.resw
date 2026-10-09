@@ -474,4 +474,61 @@
   <data name="IsFitToModeSize" xml:space="preserve">
     <value>是否强制统一页面大小</value>
   </data>
+  <data name="BookShelfFilterDescription" xml:space="preserve">
+    <value>仅筛选当前文件夹中的漫画。标签、作者各自满足任一选项，其他条件同时满足。</value>
+  </data>
+  <data name="ApplyBookShelfFilter" xml:space="preserve">
+    <value>应用筛选</value>
+  </data>
+  <data name="ClearBookShelfFilter" xml:space="preserve">
+    <value>清空筛选</value>
+  </data>
+  <data name="BookShelfFilterActive" xml:space="preserve">
+    <value>已应用筛选（当前文件夹）</value>
+  </data>
+  <data name="BookShelfFilterEmpty" xml:space="preserve">
+    <value>没有符合筛选条件的漫画，请调整或清空筛选。</value>
+  </data>
+  <data name="BookShelfFilterInvalidRange" xml:space="preserve">
+    <value>开始日期或最低进度不能大于结束日期或最高进度，进度须在 0–100% 之间。</value>
+  </data>
+  <data name="NoFilterTags" xml:space="preserve">
+    <value>暂无可用标签</value>
+  </data>
+  <data name="NoFilterAuthors" xml:space="preserve">
+    <value>暂无可用作者</value>
+  </data>
+  <data name="FilterStartDate" xml:space="preserve">
+    <value>开始日期（含当天）</value>
+  </data>
+  <data name="FilterEndDate" xml:space="preserve">
+    <value>结束日期（含当天）</value>
+  </data>
+  <data name="FilterNoLimit" xml:space="preserve">
+    <value>不限</value>
+  </data>
+  <data name="FilterReadingStatus" xml:space="preserve">
+    <value>阅读状态</value>
+  </data>
+  <data name="FilterAll" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="FilterUnread" xml:space="preserve">
+    <value>未读（0%）</value>
+  </data>
+  <data name="FilterReading" xml:space="preserve">
+    <value>阅读中（0–100% 之间）</value>
+  </data>
+  <data name="FilterCompleted" xml:space="preserve">
+    <value>已读完（100%）</value>
+  </data>
+  <data name="FilterProgressFrom" xml:space="preserve">
+    <value>最低进度（%）</value>
+  </data>
+  <data name="FilterProgressTo" xml:space="preserve">
+    <value>最高进度（%）</value>
+  </data>
+  <data name="FilterLastReadTime" xml:space="preserve">
+    <value>最后阅读时间</value>
+  </data>
 </root>

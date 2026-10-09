@@ -180,11 +180,13 @@ public partial class LocalComic : ObservableObject, IComicNode
 
         if (!IsFolder && NodeType == "Comic")
         {
-            var detail = dbClient.Set<ComicDetail>()
-                .Include(x => x.Authors)
-                .Include(x => x.Tags)
-                .Where(x => x.ComicId == Id)
-                .FirstOrDefault();
+            var detail = node.ComicDetail is { Authors: not null, Tags: not null } loadedDetail
+                ? loadedDetail
+                : dbClient.Set<ComicDetail>()
+                    .Include(x => x.Authors)
+                    .Include(x => x.Tags)
+                    .Where(x => x.ComicId == Id)
+                    .FirstOrDefault();
             if (detail == null) return;
             ComicId = detail.ExtendId ?? Id.ToString();
             EpisodeCount = detail.ChapterCount;

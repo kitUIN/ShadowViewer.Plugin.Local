@@ -36,6 +36,7 @@ using Windows.Storage;
 using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using ShadowViewer.Plugin.Local.Controls;
+using ShadowViewer.Sdk.Models;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -55,6 +56,66 @@ public partial class BookShelfViewModel : ObservableObject
     /// 排序显示
     /// </summary>
     public string SortDisplayName => ResourcesHelper.GetString(Sort.ToString());
+
+    private BookShelfFilter activeFilter = new();
+
+    /// <summary>是否正在筛选当前文件夹。</summary>
+    public bool HasActiveFilter => activeFilter.IsActive;
+
+    /// <summary>空书架或无筛选结果的提示。</summary>
+    public string EmptyMessage => HasActiveFilter ? I18N.BookShelfFilterEmpty : I18N.BookShelfEmpty;
+
+    /// <summary>
+    /// 编辑当前筛选条件，只有应用时才更新书架。
+    /// </summary>
+    [RelayCommand]
+    private async Task Filter()
+    {
+        using var db = DbFactory.CreateDbContext();
+        var details = db.Set<ComicDetail>().Where(detail => db.Set<ComicNode>()
+            .Any(node => node.Id == detail.ComicId && !node.IsDelete && node.NodeType == "Comic"));
+        var tags = details.SelectMany(detail => detail.Tags!).Distinct().AsNoTracking().ToList();
+        var authors = details.SelectMany(detail => detail.Authors!).Distinct().AsNoTracking().ToList();
+        // 保留已选但已不再关联漫画的选项，避免再次应用时悄悄丢失条件。
+        tags.AddRange(db.Set<ShadowTag>().AsNoTracking().Where(tag => activeFilter.TagIds.Contains(tag.Id))
+            .ToList().Where(tag => tags.All(existing => existing.Id != tag.Id)));
+        authors.AddRange(db.Set<LocalAuthor>().AsNoTracking().Where(author => activeFilter.AuthorIds.Contains(author.Id))
+            .ToList().Where(author => authors.All(existing => existing.Id != author.Id)));
+        var editor = new BookShelfFilterViewModel(activeFilter, tags, authors);
+        var dialog = new ContentDialog
+        {
+            Title = I18N.Filter,
+            Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
+            PrimaryButtonText = I18N.ApplyBookShelfFilter,
+            CloseButtonText = I18N.Cancel,
+            DefaultButton = ContentDialogButton.Primary,
+            Content = new BookShelfFilterControl(editor)
+        };
+        dialog.PrimaryButtonClick += (_, args) =>
+        {
+            var filter = editor.CreateFilter();
+            if (!filter.IsValid)
+            {
+                editor.ErrorMessage = I18N.BookShelfFilterInvalidRange;
+                args.Cancel = true;
+                return;
+            }
+
+            SetFilter(filter);
+        };
+        await NotifyService.ShowDialog(this, dialog);
+    }
+
+    [RelayCommand]
+    private void ClearFilter() => SetFilter(new BookShelfFilter());
+
+    private void SetFilter(BookShelfFilter filter)
+    {
+        activeFilter = filter;
+        OnPropertyChanged(nameof(HasActiveFilter));
+        OnPropertyChanged(nameof(EmptyMessage));
+        RefreshLocalComic();
+    }
 
 
     /// <summary>
@@ -365,10 +426,23 @@ public partial class BookShelfViewModel : ObservableObject
     {
         using var db = DbFactory.CreateDbContext();
         var comics = db.Set<ComicNode>()
+            .AsNoTracking()
             .Include(x => x.ReadingRecord)
             .Include(x => x.SourcePluginData)
-            .Where(x => x.ParentId == CurrentFolder.Id)
+            .Include(x => x.ComicDetail)!.ThenInclude(x => x!.Tags)
+            .Include(x => x.ComicDetail)!.ThenInclude(x => x!.Authors)
+            .AsSplitQuery()
+            .Where(x => x.ParentId == CurrentFolder.Id && !x.IsDelete)
             .ToList();
+        var lastReadTimes = new Dictionary<long, DateTime>();
+        if (activeFilter.LastReadFrom.HasValue || activeFilter.LastReadTo.HasValue)
+        {
+            lastReadTimes = db.Set<LocalHistory>().AsNoTracking()
+                .Where(history => db.Set<ComicNode>().Any(node =>
+                    node.Id == history.Id && node.ParentId == CurrentFolder.Id && !node.IsDelete))
+                .ToDictionary(history => history.Id, history => history.LastReadDateTime);
+        }
+        comics = activeFilter.Apply(comics, lastReadTimes).ToList();
         if (comics.Count > 0)
         {
             switch (Sort)
@@ -394,6 +468,7 @@ public partial class BookShelfViewModel : ObservableObject
             }
         }
 
+        SelectedItems.Clear();
         LocalComics.Clear();
         foreach (var item in comics)
         {

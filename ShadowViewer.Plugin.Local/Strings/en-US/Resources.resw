@@ -349,4 +349,61 @@
   <data name="SpreadLtr" xml:space="preserve">
     <value>Two-Page(Left To Right)</value>
   </data>
+  <data name="BookShelfFilterDescription" xml:space="preserve">
+    <value>Filter comics in the current folder. Match any selected tag or author, and all other conditions.</value>
+  </data>
+  <data name="ApplyBookShelfFilter" xml:space="preserve">
+    <value>Apply filters</value>
+  </data>
+  <data name="ClearBookShelfFilter" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
+  <data name="BookShelfFilterActive" xml:space="preserve">
+    <value>Filters applied (current folder)</value>
+  </data>
+  <data name="BookShelfFilterEmpty" xml:space="preserve">
+    <value>No comics match these filters. Adjust or clear the filters.</value>
+  </data>
+  <data name="BookShelfFilterInvalidRange" xml:space="preserve">
+    <value>Start dates and minimum progress must not exceed end dates and maximum progress. Progress must be between 0 and 100%.</value>
+  </data>
+  <data name="NoFilterTags" xml:space="preserve">
+    <value>No tags available</value>
+  </data>
+  <data name="NoFilterAuthors" xml:space="preserve">
+    <value>No authors available</value>
+  </data>
+  <data name="FilterStartDate" xml:space="preserve">
+    <value>Start date (inclusive)</value>
+  </data>
+  <data name="FilterEndDate" xml:space="preserve">
+    <value>End date (inclusive)</value>
+  </data>
+  <data name="FilterNoLimit" xml:space="preserve">
+    <value>Any</value>
+  </data>
+  <data name="FilterReadingStatus" xml:space="preserve">
+    <value>Reading status</value>
+  </data>
+  <data name="FilterAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="FilterUnread" xml:space="preserve">
+    <value>Unread (0%)</value>
+  </data>
+  <data name="FilterReading" xml:space="preserve">
+    <value>Reading (between 0 and 100%)</value>
+  </data>
+  <data name="FilterCompleted" xml:space="preserve">
+    <value>Completed (100%)</value>
+  </data>
+  <data name="FilterProgressFrom" xml:space="preserve">
+    <value>Minimum progress (%)</value>
+  </data>
+  <data name="FilterProgressTo" xml:space="preserve">
+    <value>Maximum progress (%)</value>
+  </data>
+  <data name="FilterLastReadTime" xml:space="preserve">
+    <value>Last read</value>
+  </data>
 </root>

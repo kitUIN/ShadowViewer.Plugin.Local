@@ -23,6 +23,10 @@
     <Compile Include="../../ShadowViewer.Plugin.Local/Models/LocalHistory.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Models/LocalReadingRecord.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Models/LocalComic*Mapping.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Models/BookShelfFilter*.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Services/BookShelfFilterService.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Enums/ReadingStatus.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/ViewModels/BookShelfFilterViewModel.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Constants/PluginConstants.cs" />
   </ItemGroup>
   <ItemGroup>
