@@ -2,7 +2,9 @@ using System;
 using System.Linq;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Sdk.Responders;
-using SqlSugar; 
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
+using ShadowViewer.Sdk.Database;
 using ShadowViewer.Sdk.Services;
 using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.ViewModels;
@@ -22,30 +24,30 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
     /// </summary>
     public override void CurrentEpisodeIndexChanged(object sender, PicViewContext ctx, int oldValue, int newValue)
     {
+        using var db = DbFactory.CreateDbContext();
         if (sender is not PicViewModel viewModel) return;
         if (oldValue == newValue) return;
         if (viewModel.Affiliation != Id) return;
         var index = 0;
         if (viewModel.Episodes.Count <= 0 || viewModel.Episodes[newValue] is not LocalUiEpisode episode) return;
-        var list = Db.Queryable<ComicPicture>()
+        var list = db.Set<ComicPicture>()
             .Where(x => x.ChapterId == episode.Source.Id)
             .OrderBy(x => x.Name)
             .ToList()
             .Select(item => new LocalUiPicture(++index, item.StoragePath))
             .ToList();
         viewModel.Images.ReplaceAll(list);
-        var readingRecord = Db.Queryable<LocalReadingRecord>()
+        var readingRecord = db.Set<LocalReadingRecord>()
             .Where(x => x.Id == episode.Source.ComicId)
             .Where(x => x.LastEpisode == episode.Source.Order)
-            .First();
+            .FirstOrDefault();
         viewModel.CurrentPageIndex = readingRecord is { LastPicture: >= 2 } ? readingRecord.LastPicture : 0;
 
-        Db.Updateable<LocalReadingRecord>()
-            .SetColumns(x => x.LastEpisode == episode.Source.Order)
-            .SetColumns(x => x.LastPicture == viewModel.CurrentPageIndex)
-            .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
-            .Where(x => x.Id == episode.Source.ComicId)
-            .ExecuteCommand();
+        db.Set<LocalReadingRecord>().Where(x => x.Id == episode.Source.ComicId)
+            .ExecuteUpdate(setters => setters
+                .SetProperty(x => x.LastEpisode, episode.Source.Order)
+                .SetProperty(x => x.LastPicture, viewModel.CurrentPageIndex)
+                .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
     }
 
     /// <summary>
@@ -54,6 +56,7 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
     public override void CurrentPageIndexChanged(object sender, PicViewContext ctx,
         int oldValue, int newValue)
     {
+        using var db = DbFactory.CreateDbContext();
         if (sender is not PicViewModel viewModel) return;
         if (oldValue == newValue) return;
         if (viewModel.Affiliation != Id) return;
@@ -67,12 +70,11 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
                 (decimal)localComic.Count * 100, 2);
         }
 
-        Db.Updateable<LocalReadingRecord>()
-            .SetColumns(x => x.LastPicture == viewModel.CurrentPageIndex)
-            .SetColumns(x => x.Percent == percent)
-            .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
-            .Where(x => x.Id == localComic.Id)
-            .ExecuteCommand();
+        db.Set<LocalReadingRecord>().Where(x => x.Id == localComic.Id)
+            .ExecuteUpdate(setters => setters
+                .SetProperty(x => x.LastPicture, viewModel.CurrentPageIndex)
+                .SetProperty(x => x.Percent, percent)
+                .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
     }
 
     /// <summary>
@@ -80,14 +82,15 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
     /// </summary>
     public override void PicturesLoadStarting(object sender, PicViewContext ctx)
     {
+        using var db = DbFactory.CreateDbContext();
         if (sender is not PicViewModel viewModel) return;
         if (ctx.Affiliation != Id || ctx.Parameter is not LocalComic comic) return;
-        var readingRecord = Db.Queryable<LocalReadingRecord>()
+        var readingRecord = db.Set<LocalReadingRecord>()
             .Where(x => x.Id == comic.Id)
-            .First();
+            .FirstOrDefault();
         var index = 0;
         var count = 0;
-        Db.Queryable<ComicChapter>().Where(x => x.ComicId == comic.Id).OrderBy(x => x.Order).ForEach(x =>
+        db.Set<ComicChapter>().Where(x => x.ComicId == comic.Id).OrderBy(x => x.Order).ToList().ForEach(x =>
         {
             viewModel.Episodes.Add(new LocalUiEpisode(x));
             viewModel.EpisodeCounts.Add(count);
@@ -104,14 +107,14 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
     }
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     [Autowired]
     protected ICallableService Caller { get; }
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     [Autowired]
-    protected ISqlSugarClient Db { get; }
+    protected IDbContextFactory<LocalDbContext> DbFactory { get; }
 }

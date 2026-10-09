@@ -1,5 +1,4 @@
 using System;
-using SqlSugar;
 
 namespace ShadowViewer.Plugin.Local.Entities;
 /// <summary>
@@ -10,13 +9,10 @@ public class ComicChapter
     /// <summary>
     /// ID
     /// </summary>
-    [SugarColumn(IsPrimaryKey = true, IsNullable = false)]
     public long Id { get; set; }
     /// <summary>
     /// 名称
     /// </summary>
-    [SugarColumn(ColumnDataType = "Nvarchar(2048)")]
-
     public string Name { get; set; } = null!;
     /// <summary>
     /// 序号
@@ -25,7 +21,6 @@ public class ComicChapter
     /// <summary>
     /// 所属的漫画
     /// </summary>
-    [SugarColumn()]
     public long ComicId { get; set; }
     /// <summary>
     /// 页数

@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,7 +11,9 @@ using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Sdk;
 using ShadowViewer.Sdk.Models;
 using ShadowViewer.Sdk.Services;
-using SqlSugar;
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
+using ShadowViewer.Sdk.Database;
 
 namespace ShadowViewer.Plugin.Local.ViewModels;
 
@@ -60,7 +63,7 @@ public partial class AttributesViewModel : ObservableObject
     public bool IsHaveEpisodes => Episodes.Count != 0;
 
     [Autowired] private PluginLoader PluginService { get; }
-    [Autowired] private ISqlSugarClient Db { get; }
+    [Autowired] private IDbContextFactory<LocalDbContext> DbFactory { get; }
     [Autowired] private ILogger Logger { get; }
 
     /// <summary>
@@ -69,10 +72,12 @@ public partial class AttributesViewModel : ObservableObject
     /// <param name="comicId"></param>
     public void Init(long comicId)
     {
-        var node = Db.Queryable<ComicNode>()
-            .Includes(x => x.ReadingRecord)
-            .First(x => x.Id == comicId);
-        CurrentComic = new LocalComic(node);
+        using var db = DbFactory.CreateDbContext();
+        var node = db.Set<ComicNode>()
+            .Include(x => x.ReadingRecord)
+            .Include(x => x.SourcePluginData)
+            .FirstOrDefault(x => x.Id == comicId);
+        CurrentComic = new LocalComic(node ?? throw new InvalidOperationException("Comic not found."), db);
         ReLoadTags();
         ReLoadEps();
     }
@@ -82,8 +87,9 @@ public partial class AttributesViewModel : ObservableObject
     /// </summary>
     public void ReLoadEps()
     {
+        using var db = DbFactory.CreateDbContext();
         Episodes.Clear();
-        foreach (var item in Db.Queryable<ComicChapter>().Where(x => x.ComicId == CurrentComic.Id).ToList())
+        foreach (var item in db.Set<ComicChapter>().Where(x => x.ComicId == CurrentComic.Id).ToList())
             Episodes.Add(item);
     }
 
@@ -92,9 +98,10 @@ public partial class AttributesViewModel : ObservableObject
     /// </summary>
     public void ReLoadTags()
     {
+        using var db = DbFactory.CreateDbContext();
         Tags.Clear();
-        var affiliationTag = Db.Queryable<ShadowTag>()
-            .Where(x => x.TagType == 0 && x.PluginId == CurrentComic.Affiliation).First();
+        var affiliationTag = db.Set<ShadowTag>()
+            .Where(x => x.TagType == 0 && x.PluginId == CurrentComic.Affiliation).FirstOrDefault();
         if (affiliationTag != null)
         {
             Tags.Add(affiliationTag);
@@ -127,33 +134,18 @@ public partial class AttributesViewModel : ObservableObject
     [RelayCommand]
     private void AddNewTag()
     {
-        if (Db.Queryable<ShadowTag>().Where(x => x.Name == NewUiTag.Name).Any()) return;
+        using var db = DbFactory.CreateDbContext();
+        if (db.Set<ShadowTag>().Where(x => x.Name == NewUiTag.Name).Any()) return;
         var tag = new ShadowTag(NewUiTag.Name, NewUiTag.BackgroundColor.ToHex(),
             NewUiTag.ForegroundColor.ToHex(),
             null, CurrentComic.Affiliation, tagType: 1);
+        var detail = db.Set<ComicDetail>().Include(x => x.Tags).Single(x => x.ComicId == CurrentComic.Id);
+        (detail.Tags ??= []).Add(tag);
+        db.SaveChanges();
         CurrentComic.Tags.Add(tag);
-        Db.InsertNav(CurrentComic)
-            .Include(it => it.Tags, new InsertNavOptions()
-                { OneToManyIfExistsNoInsert = true }) //配置存在不插入
-            .ExecuteCommand();
         Tags.Insert(Math.Max(Tags.Count - 1, 0), tag);
         NewUiTagVisible = false;
-        // {
-        //     tag.ComicId = localTag.ComicId;
-        //     tag.Icon = "\uEEDB";
-        //     tag.ToolTip = ResourcesHelper.GetString(ResourceKey.Tag) + ": " + localTag.Name;
-        //     Db.Updateable(tag).ExecuteCommand();
-        //     if (Tags.FirstOrDefault(x => x.Id == tag.Id) is ShadowTag lo) Tags[Tags.IndexOf(lo)] = tag;
-        // }
-        // else
-        // {
-        //     tag.Id = ShadowTag.RandomId();
-        //     tag.ComicId = CurrentComic.Id;
-        //     tag.Icon = "\uEEDB";
-        //     tag.ToolTip = ResourcesHelper.GetString(ResourceKey.Tag) + ": " + tag.Name;
-        //     Db.Insertable(tag).ExecuteCommand();
-        //     Tags.Insert(Math.Max(0, Tags.Count - 1), tag);
-        // }
+
     }
 
     /// <summary>
@@ -161,11 +153,7 @@ public partial class AttributesViewModel : ObservableObject
     /// </summary>
     public void RemoveTag(string id)
     {
-        // if (Tags.FirstOrDefault(x => x.Id == id) is ShadowTag tag)
-        // {
-        //     Tags.Remove(tag);
-        //     Db.Deleteable(tag).ExecuteCommand();
-        // }
+
     }
 
     /// <summary>

@@ -13,7 +13,7 @@
 		<PackageId>ShadowViewer.Plugin.Local</PackageId>
 		<PluginName>本地阅读器</PluginName>
 		<!--插件版本号(nuget包版本号)-->
-		<Version>1.6.6</Version>
+		<Version>2.0.0</Version>
 		<!--插件仓库地址(nuget包仓库地址)-->
 		<PackageProjectUrl>https://github.com/kitUIN/ShadowViewer.Plugin.Local</PackageProjectUrl>
 		<!--插件介绍(nuget包介绍)-->
@@ -38,6 +38,7 @@
 		<MetalamaAllowPreviewLanguageFeatures>true</MetalamaAllowPreviewLanguageFeatures>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.31" PrivateAssets="all" />
 		<!-- <PackageReference Include="ShadowPluginLoader.SourceGenerator" Version="2.1.0.20" /> -->
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240916" />
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.1.240916" />
@@ -49,6 +50,6 @@
 
 
 	<ItemGroup Condition="'$(Configuration)' == 'Release' And '$(DepsUseNuget)' == 'true'">
-		<PackageReference Include="ShadowViewer.Sdk" Version="3.3.0" />
+		<PackageReference Include="ShadowViewer.Sdk" Version="4.0.0" />
 	</ItemGroup>
 </Project>

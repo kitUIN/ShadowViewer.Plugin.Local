@@ -13,7 +13,9 @@ using ShadowViewer.Sdk.Helpers;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Readers;
-using SqlSugar;
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
+using ShadowViewer.Sdk.Database;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -145,7 +147,7 @@ public partial class ZipComicImporter : FolderComicImporter
                     var chapterName = isMulti && !string.IsNullOrEmpty(g.Key) ? g.Key : file.DisplayName; 
                     if (isMulti && string.IsNullOrEmpty(g.Key)) continue;
 
-                    var chapterId = SnowFlakeSingle.Instance.NextId();
+                    var chapterId = DatabaseIds.Next();
                     var chapter = new ComicChapter()
                     {
                         Id = chapterId,
@@ -160,7 +162,7 @@ public partial class ZipComicImporter : FolderComicImporter
                     {
                         pics.Add(new ComicPicture()
                         {
-                            Id = SnowFlakeSingle.Instance.NextId(),
+                            Id = DatabaseIds.Next(),
                             Name = Path.GetFileName(item.OriginalKey)!,
                             ChapterId = chapterId,
                             StoragePath = item.OriginalKey!, // Provisional path (relative)
@@ -224,9 +226,10 @@ public partial class ZipComicImporter : FolderComicImporter
     /// </summary>
     public async Task<bool> CheckPassword(string zip, ReaderOptions readerOptions)
     {
+        using var db = DbFactory.CreateDbContext();
         var md5 = EncryptingHelper.CreateMd5(zip);
         var sha1 = EncryptingHelper.CreateSha1(zip);
-        var cacheZip = await Db.Queryable<CacheZip>().FirstAsync(x => x.Sha1 == sha1 && x.Md5 == md5);
+        var cacheZip = await db.Set<CacheZip>().FirstOrDefaultAsync(x => x.Sha1 == sha1 && x.Md5 == md5);
         if (cacheZip is { Password: not null } && cacheZip.Password != "")
         {
             readerOptions.Password = cacheZip.Password;
@@ -240,19 +243,22 @@ public partial class ZipComicImporter : FolderComicImporter
             await using var entryStream = archive.Entries.First(entry => !entry.IsDirectory).OpenEntryStream();
             // 密码正确添加压缩包密码存档
             // 能正常打开一个entry就代表正确,所以这个循环只走了一次
-            await Db.Storageable(
-                CacheZip.Create(md5, sha1, Path.GetFileNameWithoutExtension(zip),
-                    password: readerOptions.Password)).ExecuteCommandAsync();
+            if (cacheZip == null)
+            {
+                cacheZip = CacheZip.Create(md5, sha1, Path.GetFileNameWithoutExtension(zip));
+                db.Add(cacheZip);
+            }
+            cacheZip.Password = readerOptions.Password;
+            await db.SaveChangesAsync();
 
             return true;
         }
         catch (CryptographicException)
         {
             // 密码错误就删除压缩包密码存档
-            await Db.Updateable<CacheZip>()
-                .SetColumns(x => x.Password == null)
-                .Where(x => x.Sha1 == sha1 && x.Md5 == md5)
-                .ExecuteCommandAsync();
+            await db.Set<CacheZip>().Where(x => x.Sha1 == sha1 && x.Md5 == md5)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.Password, (string?)null));
             return false;
         }
     }
@@ -279,61 +285,43 @@ public partial class ZipComicImporter : FolderComicImporter
         IProgress<double>? progress = null,
         ReaderOptions? readerOptions = null)
     {
-        var comicId = SnowFlakeSingle.Instance.NextId();
+        using var db = DbFactory.CreateDbContext();
+        var comicId = DatabaseIds.Next();
         Logger.Information("进入{Zip}解压流程", zip);
         var path = Path.Combine(destinationDirectory, comicId.ToString());
         var md5 = EncryptingHelper.CreateMd5(zip);
         var sha1 = EncryptingHelper.CreateSha1(zip);
         var start = DateTime.Now;
-        var cacheZip = await Db.Queryable<CacheZip>()
-            .FirstAsync(x => x.Sha1 == sha1 && x.Md5 == md5);
-        cacheZip ??= CacheZip.Create(md5, sha1, Path.GetFileNameWithoutExtension(zip));
+        var cacheZip = await db.Set<CacheZip>()
+            .FirstOrDefaultAsync(x => x.Sha1 == sha1 && x.Md5 == md5);
+        if (cacheZip == null)
+        {
+            cacheZip = CacheZip.Create(md5, sha1, Path.GetFileNameWithoutExtension(zip));
+            db.Add(cacheZip);
+        }
         if (cacheZip.ComicId != null)
         {
             comicId = (long)cacheZip.ComicId;
             // 缓存文件未被删除
             if (Directory.Exists(cacheZip.CachePath))
             {
-                await Db.Updateable<LocalComic>()
-                    .SetColumns(x => x.IsDelete == false)
-                    .Where(x => x.Id == comicId)
-                    .ExecuteCommandAsync();
+                await db.Set<ComicNode>().Where(x => x.Id == comicId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.IsDelete, false)
+                        .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
                 Logger.Information("{Zip}文件存在缓存记录,直接载入漫画{cid}", zip, cacheZip.ComicId);
                 progress?.Report(100D);
                 return true;
             }
         }
         
-        // 1. Init Comic Node and Detail from preview if possible
-        var comicNode = new ComicNode()
-        {
-            Name = Path.GetFileNameWithoutExtension(zip),
-            Thumb = "mx-appx:///default.png",
-            ParentId = parentId,
-            NodeType = "Comic",
-            Id = comicId,
-            ReadingRecord = new LocalReadingRecord() { CreatedDateTime = DateTime.Now, UpdatedDateTime = DateTime.Now },
-            ComicDetail = new ComicDetail() { ComicId = comicId, StoragePath = path },
-            SourcePluginDataId = PluginId + Version
-        };
-
-        if (preview?.ComicDetail != null)
-        {
-            comicNode.ComicDetail.ChapterCount = preview.ComicDetail.ChapterCount;
-            comicNode.ComicDetail.PageCount = preview.ComicDetail.PageCount;
-        }
-
-        await Db.InsertNav(comicNode)
-            .Include(z1 => z1.ReadingRecord)
-            .Include(z1 => z1.ComicDetail)
-            .ExecuteCommandAsync();
-        
+        path = Path.Combine(destinationDirectory, comicId.ToString());
         await using var fStream = File.OpenRead(zip);
         using var archive = ArchiveFactory.Open(zip, readerOptions);
         var total = archive.Entries.Where(entry => !entry.IsDirectory && (entry.Key?.IsPic() ?? false))
             .OrderBy(x => x.Key).ToList();
         var totalCount = total.Count;
-        var ms = new MemoryStream();
+        using var ms = new MemoryStream();
         if (total.FirstOrDefault() is { } img)
         {
             await using (var entryStream = img.OpenEntryStream())
@@ -342,7 +330,6 @@ public partial class ZipComicImporter : FolderComicImporter
             }
 
             var bytes = ms.ToArray();
-            CacheImg.CreateImage(BaseSdkConfig.TempFolderPath, bytes, comicId);
             thumbProgress?.Report(new MemoryStream(bytes));
         }
 
@@ -358,50 +345,63 @@ public partial class ZipComicImporter : FolderComicImporter
             progress?.Report(Math.Round(result * 100, 2) - 0.01D);
         }
 
-        // 2. Use Preview Content for Insert if valid
-        if (preview != null && preview.PreviewChapters.Count > 0)
+        // File extraction finishes before taking a SQLite write lock.
+        using var transaction = await db.Database.BeginTransactionAsync();
+        var comicNode = await db.Set<ComicNode>().Include(x => x.ReadingRecord).Include(x => x.ComicDetail)
+            .FirstOrDefaultAsync(x => x.Id == comicId);
+        if (comicNode == null)
         {
-             // Fix Paths
-             foreach(var kvp in preview.PreviewImages)
-             {
-                 foreach(var pic in kvp.Value)
-                 {
-                     pic.ComicId = comicId;
-                     // Convert relative zip path to absolute path
-                     // Zip Entry Key usually has backslashes or forward slashes.
-                     // The extraction with ExtractFullPath = true preserves structure.
-                     // On Windows, paths will use backslash if SharpCompress respects OS, 
-                     // but usually we can join paths.
-                     // The preview.Key was user saved earlier as `item.Key`.
-                     // `item.Key` usually is strict relative path in Zip.
-                     // `WriteToDirectory` uses `Path.Combine(path, entry.Key)`.
-                     // So:
-                     pic.StoragePath = Path.Combine(path, pic.StoragePath);
-                 }
-                 kvp.Key.ComicId = comicId;
-             }
-             
-             // Bulk Insert
-             var allPics = preview.PreviewImages.Values.SelectMany(x => x).ToList();
-             await Db.Insertable(preview.PreviewChapters).ExecuteCommandAsync();
-             await Db.Insertable(allPics).ExecuteCommandAsync();
-             
-             // Update Thumb (ComicNode)
-             if (!string.IsNullOrEmpty(preview.Thumb) && !preview.Thumb.StartsWith("mx-appx"))
-             {
-                  // The thumb in preview is a temp file. We might want to point to the real file in the comic folder if possible.
-                  // But usually preview thumb is fine as long as temp isn't deleted immediately?
-                  // Better: Find the thumb in the extracted files.
-                  var firstPic = allPics.FirstOrDefault();
-                  if (firstPic != null)
-                  {
-                       await Db.Updateable<ComicNode>().SetColumns(x => x.Thumb == firstPic.StoragePath).Where(x => x.Id == comicId).ExecuteCommandAsync();
-                  }
-             }
+            comicNode = new ComicNode
+            {
+                Id = comicId,
+                Name = Path.GetFileNameWithoutExtension(zip),
+                NodeType = "Comic",
+                SourcePluginDataId = PluginId + Version,
+                ReadingRecord = new LocalReadingRecord(),
+                ComicDetail = new ComicDetail()
+            };
+            db.Add(comicNode);
         }
         else
         {
-            await SaveComic(path, comicId);
+            // Rebuild missing archive files while retaining tags, authors, remarks and reading progress.
+            await db.Set<ComicChapter>().Where(x => x.ComicId == comicId).ExecuteDeleteAsync();
+            await db.Set<ComicPicture>().Where(x => x.ComicId == comicId).ExecuteDeleteAsync();
+            comicNode.ReadingRecord ??= new LocalReadingRecord();
+            comicNode.ComicDetail ??= new ComicDetail();
+        }
+        comicNode.ParentId = parentId;
+        comicNode.IsDelete = false;
+        comicNode.ComicDetail!.ProcessMode = "Zip";
+        comicNode.ComicDetail.StoragePath = path;
+        comicNode.ComicDetail.ChapterCount = preview.ComicDetail.ChapterCount;
+        comicNode.ComicDetail.PageCount = preview.ComicDetail.PageCount;
+        await db.SaveChangesAsync();
+        if (ms.Length > 0)
+            CacheImg.CreateImage(BaseSdkConfig.TempFolderPath, ms.ToArray(), comicId, db);
+
+        if (preview.PreviewChapters.Count > 0)
+        {
+            foreach (var (chapter, pictures) in preview.PreviewImages)
+            {
+                chapter.ComicId = comicId;
+                foreach (var picture in pictures)
+                {
+                    picture.ComicId = comicId;
+                    picture.StoragePath = Path.Combine(path, picture.StoragePath);
+                }
+            }
+            var allPictures = preview.PreviewImages.Values.SelectMany(x => x).ToList();
+            db.AddRange(preview.PreviewChapters);
+            db.AddRange(allPictures);
+            await db.SaveChangesAsync();
+            comicNode.Size = preview.PreviewChapters.Sum(x => x.Size);
+            if (allPictures.FirstOrDefault() is { } firstPicture)
+                comicNode.Thumb = firstPicture.StoragePath;
+        }
+        else
+        {
+            await SaveComic(path, comicId, context: db);
         }
 
         progress?.Report(100D);
@@ -410,9 +410,9 @@ public partial class ZipComicImporter : FolderComicImporter
         cacheZip.CachePath = path;
         cacheZip.Name = Path.GetFileNameWithoutExtension(zip)
             .Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries).Last();
-        await Db.Storageable(cacheZip).ExecuteCommandAsync();
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
         Logger.Information("解压成功:{Zip} 页数:{Pages} 耗时: {Time} s", zip, totalCount, (stop - start).TotalSeconds);
-        //TODO 中断回滚
         return true;
     }
 }

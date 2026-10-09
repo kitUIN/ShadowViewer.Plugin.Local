@@ -13,7 +13,9 @@ using ShadowViewer.Plugin.Local.Services.Interfaces;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
-using SqlSugar;
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
+using ShadowViewer.Sdk.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,7 +54,7 @@ public partial class ZipComicExporter : IComicExporter
     /// Db
     /// </summary>
     [Autowired]
-    protected ISqlSugarClient Db { get; }
+    protected IDbContextFactory<LocalDbContext> DbFactory { get; }
 
     /// <inheritdoc/>
     [Autowired]
@@ -170,12 +172,13 @@ public partial class ZipComicExporter : IComicExporter
     protected async Task CreateZip(StorageFile outputItem, LocalComic comic, DispatcherQueue dispatcher,
         CancellationToken token, IProgress<double>? progress = null)
     {
+        using var db = DbFactory.CreateDbContext();
         using var archive = ZipArchive.Create();
         var count = comic.Count;
         var current = 0;
-        foreach (var ep in await Db.Queryable<ComicChapter>().Where(x => x.ComicId == comic.Id).ToArrayAsync())
+        foreach (var ep in await db.Set<ComicChapter>().Where(x => x.ComicId == comic.Id).ToArrayAsync())
         {
-            foreach (var pic in await Db.Queryable<ComicPicture>()
+            foreach (var pic in await db.Set<ComicPicture>()
                          .Where(x => x.ComicId == comic.Id && x.ChapterId == ep.Id).ToArrayAsync())
             {
                 archive.AddEntry($"{ep.Name}/{pic.Name}", pic.StoragePath);

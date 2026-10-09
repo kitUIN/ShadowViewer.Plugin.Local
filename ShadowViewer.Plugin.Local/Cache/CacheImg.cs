@@ -1,8 +1,12 @@
+using System.Linq;
+using System;
 using DryIoc;
 using ShadowPluginLoader.WinUI;
 using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Sdk.Helpers;
-using SqlSugar;
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
+using ShadowViewer.Sdk.Database;
 
 namespace ShadowViewer.Plugin.Local.Cache
 {
@@ -14,19 +18,16 @@ namespace ShadowViewer.Plugin.Local.Cache
         /// <summary>
         /// Id
         /// </summary>
-        [SugarColumn(IsPrimaryKey = true)]
         public long Id { get; set; }
 
         /// <summary>
         /// MD5
         /// </summary>
-        [SugarColumn(ColumnDataType = "Nchar(32)", IsNullable = false)]
         public string Md5 { get; set; } = null!;
 
         /// <summary>
         /// 文件夹
         /// </summary>
-        [SugarColumn(ColumnDataType = "Text")]
         public string Dir { get; set; } = null!;
 
         /// <summary>
@@ -37,42 +38,46 @@ namespace ShadowViewer.Plugin.Local.Cache
         /// <summary>
         /// 标签
         /// </summary>
-        [SugarColumn()]
         public long ComicId { get; set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="dir"></param>
         /// <param name="bytes"></param>
         /// <param name="comicId"></param>
-        public static void CreateImage(string dir, byte[] bytes, long comicId)
+        public static void CreateImage(string dir, byte[] bytes, long comicId, LocalDbContext? context = null)
         {
-            var db = DiFactory.Services.Resolve<ISqlSugarClient>();
+            using var ownedContext = context == null
+                ? DiFactory.Services.Resolve<IDbContextFactory<LocalDbContext>>().CreateDbContext() : null;
+            var db = context ?? ownedContext!;
             var md5 = EncryptingHelper.CreateMd5(bytes);
-            var id = SnowFlakeSingle.Instance.NextId();
+            var id = DatabaseIds.Next();
             var path = System.IO.Path.Combine(dir, $"{id}.png");
-            System.IO.File.WriteAllBytes(path, bytes);
-            if (db.Queryable<CacheImg>().First(x => x.Md5 == md5) is { } cache)
+
+            if (db.Set<CacheImg>().FirstOrDefault(x => x.Md5 == md5) is { } cache)
             {
-                db.Updateable<ComicNode>()
-                    .SetColumns(it => it.Thumb == cache.Path)
-                    .Where(x => x.Id == comicId)
-                    .ExecuteCommand();
+                db.Set<ComicNode>().Where(x => x.Id == comicId)
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(it => it.Thumb, cache.Path)
+                        .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
             }
             else
             {
-                db.Insertable(new CacheImg
+                System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.WriteAllBytes(path, bytes);
+                db.Add(new CacheImg
                 {
                     Id = id,
                     Md5 = md5,
                     Dir = dir,
                     ComicId = comicId,
-                }).ExecuteCommand();
-                db.Updateable<ComicNode>()
-                    .SetColumns(it => it.Thumb == path)
-                    .Where(x => x.Id == comicId)
-                    .ExecuteCommand();
+                });
+                db.SaveChanges();
+                db.Set<ComicNode>().Where(x => x.Id == comicId)
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(it => it.Thumb, path)
+                        .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
             }
         }
     }

@@ -5,7 +5,9 @@ using ShadowPluginLoader.Attributes;
 using ShadowViewer.Sdk.Models;
 using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Plugin.Local.Services.Interfaces;
-using SqlSugar;
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
+using ShadowViewer.Sdk.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,7 +62,7 @@ public partial class FolderComicImporter : IComicImporter
     /// Db
     /// </summary>
     [Autowired]
-    protected ISqlSugarClient Db { get; }
+    protected IDbContextFactory<LocalDbContext> DbFactory { get; }
 
     /// <summary>
     /// 保存漫画
@@ -69,8 +71,10 @@ public partial class FolderComicImporter : IComicImporter
     /// <param name="comicId"></param>
     /// <param name="findThumb"></param>
     /// <returns></returns>
-    protected async Task<ShadowTreeNode> SaveComic(string path, long comicId, bool findThumb = false)
+    protected async Task<ShadowTreeNode> SaveComic(string path, long comicId, bool findThumb = false, LocalDbContext? context = null)
     {
+        using var ownedContext = context == null ? DbFactory.CreateDbContext() : null;
+        var db = context ?? ownedContext!;
         var node = ShadowTreeNode.FromFolder(path);
         ShadowTreeNode? thumb = null;
         var number = 1;
@@ -83,7 +87,7 @@ public partial class FolderComicImporter : IComicImporter
 
             foreach (var child in comicNode.Children.Where(child => child is { IsDirectory: true, Count: > 0 }))
             {
-                pics.AddRange(await CreateEpisode(comicId, child, number));
+                pics.AddRange(await CreateEpisode(db, comicId, child, number));
                 number++;
             }
         }
@@ -93,38 +97,38 @@ public partial class FolderComicImporter : IComicImporter
             if (epNode != null)
             {
                 if (findThumb) thumb = epNode.Children.FirstOrDefault(child => child.IsPic);
-                pics.AddRange(await CreateEpisode(comicId, epNode, number));
+                pics.AddRange(await CreateEpisode(db, comicId, epNode, number));
             }
         }
 
         if (thumb != null)
         {
-            await Db.Updateable<ComicNode>()
-                .SetColumns(x => x.Thumb == thumb.Path)
-                .Where(x => x.Id == comicId)
-                .ExecuteCommandAsync();
+            await db.Set<ComicNode>().Where(x => x.Id == comicId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.Thumb, thumb.Path)
+                    .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
         }
 
-        await Db.Insertable(pics).ExecuteReturnSnowflakeIdListAsync();
+        db.AddRange(pics);
+        await db.SaveChangesAsync();
         var episodeCount =
-            await Db.Queryable<ComicChapter>().Where(x => x.ComicId == comicId).CountAsync();
-        var count = await Db.Queryable<ComicPicture>().Where(x => x.ComicId == comicId).CountAsync();
-        await Db.Updateable<ComicNode>()
-            .SetColumns(it => it.Size == node.Size)
-            .Where(x => x.Id == comicId)
-            .ExecuteCommandAsync();
-        await Db.Updateable<ComicDetail>()
-            .SetColumns(it => it.ChapterCount == episodeCount)
-            .SetColumns(it => it.PageCount == count)
-            .Where(x => x.ComicId == comicId)
-            .ExecuteCommandAsync();
+            await db.Set<ComicChapter>().Where(x => x.ComicId == comicId).CountAsync();
+        var count = await db.Set<ComicPicture>().Where(x => x.ComicId == comicId).CountAsync();
+        await db.Set<ComicNode>().Where(x => x.Id == comicId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(it => it.Size, node.Size)
+                .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
+        await db.Set<ComicDetail>().Where(x => x.ComicId == comicId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(it => it.ChapterCount, episodeCount)
+                .SetProperty(it => it.PageCount, count));
         return node;
     }
 
-    private async Task<IEnumerable<ComicPicture>> CreateEpisode(long comicId,
+    private async Task<IEnumerable<ComicPicture>> CreateEpisode(LocalDbContext db, long comicId,
         ShadowTreeNode child, int number)
     {
-        var epId = await Db.Insertable(new ComicChapter
+        var chapter = new ComicChapter
         {
             Name = child.Name,
             Order = number,
@@ -132,7 +136,10 @@ public partial class FolderComicImporter : IComicImporter
             PageCount = child.Count,
             Size = child.Size,
             CreatedDateTime = DateTime.Now,
-        }).ExecuteReturnSnowflakeIdAsync();
+        };
+        db.Add(chapter);
+        await db.SaveChangesAsync();
+        var epId = chapter.Id;
         return child.Children
             .Where(c => c.IsPic)
             .Select(item =>
@@ -198,7 +205,7 @@ public partial class FolderComicImporter : IComicImporter
             var order = 1;
             foreach (var child in node.Children.Where(child => child is { IsDirectory: true, Count: > 0 }))
             {
-                var chapterId = SnowFlakeSingle.Instance.NextId();
+                var chapterId = DatabaseIds.Next();
                 var chapter = new ComicChapter()
                 {
                     Id = chapterId,
@@ -210,7 +217,7 @@ public partial class FolderComicImporter : IComicImporter
 
                 var pics = child.Children.Where(c => c.IsPic).Select(item => new ComicPicture
                 {
-                    Id = SnowFlakeSingle.Instance.NextId(),
+                    Id = DatabaseIds.Next(),
                     Name = item.Name,
                     ChapterId = chapterId,
                     // ComicId set later
@@ -246,7 +253,7 @@ public partial class FolderComicImporter : IComicImporter
 
                 thumb = epNode.Children.FirstOrDefault(child => child.IsPic);
 
-                var chapterId = SnowFlakeSingle.Instance.NextId();
+                var chapterId = DatabaseIds.Next();
                 var chapter = new ComicChapter()
                 {
                     Id = chapterId,
@@ -259,7 +266,7 @@ public partial class FolderComicImporter : IComicImporter
 
                 var pics = epNode.Children.Where(c => c.IsPic).Select(item => new ComicPicture
                 {
-                    Id = SnowFlakeSingle.Instance.NextId(),
+                    Id = DatabaseIds.Next(),
                     Name = item.Name,
                     ChapterId = chapterId,
                     StoragePath = item.Path,
@@ -309,33 +316,33 @@ public partial class FolderComicImporter : IComicImporter
     /// <returns></returns>
     protected virtual async Task ImportDetail(ComicImportPreview preview, long parentId)
     {
+        using var db = DbFactory.CreateDbContext();
+        using var transaction = await db.Database.BeginTransactionAsync();
         var path = preview.SourceItem?.Path ?? preview.ComicDetail.StoragePath;
 
         // Create ComicNode (The Book) with Detail attached
-        var comic = await Db.InsertNav(new ComicNode()
+        var comic = new ComicNode()
+        {
+            Name = preview.Name,
+            Thumb = preview.Thumb,
+            ParentId = parentId,
+            NodeType = "Comic",
+            Size = preview.PreviewChapters.Sum(c => c.Size),
+            ReadingRecord = new LocalReadingRecord()
             {
-                Name = preview.Name,
-                Thumb = preview.Thumb,
-                ParentId = parentId,
-                NodeType = "Comic",
-                Size = preview.PreviewChapters.Sum(c => c.Size),
-                ReadingRecord = new LocalReadingRecord()
-                {
-                    CreatedDateTime = DateTime.Now,
-                    UpdatedDateTime = DateTime.Now
-                },
-                ComicDetail = new ComicDetail()
-                {
-                    ProcessMode = "Folder",
-                    StoragePath = path,
-                    ChapterCount = preview.ComicDetail.ChapterCount,
-                    PageCount = preview.ComicDetail.PageCount,
-                },
-                SourcePluginDataId = PluginId + Version
-            })
-            .Include(z1 => z1.ReadingRecord)
-            .Include(z1 => z1.ComicDetail)
-            .ExecuteReturnEntityAsync();
+                CreatedDateTime = DateTime.Now,
+                UpdatedDateTime = DateTime.Now
+            },
+            ComicDetail = new ComicDetail()
+            {
+                ProcessMode = "Folder",
+                StoragePath = path,
+                ChapterCount = preview.ComicDetail.ChapterCount,
+                PageCount = preview.ComicDetail.PageCount,
+            },
+            SourcePluginDataId = PluginId + Version
+        };
+        db.Add(comic);
 
         var comicId = comic.Id;
 
@@ -361,16 +368,15 @@ public partial class FolderComicImporter : IComicImporter
         // Bulk Insert
         if (allChapters.Count > 0)
         {
-            await Db.Insertable(allChapters).ExecuteCommandAsync();
+            db.AddRange(allChapters);
         }
 
         if (allPictures.Count > 0)
         {
-            // Use chunks if too many pictures? Sqlite has limits on variables.
-            // SqlSugar usually handles batching but safer to check.
-            // For now assuming safe or SqlSugar handles it.
-            await Db.Insertable(allPictures).ExecuteCommandAsync();
+            db.AddRange(allPictures);
         }
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
 
     /// <inheritdoc />

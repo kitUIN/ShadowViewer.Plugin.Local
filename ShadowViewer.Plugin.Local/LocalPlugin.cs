@@ -1,4 +1,7 @@
+using System.Linq;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
 using DryIoc;
 using ShadowPluginLoader.Attributes;
 using ShadowPluginLoader.WinUI;
@@ -49,26 +52,15 @@ public partial class LocalPlugin : AShadowViewerPlugin
         DiFactory.Services.Register<IImageSourceStrategy, NetworkStrategy>(
             Reuse.Singleton, serviceKey: "network",
             ifAlreadyRegistered: IfAlreadyRegistered.Replace);
-        Db.CodeFirst.InitTables<ComicChapter>();
-        Db.CodeFirst.InitTables<ComicPicture>();
-        Db.CodeFirst.InitTables<CacheImg>();
-        Db.CodeFirst
-            .InitTables<ComicNode, SourcePluginData, LocalReadingRecord>();
-        Db.CodeFirst
-            .InitTables<LocalAuthor, ComicDetail, LocalComicAuthorMapping, LocalComicTagMapping>();
-        Db.CodeFirst.InitTables<LocalHistory>();
-        if (!Db.Queryable<ComicNode>().Any(x => x.Id == -1L))
-        {
+        using var db = DiFactory.Services.Resolve<IDbContextFactory<LocalDbContext>>().CreateDbContext();
+        var source = new SourcePluginData(MetaData.Id, MetaData.Version.ToString(), MetaData.Name,
+            "#ffd657", "#000000");
+        var existingSource = db.Set<SourcePluginData>().Find(source.Id);
+        if (existingSource == null) db.Add(source);
+        else db.Entry(existingSource).CurrentValues.SetValues(source);
+        db.SaveChanges();
+        if (!db.Set<ComicNode>().Any(x => x.Id == -1L))
             ComicNode.CreateFolder("root", -2, -1);
-        }
-
-        Db.Storageable(new SourcePluginData(
-            MetaData.Id,
-            MetaData.Version.ToString(),
-            MetaData.Name,
-            "#ffd657",
-            "#000000"
-        )).ExecuteCommand();
     }
 
     /// <inheritdoc />

@@ -1,3 +1,4 @@
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DryIoc;
 using ShadowPluginLoader.WinUI;
@@ -5,7 +6,9 @@ using ShadowViewer.Plugin.Local.Constants;
 using ShadowViewer.Plugin.Local.Entities;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
 using ShadowViewer.Sdk.Models;
-using SqlSugar;
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
+using ShadowViewer.Sdk.Database;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -15,7 +18,6 @@ namespace ShadowViewer.Plugin.Local.Models;
 /// <summary>
 /// 本地漫画
 /// </summary>
-[SugarTable(IsDisabledDelete = true)]
 public partial class LocalComic : ObservableObject, IComicNode
 {
     #region Field
@@ -124,12 +126,12 @@ public partial class LocalComic : ObservableObject, IComicNode
     /// <summary>
     /// 作者
     /// </summary>
-    public ObservableCollection<LocalAuthor> Authors { get; set; } = null!;
+    public ObservableCollection<LocalAuthor> Authors { get; set; } = [];
 
     /// <summary>
     /// 标签
     /// </summary>
-    public ObservableCollection<ShadowTag> Tags { get; set; } = null!;
+    public ObservableCollection<ShadowTag> Tags { get; set; } = [];
 
     /// <summary>
     /// 阅读记录
@@ -157,9 +159,11 @@ public partial class LocalComic : ObservableObject, IComicNode
     /// </summary>
     /// <param name="node">漫画节点</param>
     /// <param name="dbClient">数据库</param>
-    public LocalComic(ComicNode node, ISqlSugarClient? dbClient = null)
+    public LocalComic(ComicNode node, LocalDbContext? dbClient = null)
     {
-        dbClient ??= DiFactory.Services.Resolve<ISqlSugarClient>();
+        using var ownedContext = dbClient == null
+            ? DiFactory.Services.Resolve<IDbContextFactory<LocalDbContext>>().CreateDbContext() : null;
+        dbClient ??= ownedContext!;
 
         Id = node.Id;
         ParentId = node.ParentId;
@@ -176,11 +180,11 @@ public partial class LocalComic : ObservableObject, IComicNode
 
         if (!IsFolder && NodeType == "Comic")
         {
-            var detail = dbClient.Queryable<ComicDetail>()
-                .Includes(x => x.Authors)
-                .Includes(x => x.Tags)
+            var detail = dbClient.Set<ComicDetail>()
+                .Include(x => x.Authors)
+                .Include(x => x.Tags)
                 .Where(x => x.ComicId == Id)
-                .First();
+                .FirstOrDefault();
             if (detail == null) return;
             ComicId = detail.ExtendId ?? Id.ToString();
             EpisodeCount = detail.ChapterCount;

@@ -14,7 +14,9 @@ using ShadowViewer.Plugin.Local.Models;
 using ShadowViewer.Sdk.Helpers;
 using ShadowViewer.Sdk.Models;
 using ShadowViewer.Sdk.Services;
-using SqlSugar;
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
+using ShadowViewer.Sdk.Database;
 
 namespace ShadowViewer.Plugin.Local.Services;
 
@@ -76,7 +78,8 @@ public partial class FolderContainerComicImporter : FolderComicImporter
         if (preview.SubPreviews.Count > 0)
         {
             // Create a folder node for the container
-            var folderNode = await Db.InsertNav(new ComicNode()
+            using var db = DbFactory.CreateDbContext();
+            var folderNode = new ComicNode()
             {
                 Name = preview.Name,
                 ParentId = parentId,
@@ -84,7 +87,9 @@ public partial class FolderContainerComicImporter : FolderComicImporter
                 Thumb = "ms-appx:///Assets/Default/folder.png",  // Default folder icon
                 ReadingRecord = new LocalReadingRecord() { CreatedDateTime = DateTime.Now, UpdatedDateTime = DateTime.Now },
                 SourcePluginDataId = PluginId + Version
-            }).Include(x => x.ReadingRecord).ExecuteReturnEntityAsync();
+            };
+            db.Add(folderNode);
+            await db.SaveChangesAsync();
 
             int i = 0;
             int total = preview.SubPreviews.Count;

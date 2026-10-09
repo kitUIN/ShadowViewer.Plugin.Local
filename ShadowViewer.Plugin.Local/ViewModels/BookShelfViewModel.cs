@@ -21,7 +21,9 @@ using ShadowViewer.Sdk.Helpers;
 using ShadowViewer.Sdk.Navigation;
 using ShadowViewer.Sdk.Services;
 using ShadowViewer.Sdk.Utils;
-using SqlSugar;
+using Microsoft.EntityFrameworkCore;
+using ShadowViewer.Plugin.Local.Database;
+using ShadowViewer.Sdk.Database;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -99,7 +101,7 @@ public partial class BookShelfViewModel : ObservableObject
     /// 
     /// </summary>
     [Autowired]
-    private ISqlSugarClient Db { get; }
+    private IDbContextFactory<LocalDbContext> DbFactory { get; }
 
 
     /// <summary>
@@ -152,6 +154,7 @@ public partial class BookShelfViewModel : ObservableObject
     /// </summary>
     public void NavigateTo(ShadowUri uri)
     {
+        using var db = DbFactory.CreateDbContext();
         var toId = -1L;
         if (uri.Query.ContainsKey("bookId"))
         {
@@ -166,7 +169,7 @@ public partial class BookShelfViewModel : ObservableObject
         }
 
         Logger.Information("导航到{Path},Path={P}", uri, toId);
-        var current = Db.Queryable<ComicNode>().First(x => x.Id == toId);
+        var current = db.Set<ComicNode>().FirstOrDefault(x => x.Id == toId);
 
         OriginPath = uri;
         CurrentFolder = current ?? throw new Exception("跳转失败");
@@ -204,10 +207,11 @@ public partial class BookShelfViewModel : ObservableObject
             I18N.Rename, text: comic.Name,
             primaryAction: (_, _, name) =>
             {
-                Db.Updateable<LocalComic>()
-                    .SetColumns(x => x.Name == name)
-                    .Where(x => x.Id == comic.Id)
-                    .ExecuteCommand();
+                using var db = DbFactory.CreateDbContext();
+                db.Set<ComicNode>().Where(x => x.Id == comic.Id)
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(x => x.Name, name)
+                        .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
                 RefreshLocalComic();
             });
         await NotifyService.ShowDialog(this, dialog);
@@ -324,31 +328,32 @@ public partial class BookShelfViewModel : ObservableObject
     /// </summary>
     private void DeleteComics()
     {
-        var db = DiFactory.Services.Resolve<ISqlSugarClient>();
+        using var db = DbFactory.CreateDbContext();
+        using var transaction = db.Database.BeginTransaction();
         foreach (var comic in SelectedItems.ToArray())
         {
             if (LocalPluginConfig.LocalIsDeleteFilesWithComicDelete && !comic.IsFolder)
             {
                 comic.Link?.DeleteDirectory(recycleBin: true);
-                db.Updateable<CacheZip>()
-                    .SetColumns(x => x.ComicId == null)
-                    .Where(x => x.ComicId == comic.Id)
-                    .ExecuteCommand();
-                db.Deleteable<ComicChapter>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
-                db.Deleteable<ComicPicture>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
-                db.Deleteable<ComicDetail>().Where(x => x.ComicId == comic.Id).ExecuteCommand();
-                db.Deleteable<ComicNode>().Where(x => x.Id == comic.Id).ExecuteCommand();
+                db.Set<CacheZip>().Where(x => x.ComicId == comic.Id)
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(x => x.ComicId, (long?)null));
+                db.Set<ComicChapter>().Where(x => x.ComicId == comic.Id).ExecuteDelete();
+                db.Set<ComicPicture>().Where(x => x.ComicId == comic.Id).ExecuteDelete();
+                db.Set<ComicDetail>().Where(x => x.ComicId == comic.Id).ExecuteDelete();
+                db.Set<ComicNode>().Where(x => x.Id == comic.Id).ExecuteDelete();
             }
             else
             {
-                db.Updateable<ComicNode>()
-                    .SetColumns(x => x.IsDelete == true)
-                    .Where(x => x.Id == comic.Id)
-                    .ExecuteCommand();
+                db.Set<ComicNode>().Where(x => x.Id == comic.Id)
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(x => x.IsDelete, true)
+                        .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
             }
 
             LocalComics.Remove(comic);
         }
+        transaction.Commit();
     }
 
 
@@ -358,9 +363,10 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     public void RefreshLocalComic()
     {
-        var comics = Db.Queryable<ComicNode>()
-            .Includes(x => x.ReadingRecord)
-            .Includes(x => x.SourcePluginData)
+        using var db = DbFactory.CreateDbContext();
+        var comics = db.Set<ComicNode>()
+            .Include(x => x.ReadingRecord)
+            .Include(x => x.SourcePluginData)
             .Where(x => x.ParentId == CurrentFolder.Id)
             .ToList();
         if (comics.Count > 0)
@@ -391,7 +397,7 @@ public partial class BookShelfViewModel : ObservableObject
         LocalComics.Clear();
         foreach (var item in comics)
         {
-            LocalComics.Add(new LocalComic(item, Db));
+            LocalComics.Add(new LocalComic(item, db));
         }
 
         LoadFolderTree();
@@ -403,18 +409,26 @@ public partial class BookShelfViewModel : ObservableObject
     [RelayCommand]
     private void DoubleTappedItem(LocalComic item)
     {
+        using var db = DbFactory.CreateDbContext();
         if (item.IsFolder) NavigateTo(ShadowUri.Parse($"shadow://local/bookshelf?bookId={item.Id}"));
         else
         {
             if (SelectedItems.Count != 1) return;
             var comic = SelectedItems[0];
-            Db.Storageable(new LocalHistory()
+            var history = db.Set<LocalHistory>().Find(comic.Id);
+            if (history == null)
+            {
+                history = new LocalHistory { Id = comic.Id };
+                db.Add(history);
+            }
+            db.Entry(history).CurrentValues.SetValues(new LocalHistory()
             {
                 Id = comic.Id,
                 LastReadDateTime = DateTime.Now,
                 Thumb = comic.Thumb,
                 Title = comic.Name,
-            }).ExecuteCommand();
+            });
+            db.SaveChanges();
             NavigateService.Navigate(typeof(PicPage), new PicViewArg(PluginConstants.PluginId, comic),
                 new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
         }
@@ -527,13 +541,13 @@ public partial class BookShelfViewModel : ObservableObject
     /// <param name="comics"></param>
     public async Task MoveTo(long newFolderId, IEnumerable<LocalComic> comics)
     {
+        using var db = DbFactory.CreateDbContext();
         var ids = comics.Select(x => x.Id).ToList();
         if (ids.Contains(newFolderId)) return;
-        await Db.Updateable<ComicNode>()
-            .SetColumns(x => x.ParentId == newFolderId)
-            .SetColumns(x => x.UpdatedDateTime == DateTime.Now)
-            .Where(x => ids.Contains(x.Id))
-            .ExecuteCommandAsync();
+        await db.Set<ComicNode>().Where(x => ids.Contains(x.Id))
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.ParentId, newFolderId)
+                .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
     }
 
     /// <summary>
@@ -556,9 +570,10 @@ public partial class BookShelfViewModel : ObservableObject
     /// </summary>
     public void LoadFolderTree()
     {
+        using var db = DbFactory.CreateDbContext();
         FolderTree.Clear();
         var selectedIds = SelectedItems.Select(x => x.Id).ToHashSet();
-        var allFolders = Db.Queryable<ComicNode>()
+        var allFolders = db.Set<ComicNode>()
             .Where(x => x.NodeType == "Folder" && !x.IsDelete)
             .ToList();
         var rootComic = allFolders.First(x => x.Id == -1);
