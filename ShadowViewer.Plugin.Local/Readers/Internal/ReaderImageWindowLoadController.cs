@@ -97,6 +97,10 @@ internal sealed class ReaderImageWindowLoadController(Func<DateTimeOffset>? getT
         Rect viewportRect, int preloadRange, CanvasDevice? device, Func<ReaderImageLoadTicket, bool> enqueueBitmapLoad)
     {
         var nextWindow = BuildWindow(layoutNodes, allNodes, viewportRect, preloadRange, out var visible);
+        // 半页参与可见范围计算，资源请求与淘汰则按原图去重。
+        nextWindow = nextWindow.Select(n => n.ImageNode).ToHashSet();
+        visible = visible.Select(n => n.ImageNode).ToHashSet();
+        var imageNodes = allNodes.Select(n => n.ImageNode).Distinct().ToArray();
         List<ReaderImageLoadTicket> canceled;
         var released = new List<CanvasBitmap>();
         lock (gate)
@@ -113,7 +117,7 @@ internal sealed class ReaderImageWindowLoadController(Func<DateTimeOffset>? getT
             foreach (var node in new List<RenderNode>(retries.Keys))
                 if (!wanted.Contains(node)) retries.Remove(node);
 
-            foreach (var node in allNodes)
+            foreach (var node in imageNodes)
             {
                 if (!wanted.Contains(node))
                 {
@@ -126,7 +130,7 @@ internal sealed class ReaderImageWindowLoadController(Func<DateTimeOffset>? getT
                 }
             }
             // 可见图片先于预加载邻页入队，避免网络预取占满消费者。
-            foreach (var node in visible.Concat(allNodes.Where(n => wanted.Contains(n) && !visible.Contains(n))))
+            foreach (var node in visible.Concat(imageNodes.Where(n => wanted.Contains(n) && !visible.Contains(n))))
             {
                 // 快速跳页只更新目标窗口，短暂稳定后再加载，避免中间页堆满队列。
                 if (now < loadAfter) break;

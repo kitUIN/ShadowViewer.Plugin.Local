@@ -10,8 +10,16 @@ namespace ShadowViewer.Plugin.Local.Readers;
 /// </summary>
 public class RenderNode
 {
+    internal RenderNode? OriginalNode { get; init; }
+    internal RenderNode ImageNode => OriginalNode ?? this;
+    /// <summary>在原图中的归一化裁切区域，半页无需单独解码位图。</summary>
+    internal Rect SourceRegion { get; init; } = new(0, 0, 1, 1);
+    internal Size PageSize => new(Ctx.Size.Width * SourceRegion.Width, Ctx.Size.Height * SourceRegion.Height);
+    internal Rect GetSourceRect(CanvasBitmap image) => new(SourceRegion.X * image.Size.Width,
+        SourceRegion.Y * image.Size.Height, SourceRegion.Width * image.Size.Width, SourceRegion.Height * image.Size.Height);
+
     /// <summary>
-    /// 原始页码。
+    /// 当前阅读序列中的页码（拆分后的半页各占一个索引）。
     /// </summary>
     public int PageIndex { get; set; }
 
@@ -30,7 +38,7 @@ public class RenderNode
     /// </summary>
     public CanvasBitmap? Bitmap
     {
-        get { lock (bitmapLock) return bitmap; }
+        get { if (OriginalNode != null) return OriginalNode.Bitmap; lock (bitmapLock) return bitmap; }
         set => SetBitmap(value);
     }
 
@@ -50,16 +58,17 @@ public class RenderNode
     internal SemaphoreSlim ImageLoadGate { get; } = new(1, 1);
     internal bool IsSourceInitialized { get; private set; }
     internal bool IsRetired => isRetired;
+    private bool isSizeLoaded;
 
     /// <summary>
     /// 如果 <see cref="Bitmap"/> 不为 <c>null</c> 则表示已加载。
     /// </summary>
-    public bool IsLoaded { get { lock (bitmapLock) return bitmap != null; } }
+    public bool IsLoaded { get { if (OriginalNode != null) return OriginalNode.IsLoaded; lock (bitmapLock) return bitmap != null; } }
 
     /// <summary>
     /// 是否已加载实际尺寸（不是默认占位尺寸）。
     /// </summary>
-    public bool IsSizeLoaded { get; set; }
+    public bool IsSizeLoaded { get => OriginalNode?.IsSizeLoaded ?? isSizeLoaded; set => isSizeLoaded = value; }
 
     /// <summary>
     /// 是否预加载
@@ -71,6 +80,11 @@ public class RenderNode
     /// </summary>
     public void UseBitmap(System.Action<CanvasBitmap> action)
     {
+        if (OriginalNode != null)
+        {
+            OriginalNode.UseBitmap(action);
+            return;
+        }
         lock (bitmapLock)
         {
             if (bitmap != null)

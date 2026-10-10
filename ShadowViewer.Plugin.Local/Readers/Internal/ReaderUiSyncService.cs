@@ -9,6 +9,18 @@ namespace ShadowViewer.Plugin.Local.Readers.Internal;
 /// </summary>
 internal sealed class ReaderUiSyncService
 {
+    /// <summary>分页模式保留明确定位的页码，不能仅因双页离相机等距而改写恢复位置。</summary>
+    public static int ResolvePageIndex(ReadingMode mode, IReadOnlyList<RenderNode> layoutNodes,
+        int currentIndex, int closestIndex)
+    {
+        if (mode != ReadingMode.VerticalScroll)
+        {
+            foreach (var node in layoutNodes)
+                if (node.PageIndex == currentIndex) return currentIndex;
+        }
+        return closestIndex;
+    }
+
     /// <summary>
     /// 尝试计算当前帧需要同步到 UI 的状态。
     /// </summary>

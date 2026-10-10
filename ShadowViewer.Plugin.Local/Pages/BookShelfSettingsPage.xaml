@@ -83,6 +83,28 @@
                         TextConverter="{ThemeResource LocalReaderModeConverter}" />
                 </controls:SettingsCard>
                 <controls:SettingsCard
+                    Description="{i18N:Locale Key=BuildPageIndexDescription}"
+                    Header="{i18N:Locale Key=BuildPageIndex}"
+                    HeaderIcon="{icx:FluentIcon Icon=BookTemplate}">
+                    <ToggleSwitch IsOn="{x:Bind Config.BuildPageIndex, Mode=TwoWay}" />
+                </controls:SettingsCard>
+                <controls:SettingsCard
+                    Description="{i18N:Locale Key=SplitWidePagesDescription}"
+                    Header="{i18N:Locale Key=SplitWidePages}"
+                    HeaderIcon="{icx:FluentIcon Icon=BookTemplate}">
+                    <ToggleSwitch IsOn="{x:Bind Config.SplitWidePages, Mode=TwoWay}" />
+                </controls:SettingsCard>
+                <controls:SettingsCard
+                    Description="{i18N:Locale Key=SplitWidePagesScopeDescription}"
+                    Header="{i18N:Locale Key=SplitWidePagesScope}"
+                    HeaderIcon="{icx:FluentIcon Icon=BookTemplate}">
+                    <controls2:EnumButton
+                        EnumSource="readers:WidePageSplitScope"
+                        IsEnabled="{x:Bind Config.SplitWidePages, Mode=OneWay}"
+                        SelectedValue="{x:Bind Config.SplitWidePagesScope, Mode=TwoWay}"
+                        TextConverter="{ThemeResource WidePageSplitScopeConverter}" />
+                </controls:SettingsCard>
+                <controls:SettingsCard
                     Description="{i18N:Locale Key=AllowHorizontalDragInScrollDescription}"
                     Header="{i18N:Locale Key=AllowHorizontalDragInScroll}"
                     HeaderIcon="{icx:FluentIcon Icon=PhoneSpanOut}">

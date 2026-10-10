@@ -6,6 +6,7 @@ using Windows.Foundation;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using ShadowViewer.Plugin.Local.Models.Interfaces;
+using ShadowViewer.Plugin.Local.Readers.Internal;
 
 namespace ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 
@@ -15,6 +16,15 @@ namespace ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 /// </summary>
 public class LocalFileStrategy : IImageSourceStrategy
 {
+    /// <inheritdoc />
+    public virtual bool IsLocalSource => true;
+
+    private static readonly Lazy<ReaderImageSizeCache> SizeCache = new(() => new ReaderImageSizeCache(
+        Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "reader_index", "local_image_sizes.json")));
+
+    internal static Task FlushSizeCacheAsync(CancellationToken token) =>
+        SizeCache.IsValueCreated ? SizeCache.Value.FlushAsync(token) : Task.CompletedTask;
+
     /// <summary>
     /// 判断给定的资源标识是否为本地文件或可通过本地路径访问的资源。
     /// 支持 <see cref="StorageFile"/> 实例、绝对路径以及以 "ms-appx:" 或 "ms-appdata:" 为前缀的路径。
@@ -79,11 +89,33 @@ public class LocalFileStrategy : IImageSourceStrategy
     /// <returns>表示异步初始化操作的任务。</returns>
     public virtual async Task InitImageAsync(ImageLoadingContext ctx)
     {
-        var file = await GetStorageFile(ctx.Source, ctx.CancellationToken);
-        if (file == null) return;
-        var props = await file.Properties.GetImagePropertiesAsync().AsTask(ctx.CancellationToken);
-        ctx.Size = new Size(props.Width, props.Height);
-        ctx.CachedFilePath = string.IsNullOrWhiteSpace(file.Path) ? null : file.Path;
+        string? path = ctx.Source switch
+        {
+            IUiPicture picture => picture.SourcePath,
+            StorageFile file => file.Path,
+            string value => value,
+            _ => null
+        };
+        if (!string.IsNullOrWhiteSpace(path) && Path.IsPathFullyQualified(path))
+        {
+            ctx.Size = await SizeCache.Value.GetAsync(path, async token =>
+            {
+                var file = await GetStorageFile(ctx.Source, token);
+                if (file == null) return default;
+                var props = await file.Properties.GetImagePropertiesAsync().AsTask(token);
+                return new Size(props.Width, props.Height);
+            }, ctx.CancellationToken);
+            ctx.CachedFilePath = path;
+        }
+        else
+        {
+            // 无普通文件路径的应用资源及虚拟文件仍通过原策略解析。
+            var file = await GetStorageFile(ctx.Source, ctx.CancellationToken);
+            if (file == null) return;
+            var props = await file.Properties.GetImagePropertiesAsync().AsTask(ctx.CancellationToken);
+            ctx.Size = new Size(props.Width, props.Height);
+            ctx.CachedFilePath = string.IsNullOrWhiteSpace(file.Path) ? null : file.Path;
+        }
     }
 
     /// <inheritdoc />

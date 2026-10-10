@@ -169,7 +169,7 @@ internal sealed partial class Win2DPageRenderer : IPageRenderer
         {
             try
             {
-                drawingSession.DrawImage(bitmap, bounds);
+                drawingSession.DrawImage(bitmap, bounds, node.GetSourceRect(bitmap));
                 drew = true;
             }
             catch
@@ -220,17 +220,21 @@ internal sealed partial class Win2DPageRenderer : IPageRenderer
             nodeUnderneath?.UseBitmap(backBitmap =>
             {
                 if (diagonal != null)
-                    DrawDiagonalBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, nodeUnderneath.Bounds, curlFromRight, diagonal);
+                    DrawDiagonalBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, nodeUnderneath.Bounds, curlFromRight, diagonal,
+                        node.GetSourceRect(frontBitmap), nodeUnderneath.GetSourceRect(backBitmap));
                 else
-                    DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, nodeUnderneath.Bounds, curlAmount, curlFromRight);
+                    DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, nodeUnderneath.Bounds, curlAmount, curlFromRight,
+                        node.GetSourceRect(frontBitmap), nodeUnderneath.GetSourceRect(backBitmap));
                 drewBack = true;
             });
             if (!drewBack)
             {
                 if (diagonal != null)
-                    DrawDiagonalBitmap(drawingSession, node.Bounds, frontBitmap, null, node.Bounds, curlFromRight, diagonal);
+                    DrawDiagonalBitmap(drawingSession, node.Bounds, frontBitmap, null, node.Bounds, curlFromRight, diagonal,
+                        node.GetSourceRect(frontBitmap), node.GetSourceRect(frontBitmap));
                 else
-                    DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, null, node.Bounds, curlAmount, curlFromRight);
+                    DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, null, node.Bounds, curlAmount, curlFromRight,
+                        node.GetSourceRect(frontBitmap), node.GetSourceRect(frontBitmap));
             }
             drew = true;
         });
@@ -242,7 +246,7 @@ internal sealed partial class Win2DPageRenderer : IPageRenderer
 
     // 位图锁在整个绘制过程中持有，避免清空章节时释放仍在使用的纹理。
     private static void DrawCurledBitmap(CanvasDrawingSession drawingSession, Rect bounds, CanvasBitmap frontBitmap,
-        CanvasBitmap? backBitmap, Rect backBounds, float curlAmount, bool curlFromRight)
+        CanvasBitmap? backBitmap, Rect backBounds, float curlAmount, bool curlFromRight, Rect frontSource, Rect backSource)
     {
 
         float width = (float)bounds.Width;
@@ -348,11 +352,12 @@ internal sealed partial class Win2DPageRenderer : IPageRenderer
                 sourceX = width - x - currentStripWidth;
             }
 
+            var source = isBack && backBitmap != null ? backSource : frontSource;
             Rect sourceRect = new(
-                (sourceX / width) * currentBitmap.Size.Width,
-                0,
-                (currentStripWidth / width) * currentBitmap.Size.Width,
-                currentBitmap.Size.Height);
+                source.X + (sourceX / width) * source.Width,
+                source.Y,
+                (currentStripWidth / width) * source.Width,
+                source.Height);
 
             if (sourceRect.Width <= 0 || sourceRect.Height <= 0)
             {

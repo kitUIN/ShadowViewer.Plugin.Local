@@ -69,6 +69,20 @@ public partial class LocalPluginConfig
     [ObservableConfigProperty(Description = "阅读模式-滑动/双页")]
     private ReadingMode localReaderMode = ReadingMode.VerticalScroll;
 
+    /// <summary>打开漫画时预先探测整章尺寸并建立稳定页码，默认开启。</summary>
+    [ObservableConfigProperty(Description = "预先建立页面索引")]
+    private bool buildPageIndex = true;
+
+    /// <summary>
+    /// 双页模式下自动将宽图拆成左右两页。
+    /// </summary>
+    [ObservableConfigProperty(Description = "双页模式下自动拆分宽图")]
+    private bool splitWidePages = true;
+
+    /// <summary>宽图自动拆页的作用范围，默认包含本地及网络图片。</summary>
+    [ObservableConfigProperty(Description = "宽图自动拆页作用范围")]
+    private WidePageSplitScope splitWidePagesScope = WidePageSplitScope.AllImages;
+
     /// <summary>
     /// 阅读器点击区域设置
     /// </summary>

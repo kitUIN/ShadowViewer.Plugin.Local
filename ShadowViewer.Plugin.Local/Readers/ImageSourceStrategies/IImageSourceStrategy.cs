@@ -8,6 +8,9 @@ namespace ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
 /// </summary>
 public interface IImageSourceStrategy
 {
+    /// <summary>原始来源是否为本地文件；网络图片的磁盘缓存不属于本地来源。</summary>
+    bool IsLocalSource => false;
+
     /// <summary>
     /// 判断此策略是否可以处理给定的资源标识。
     /// </summary>

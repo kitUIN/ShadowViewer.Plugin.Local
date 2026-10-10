@@ -108,14 +108,14 @@ internal sealed class ReaderLayoutService
                         if (isFitToModeSize && cache.ModeWidth > 0 && cache.ModeHeight > 0)
                         {
                             // 先按众数尺寸做等比拟合，再叠加全局缩放，能兼顾统一观感与完整显示。
-                            double fitScale = Math.Min(cache.ModeWidth / node.Ctx.Size.Width, cache.ModeHeight / node.Ctx.Size.Height);
-                            scaledWidth = node.Ctx.Size.Width * fitScale * scale;
-                            scaledHeight = node.Ctx.Size.Height * fitScale * scale;
+                            double fitScale = Math.Min(cache.ModeWidth / node.PageSize.Width, cache.ModeHeight / node.PageSize.Height);
+                            scaledWidth = node.PageSize.Width * fitScale * scale;
+                            scaledHeight = node.PageSize.Height * fitScale * scale;
                         }
                         else
                         {
-                            scaledWidth = node.Ctx.Size.Width * scale;
-                            scaledHeight = node.Ctx.Size.Height * scale;
+                            scaledWidth = node.PageSize.Width * scale;
+                            scaledHeight = node.PageSize.Height * scale;
                         }
 
                         node.Bounds.Width = scaledWidth;
@@ -140,14 +140,14 @@ internal sealed class ReaderLayoutService
                         var node = allNodes[index];
                         if (isFitToModeSize && cache.ModeWidth > 0 && cache.ModeHeight > 0)
                         {
-                            double fitScale = Math.Min(cache.ModeWidth / node.Ctx.Size.Width, cache.ModeHeight / node.Ctx.Size.Height);
-                            node.Bounds.Width = node.Ctx.Size.Width * fitScale;
-                            node.Bounds.Height = node.Ctx.Size.Height * fitScale;
+                            double fitScale = Math.Min(cache.ModeWidth / node.PageSize.Width, cache.ModeHeight / node.PageSize.Height);
+                            node.Bounds.Width = node.PageSize.Width * fitScale;
+                            node.Bounds.Height = node.PageSize.Height * fitScale;
                         }
                         else if (node.IsSizeLoaded)
                         {
-                            node.Bounds.Width = node.Ctx.Size.Width;
-                            node.Bounds.Height = node.Ctx.Size.Height;
+                            node.Bounds.Width = node.PageSize.Width;
+                            node.Bounds.Height = node.PageSize.Height;
                         }
 
                         node.Bounds.X = -node.Bounds.Width / 2.0;
@@ -258,12 +258,12 @@ internal sealed class ReaderLayoutService
         var sampleNodes = loadedNodes.Count <= 100 ? loadedNodes : loadedNodes.Take(100).ToList();
 
         var modeHeightGroup = sampleNodes
-            .GroupBy(n => Math.Round(n.Ctx.Size.Height))
+            .GroupBy(n => Math.Round(n.PageSize.Height))
             .OrderByDescending(g => g.Count())
             .FirstOrDefault();
 
         var modeWidthGroup = sampleNodes
-            .GroupBy(n => Math.Round(n.Ctx.Size.Width))
+            .GroupBy(n => Math.Round(n.PageSize.Width))
             .OrderByDescending(g => g.Count())
             .FirstOrDefault();
 
@@ -319,20 +319,20 @@ internal sealed class ReaderLayoutService
             if (nodes.Count == 1)
             {
                 var node = nodes[0];
-                double fitScale = Math.Min(cache.ModeWidth / node.Ctx.Size.Width, cache.ModeHeight / node.Ctx.Size.Height);
-                node.Bounds.Width = node.Ctx.Size.Width * fitScale;
-                node.Bounds.Height = node.Ctx.Size.Height * fitScale;
+                double fitScale = Math.Min(cache.ModeWidth / node.PageSize.Width, cache.ModeHeight / node.PageSize.Height);
+                node.Bounds.Width = node.PageSize.Width * fitScale;
+                node.Bounds.Height = node.PageSize.Height * fitScale;
             }
             else if (nodes.Count == 2)
             {
                 var node1 = nodes[0];
                 var node2 = nodes[1];
 
-                double scale1 = cache.ModeHeight / node1.Ctx.Size.Height;
-                double scale2 = cache.ModeHeight / node2.Ctx.Size.Height;
+                double scale1 = cache.ModeHeight / node1.PageSize.Height;
+                double scale2 = cache.ModeHeight / node2.PageSize.Height;
 
-                double width1 = node1.Ctx.Size.Width * scale1;
-                double width2 = node2.Ctx.Size.Width * scale2;
+                double width1 = node1.PageSize.Width * scale1;
+                double width2 = node2.PageSize.Width * scale2;
 
                 // 当并页总宽超出双页目标宽度时整体等比收缩，保证并页仍完整落入视口。
                 double combinedWidth = width1 + width2;
@@ -343,11 +343,11 @@ internal sealed class ReaderLayoutService
                     scale2 *= shrinkScale;
                 }
 
-                node1.Bounds.Width = node1.Ctx.Size.Width * scale1;
-                node1.Bounds.Height = node1.Ctx.Size.Height * scale1;
+                node1.Bounds.Width = node1.PageSize.Width * scale1;
+                node1.Bounds.Height = node1.PageSize.Height * scale1;
 
-                node2.Bounds.Width = node2.Ctx.Size.Width * scale2;
-                node2.Bounds.Height = node2.Ctx.Size.Height * scale2;
+                node2.Bounds.Width = node2.PageSize.Width * scale2;
+                node2.Bounds.Height = node2.PageSize.Height * scale2;
             }
         }
         else
@@ -357,8 +357,8 @@ internal sealed class ReaderLayoutService
                 var node = nodes[0];
                 if (node.IsSizeLoaded)
                 {
-                    node.Bounds.Width = node.Ctx.Size.Width;
-                    node.Bounds.Height = node.Ctx.Size.Height;
+                    node.Bounds.Width = node.PageSize.Width;
+                    node.Bounds.Height = node.PageSize.Height;
                 }
             }
             else if (nodes.Count == 2)
@@ -369,15 +369,15 @@ internal sealed class ReaderLayoutService
                 if (node1.IsSizeLoaded && node2.IsSizeLoaded)
                 {
                     // 在非拟合模式下统一到同一高度，可避免跨页视觉跳变。
-                    double maxHeight = Math.Max(node1.Ctx.Size.Height, node2.Ctx.Size.Height);
-                    double scale1 = maxHeight / node1.Ctx.Size.Height;
-                    double scale2 = maxHeight / node2.Ctx.Size.Height;
+                    double maxHeight = Math.Max(node1.PageSize.Height, node2.PageSize.Height);
+                    double scale1 = maxHeight / node1.PageSize.Height;
+                    double scale2 = maxHeight / node2.PageSize.Height;
 
-                    node1.Bounds.Width = node1.Ctx.Size.Width * scale1;
-                    node1.Bounds.Height = node1.Ctx.Size.Height * scale1;
+                    node1.Bounds.Width = node1.PageSize.Width * scale1;
+                    node1.Bounds.Height = node1.PageSize.Height * scale1;
 
-                    node2.Bounds.Width = node2.Ctx.Size.Width * scale2;
-                    node2.Bounds.Height = node2.Ctx.Size.Height * scale2;
+                    node2.Bounds.Width = node2.PageSize.Width * scale2;
+                    node2.Bounds.Height = node2.PageSize.Height * scale2;
                 }
             }
         }

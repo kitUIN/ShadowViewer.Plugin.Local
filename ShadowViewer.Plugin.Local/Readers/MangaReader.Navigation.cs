@@ -12,7 +12,7 @@ public sealed partial class MangaReader
     /// <summary>点击、命令和滚轮共用的翻页入口。</summary>
     public void TurnPage(int direction)
     {
-        if (TotalPage <= 0 || direction == 0) return;
+        if (isPreparingPages || TotalPage <= 0 || direction == 0) return;
         if (ReaderNavigationService.IsPageBoundary(CurrentPageIndex, TotalPage, state.CurrentMode, direction))
         {
             // 双页自动动画尚未结束时，当前页码可能已经是目标页码。

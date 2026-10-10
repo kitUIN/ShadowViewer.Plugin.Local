@@ -23,6 +23,20 @@ namespace ShadowViewer.Plugin.Local.Pages;
 /// </summary>
 public sealed partial class PicPage
 {
+    private void CurrentReadingPageBack(double page)
+    {
+        if (MangaReader.IsPreparingPages || MangaReader.TotalPage <= 0) return;
+        MangaReader.CurrentPageIndex = Math.Clamp(Convert.ToInt32(page) - 1, 0, MangaReader.TotalPage - 1);
+    }
+
+    private string ReadingPageText(bool preparing, int index, int total) =>
+        preparing || total <= 0 ? "—" : (index + 1).ToString();
+
+    private string ReadingTotalText(bool preparing, int total) =>
+        preparing || total <= 0 ? "—" : total.ToString();
+
+    private bool CanNavigatePages(bool preparing, int total) => !preparing && total > 0;
+
     /// <summary>
     /// ViewModel
     /// </summary>
@@ -40,6 +54,8 @@ public sealed partial class PicPage
     public PicPage()
     {
         this.InitializeComponent();
+        // x:Bind 会先更新 ViewModel.Images；在首次绑定前应用设置，避免首批图片误用默认索引模式。
+        MangaReader.BuildPageIndex = LocalPluginConfig.BuildPageIndex;
         autoPageTimer = DispatcherQueue.CreateTimer();
         autoPageTimer.IsRepeating = true;
         autoPageTimer.Interval = TimeSpan.FromSeconds(LocalPluginConfig.PageAutoTurnInterval);

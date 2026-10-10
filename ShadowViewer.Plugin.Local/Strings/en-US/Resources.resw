@@ -412,4 +412,28 @@
   <data name="FilterLastReadTime" xml:space="preserve">
     <value>Last read</value>
   </data>
+  <data name="BuildPageIndex" xml:space="preserve">
+    <value>Prepare page index before reading</value>
+  </data>
+  <data name="BuildPageIndexDescription" xml:space="preserve">
+    <value>Read image dimensions when opening a manga to reduce changes in page numbers and totals, at the cost of a longer wait. When off, images load on demand; automatic wide image splitting remains independent. Enabled by default. Changes apply the next time you open a manga.</value>
+  </data>
+  <data name="SplitWidePages" xml:space="preserve">
+    <value>Automatically split wide images</value>
+  </data>
+  <data name="SplitWidePagesDescription" xml:space="preserve">
+    <value>Only applies in double-page mode: split wide images into left and right pages and pair them in reading order. Checking image dimensions increases loading time. Changing this switch or its scope rebuilds the reading page index, reusing known dimensions without rescanning the chapter. With index preparation off, page counts may change as images load.</value>
+  </data>
+  <data name="SplitWidePagesScope" xml:space="preserve">
+    <value>Wide image splitting scope</value>
+  </data>
+  <data name="SplitWidePagesScopeDescription" xml:space="preserve">
+    <value>Split local files only, or apply globally to local and network images.</value>
+  </data>
+  <data name="WidePageSplitScopeAllImages" xml:space="preserve">
+    <value>Global (local and network images)</value>
+  </data>
+  <data name="WidePageSplitScopeLocalFilesOnly" xml:space="preserve">
+    <value>Local files only</value>
+  </data>
 </root>

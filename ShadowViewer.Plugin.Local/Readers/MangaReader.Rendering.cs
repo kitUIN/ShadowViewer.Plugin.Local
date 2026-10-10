@@ -16,6 +16,7 @@ public sealed partial class MangaReader
     {
         lock (pageTurnLock)
         {
+            if (isPreparingPages) return;
             var size = viewSize;
             if (size == Vector2.Zero) return;
 
@@ -74,6 +75,7 @@ public sealed partial class MangaReader
     {
         lock (pageTurnLock)
         {
+            if (isPreparingPages) return;
             var size = viewSize;
             if (size == Vector2.Zero) return;
 

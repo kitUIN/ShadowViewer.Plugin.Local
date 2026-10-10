@@ -21,6 +21,7 @@ public partial class MangaReader
     /// </summary>
     private void MainCanvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
+        if (isPreparingPages) return;
         var point = e.GetCurrentPoint(mainCanvas);
         if (point.Properties.IsLeftButtonPressed || e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Touch)
         {
@@ -179,6 +180,7 @@ public partial class MangaReader
     /// </summary>
     private void MainCanvas_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
+        if (isPreparingPages) return;
         var point = e.GetCurrentPoint(mainCanvas);
         var delta = point.Properties.MouseWheelDelta;
         bool isCtrlPressed = e.KeyModifiers.HasFlag(Windows.System.VirtualKeyModifiers.Control);

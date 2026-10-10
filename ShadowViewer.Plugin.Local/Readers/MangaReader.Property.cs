@@ -103,6 +103,49 @@ public sealed partial class MangaReader
         set => SetValue(EnableMouseWheelNavigationProperty, value);
     }
 
+    /// <summary>是否在打开漫画时预先探测整章尺寸；修改后从下次打开漫画起生效。</summary>
+    public static readonly DependencyProperty BuildPageIndexProperty =
+        DependencyProperty.Register(nameof(BuildPageIndex), typeof(bool), typeof(MangaReader),
+            new PropertyMetadata(true));
+
+    public bool BuildPageIndex
+    {
+        get => (bool)GetValue(BuildPageIndexProperty);
+        set => SetValue(BuildPageIndexProperty, value);
+    }
+
+    /// <summary>双页模式下是否将宽图拆成左右两个阅读页，默认开启。</summary>
+    public static readonly DependencyProperty SplitWidePagesProperty =
+        DependencyProperty.Register(nameof(SplitWidePages), typeof(bool), typeof(MangaReader),
+            new PropertyMetadata(true, OnSplitWidePagesChanged));
+
+    /// <summary>双页模式下是否自动拆分宽图。</summary>
+    public bool SplitWidePages
+    {
+        get => (bool)GetValue(SplitWidePagesProperty);
+        set => SetValue(SplitWidePagesProperty, value);
+    }
+
+    /// <summary>宽图自动拆页的作用范围。</summary>
+    public static readonly DependencyProperty SplitWidePagesScopeProperty =
+        DependencyProperty.Register(nameof(SplitWidePagesScope), typeof(WidePageSplitScope), typeof(MangaReader),
+            new PropertyMetadata(WidePageSplitScope.AllImages, OnSplitWidePagesChanged));
+
+    public WidePageSplitScope SplitWidePagesScope
+    {
+        get => (WidePageSplitScope)GetValue(SplitWidePagesScopeProperty);
+        set => SetValue(SplitWidePagesScopeProperty, value);
+    }
+
+    private static void OnSplitWidePagesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not MangaReader control) return;
+        control.CancelPageTurn(resetInput: true);
+        control.pageSequenceDirty = true;
+        control.UpdateActiveLayout();
+        control.ResetZoom();
+    }
+
     /// <summary>
     /// 是否强制图片符合众数尺寸的依赖属性键。
     /// </summary>
@@ -159,6 +202,7 @@ public sealed partial class MangaReader
         {
             control.CancelPageTurn(resetInput: true);
             control.state.CurrentMode = (ReadingMode)e.NewValue;
+            control.pageSequenceDirty = true;
             control.UpdateActiveLayout();
             control.ResetZoom();
         }
@@ -180,6 +224,64 @@ public sealed partial class MangaReader
         set => SetValue(CurrentPageIndexProperty, value);
     }
 
+    /// <summary>当前原图索引，供插件记录进度；双页拆分后的阅读页码使用 CurrentPageIndex。</summary>
+    public static readonly DependencyProperty SourcePageIndexProperty =
+        DependencyProperty.Register(nameof(SourcePageIndex), typeof(int), typeof(MangaReader),
+            new PropertyMetadata(0, OnSourcePageIndexChanged));
+
+    public int SourcePageIndex
+    {
+        get => (int)GetValue(SourcePageIndexProperty);
+        set => SetValue(SourcePageIndexProperty, value);
+    }
+
+    private bool isUpdatingSourceIndex;
+    private int? pendingSourcePageIndex;
+
+    private static void OnSourcePageIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not MangaReader control || control.isUpdatingSourceIndex || e.NewValue is not int sourceIndex) return;
+        if (sourceIndex < 0) return;
+        control.pendingSourcePageIndex = sourceIndex;
+        if (control.isPreparingPages) return;
+        int target;
+        lock (control.sourceNodes)
+        lock (control.allNodes)
+        {
+            if (sourceIndex < 0 || sourceIndex >= control.sourceNodes.Count) return;
+            var source = control.sourceNodes[sourceIndex];
+            // 双向绑定回写同一原图时，不能把第二半页跳回第一半页。
+            if (control.CurrentPageIndex >= 0 && control.CurrentPageIndex < control.allNodes.Count &&
+                control.allNodes[control.CurrentPageIndex].ImageNode == source)
+            {
+                control.pendingSourcePageIndex = null;
+                return;
+            }
+            target = control.allNodes.FindIndex(n => n.ImageNode == source);
+        }
+        if (target >= 0)
+        {
+            control.pendingSourcePageIndex = null;
+            control.CurrentPageIndex = target;
+        }
+    }
+
+    private void SyncSourcePageIndex()
+    {
+        if (isPreparingPages || pendingSourcePageIndex.HasValue) return;
+        int sourceIndex;
+        lock (sourceNodes)
+        lock (allNodes)
+        {
+            if (CurrentPageIndex < 0 || CurrentPageIndex >= allNodes.Count) return;
+            sourceIndex = sourceNodes.IndexOf(allNodes[CurrentPageIndex].ImageNode);
+        }
+        if (sourceIndex < 0 || sourceIndex == SourcePageIndex) return;
+        isUpdatingSourceIndex = true;
+        try { SourcePageIndex = sourceIndex; }
+        finally { isUpdatingSourceIndex = false; }
+    }
+
     /// <summary>
     /// 总页数的依赖属性键。
     /// </summary>
@@ -188,12 +290,61 @@ public sealed partial class MangaReader
             new PropertyMetadata(0));
 
     /// <summary>
-    /// 当前源中的总页数（节点数量）。
+    /// 当前阅读序列的总页数，双页模式下包含拆分出的半页。
     /// </summary>
     public int TotalPage
     {
         get => (int)GetValue(TotalPageProperty);
         set => SetValue(TotalPageProperty, value);
+    }
+
+    /// <summary>正在准备分页，期间不发布中间页码或响应页码回写。</summary>
+    public static readonly DependencyProperty IsPreparingPagesProperty =
+        DependencyProperty.Register(nameof(IsPreparingPages), typeof(bool), typeof(MangaReader),
+            new PropertyMetadata(false));
+
+    public bool IsPreparingPages
+    {
+        get => (bool)GetValue(IsPreparingPagesProperty);
+        private set
+        {
+            bool changed = isPreparingPages != value;
+            isPreparingPages = value;
+            SetValue(IsPreparingPagesProperty, value);
+            if (!changed) return;
+            int version = Interlocked.Increment(ref preparationIndicatorVersion);
+            if (value) _ = ShowPreparationIndicatorAsync(version);
+            else SetValue(IsPagePreparationVisibleProperty, false);
+        }
+    }
+
+    private volatile bool isPreparingPages;
+    private int preparationIndicatorVersion;
+
+    /// <summary>只有准备过程持续一段时间才显示转圈，缓存命中的短暂校验不闪烁。</summary>
+    public static readonly DependencyProperty IsPagePreparationVisibleProperty =
+        DependencyProperty.Register(nameof(IsPagePreparationVisible), typeof(bool), typeof(MangaReader),
+            new PropertyMetadata(false));
+
+    public bool IsPagePreparationVisible => (bool)GetValue(IsPagePreparationVisibleProperty);
+
+    private async Task ShowPreparationIndicatorAsync(int version)
+    {
+        try { await Task.Delay(150, deferredUiWorkCts.Token).ConfigureAwait(false); }
+        catch (OperationCanceledException) { return; }
+        if (version != Volatile.Read(ref preparationIndicatorVersion)) return;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (isPreparingPages && version == preparationIndicatorVersion)
+                SetValue(IsPagePreparationVisibleProperty, true);
+        });
+    }
+
+    private void BeginPagePreparation()
+    {
+        if (isPreparingPages) return;
+        CancelPageTurn(resetInput: true);
+        IsPreparingPages = true;
     }
 
     /// <summary>
@@ -252,11 +403,6 @@ public sealed partial class MangaReader
     private volatile bool sizeLoadPendingLayout = false;
 
     /// <summary>
-    /// 批次大小：每加载多少个节点后触发一次布局更新。
-    /// </summary>
-    private const int LayoutUpdateBatchSize = 10;
-
-    /// <summary>
     /// 并发加载的最大消费者数量。
     /// </summary>
     private const int MaxConcurrentLoads = 2;
@@ -265,11 +411,6 @@ public sealed partial class MangaReader
     /// 尺寸加载刷新防抖延迟（毫秒）。
     /// </summary>
     private const int SizeLoadLayoutFlushDelayMs = 120;
-
-    /// <summary>
-    /// 当前批次已加载的节点数量。
-    /// </summary>
-    private int currentBatchLoadedCount = 0;
 
     /// <summary>
     /// 标记是否已调度尺寸加载的防抖布局刷新任务。
@@ -289,6 +430,7 @@ public sealed partial class MangaReader
     private void AddItems(IList? newItems, int startIndex)
     {
         if (newItems == null || newItems.Count == 0) return;
+        BeginPagePreparation();
 
         var newNodes = new List<RenderNode>(newItems.Count);
 
@@ -308,27 +450,18 @@ public sealed partial class MangaReader
         }
 
         // 2. 同步插入到列表
-        lock (allNodes)
+        lock (sourceNodes)
         {
-            if (startIndex < 0 || startIndex > allNodes.Count)
-                startIndex = allNodes.Count;
+            if (startIndex < 0 || startIndex > sourceNodes.Count)
+                startIndex = sourceNodes.Count;
 
-            allNodes.InsertRange(startIndex, newNodes);
+            sourceNodes.InsertRange(startIndex, newNodes);
+            pageSequenceDirty = true;
 
-            // 更新页码索引
-            for (int i = startIndex; i < allNodes.Count; i++)
-            {
-                allNodes[i].PageIndex = i;
-            }
-
-            TotalPage = allNodes.Count;
-
-            // 3. 将新节点加入尺寸加载通道
-            foreach (var node in newNodes)
-            {
-                TryEnqueueSizeLoad(node);
-            }
+            pageIndexPreparation.Add(newNodes, BuildPageIndex);
         }
+        // 队列满时保留剩余节点，消费者完成后继续入队。
+        pageIndexPreparation.Dispatch(sizeLoadPipeline.TryEnqueue);
 
         // 4. 触发布局更新（批量模式下延迟更新）
         if (isBatchAdding)
@@ -355,46 +488,27 @@ public sealed partial class MangaReader
             return;
         }
 
-        // 尺寸已就绪时直接跳过，避免重复执行 InitImageAsync 带来的额外 CPU 与分配。
-        if (request.Payload.IsSizeLoaded)
+        try
         {
-            return;
+            if (!request.Payload.IsSizeLoaded)
+                await LoadNodeSizeAsync(request.Payload, cancellationToken);
         }
-
-        await LoadNodeSizeAsync(request.Payload, cancellationToken);
-
-        if (!sizeLoadPipeline.IsCurrentEpoch(request) || request.Payload.IsRetired || !request.Payload.IsSizeLoaded)
+        finally
         {
-            return;
-        }
-
-        int count = Interlocked.Increment(ref currentBatchLoadedCount);
-
-        if (count % LayoutUpdateBatchSize == 0)
-        {
-            // 达到批次阈值后立即刷新，优先保障“连续新增内容可见”。
-            Interlocked.Exchange(ref currentBatchLoadedCount, 0);
-            sizeLoadPendingLayout = false;
-            this.DispatcherQueue.TryEnqueue(() =>
+            if (sizeLoadPipeline.IsCurrentEpoch(request) && !request.Payload.IsRetired)
             {
-                if (sizeLoadPipeline.IsCurrentEpoch(request)) UpdateLayoutWithPageLock();
-            });
+                pageIndexPreparation.Complete(request.Payload);
+                pageIndexPreparation.Dispatch(sizeLoadPipeline.TryEnqueue);
+                if (pageIndexPreparation.IsReady)
+                {
+                    await LocalFileStrategy.FlushSizeCacheAsync(cancellationToken);
+                    this.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        if (sizeLoadPipeline.IsCurrentEpoch(request)) UpdateLayoutWithPageLock();
+                    });
+                }
+            }
         }
-        else
-        {
-            sizeLoadPendingLayout = true;
-            ScheduleSizeLoadLayoutFlush();
-        }
-    }
-
-    /// <summary>
-    /// 尝试将尺寸加载请求写入通道。
-    /// </summary>
-    /// <param name="node">待加载尺寸的节点。</param>
-    /// <returns>写入成功返回 <c>true</c>；否则返回 <c>false</c>。</returns>
-    private bool TryEnqueueSizeLoad(RenderNode node)
-    {
-        return sizeLoadPipeline.TryEnqueue(node);
     }
 
     /// <summary>
@@ -429,8 +543,7 @@ public sealed partial class MangaReader
             }
             if (sizeLoadPendingLayout)
             {
-                // 防抖刷新用于补齐“最后不足一个批次”的节点，避免它们长时间不参与布局。
-                Interlocked.Exchange(ref currentBatchLoadedCount, 0);
+                // 交互期间延后的尺寸变化，在停止交互后统一刷新。
                 sizeLoadPendingLayout = false;
                 this.DispatcherQueue.TryEnqueue(() =>
                 {
@@ -452,6 +565,7 @@ public sealed partial class MangaReader
     private void UpdateLayoutWithPageLock()
     {
         layoutCache.IsDirty = true;
+        pageSequenceDirty = true;
         // 延迟加载的邻页尺寸不应打断拖动、滚轮或卷页。
         if (IsLayoutInteractionActive)
         {
@@ -550,6 +664,12 @@ public sealed partial class MangaReader
 
     private static void OnCurrentPageIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
+        if (d is MangaReader reader)
+        {
+            if (reader.isPreparingPages) return;
+            if (!reader.isUpdatingInternal) reader.pendingSourcePageIndex = null;
+            reader.SyncSourcePageIndex();
+        }
         if (d is not MangaReader { isUpdatingInternal: false } control || e.NewValue is not int targetIndex ||
             control.isCompletingPageTurn) return;
         if (e.OldValue is int currentIndex) control.HandleCurrentPageIndexChanged(currentIndex, targetIndex);

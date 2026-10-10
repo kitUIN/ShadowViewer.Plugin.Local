@@ -49,12 +49,18 @@ namespace Microsoft.Graphics.Canvas
             DiagonalShadows.Add((geometry.Points, brush.StartPoint, brush.EndPoint));
         public void FillGeometry(Geometry.CanvasGeometry geometry, Windows.UI.Color color) { }
         public List<(int Page, Rect Bounds)> Images { get; } = [];
+        public List<(int Page, Rect Bounds, Rect Source)> CroppedImages { get; } = [];
         public List<(int Page, Matrix3x2 Transform, Rect Source)> Sprites { get; } = [];
         public List<Vector4> Tints { get; } = [];
         public List<(Rect Bounds, Vector2 Start, Vector2 End, Brushes.CanvasGradientStop[] Stops)> Shadows { get; } = [];
         public void FillRectangle(Rect rect, Brushes.CanvasLinearGradientBrush brush) =>
             Shadows.Add((rect, brush.StartPoint, brush.EndPoint, brush.Stops));
         public void DrawImage(CanvasBitmap bitmap, Rect rect) => Images.Add((bitmap.PageIndex, rect));
+        public void DrawImage(CanvasBitmap bitmap, Rect rect, Rect source)
+        {
+            Images.Add((bitmap.PageIndex, rect));
+            CroppedImages.Add((bitmap.PageIndex, rect, source));
+        }
         public void DrawRectangle(Rect rect, Windows.UI.Color color) { }
         public void DrawText(string text, Rect rect, Windows.UI.Color color, Text.CanvasTextFormat format) { }
         public CanvasSpriteBatch CreateSpriteBatch(CanvasSpriteSortMode sort, CanvasImageInterpolation interp, CanvasSpriteOptions options) => new(this);

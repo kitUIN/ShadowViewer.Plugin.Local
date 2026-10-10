@@ -74,6 +74,9 @@ public sealed partial class MangaReader : Control
     /// 所有已创建的渲染节点（包含未布局或已布局的所有页节点）。
     /// </summary>
     private readonly List<RenderNode> allNodes = new List<RenderNode>();
+    private readonly List<RenderNode> sourceNodes = new();
+    private volatile bool pageSequenceDirty = true;
+    private readonly ReaderPageIndexPreparation pageIndexPreparation = new();
 
     // 防止重复加载
 
@@ -234,19 +237,23 @@ public sealed partial class MangaReader : Control
     public void ClearItems(bool scheduleLayoutUpdate = true)
     {
         CancelPageTurn(resetInput: true);
+        IsPreparingPages = true;
         // 清空内容时推进流水线世代，确保旧请求结果不会污染新数据集。
         imageWindowLoadController.Reset();
         sizeLoadPipeline.Invalidate();
         bitmapLoadPipeline.Invalidate();
+        pageIndexPreparation.Reset();
 
-        lock (allNodes)
+        lock (sourceNodes)
         {
-            foreach (var node in allNodes)
+            foreach (var node in sourceNodes)
             {
                 node.Retire();
             }
 
-            allNodes.Clear();
+            sourceNodes.Clear();
+            pageSequenceDirty = true;
+            lock (allNodes) allNodes.Clear();
             TotalPage = 0;
 
             // 重置缓存
@@ -254,7 +261,6 @@ public sealed partial class MangaReader : Control
         }
 
         sizeLoadPendingLayout = false;
-        Interlocked.Exchange(ref currentBatchLoadedCount, 0);
 
         lock (state.LayoutNodes)
         {
@@ -395,7 +401,7 @@ public sealed partial class MangaReader : Control
                     // 让出时间片，保持 UI 响应
                     if (i + batchSize < totalCount)
                     {
-                        await Task.Delay(1, cancellationToken);
+                        await Task.Yield();
                     }
                 }
             }
@@ -682,7 +688,7 @@ public sealed partial class MangaReader : Control
         int syncVersion;
         lock (pageTurnLock)
         {
-            if (isAnimatingPageTurn) return;
+            if (isAnimatingPageTurn || isPreparingPages) return;
             syncVersion = pageTurnVersion;
         }
         int total;
@@ -718,8 +724,9 @@ public sealed partial class MangaReader : Control
 
         this.DispatcherQueue.TryEnqueue(() =>
         {
-            if (syncVersion != Volatile.Read(ref pageTurnVersion)) return;
-            int newIndex = snapshot.CurrentPage - 1;
+            if (isPreparingPages || syncVersion != Volatile.Read(ref pageTurnVersion)) return;
+            int newIndex = ReaderUiSyncService.ResolvePageIndex(state.CurrentMode, layoutSnapshot,
+                CurrentPageIndex, snapshot.CurrentPage - 1);
             if (newIndex != CurrentPageIndex)
             {
                 isUpdatingInternal = true;
@@ -729,7 +736,7 @@ public sealed partial class MangaReader : Control
 
             if (pageInfoText != null)
             {
-                pageInfoText.Text = $"{snapshot.CurrentPage} / {snapshot.TotalPage}";
+                pageInfoText.Text = $"{newIndex + 1} / {snapshot.TotalPage}";
             }
 
             if (Math.Abs(ZoomFactor - snapshot.RelativeZoom) > 0.001f)
@@ -826,13 +833,45 @@ public sealed partial class MangaReader : Control
     /// </summary>
     private void UpdateActiveLayout()
     {
-        layoutService.UpdateActiveLayout(
-            state,
-            allNodes,
-            CurrentPageIndex,
-            pageSpacing,
-            IsFitToModeSize,
-            viewSize,
-            layoutCache);
+        lock (pageTurnLock)
+        {
+            // 预建索引时等待整章探测；关闭时只等待源列表收齐，之后按需补齐尺寸与页码。
+            if (isBatchAdding || !pageIndexPreparation.IsReady) return;
+            bool wasPreparing = isPreparingPages;
+            int index = CurrentPageIndex;
+            if (pageSequenceDirty)
+            {
+                lock (sourceNodes)
+                lock (allNodes)
+                {
+                    bool firstLayout = allNodes.Count == 0;
+                    index = ReaderPageSequence.Update(sourceNodes, allNodes, state.CurrentMode, index,
+                        SplitWidePages, SplitWidePagesScope);
+                    int sourceIndex = pendingSourcePageIndex ?? SourcePageIndex;
+                    if ((firstLayout || pendingSourcePageIndex.HasValue) && sourceIndex >= 0 && sourceIndex < sourceNodes.Count)
+                    {
+                        index = allNodes.FindIndex(n => n.ImageNode == sourceNodes[sourceIndex]);
+                        pendingSourcePageIndex = null;
+                    }
+                    pageSequenceDirty = false;
+                }
+                // 序列重建会移动逻辑页码，丢弃基于旧序列排队的 UI 同步结果。
+                pageTurnVersion++;
+                lastReportedPage = -1;
+                layoutCache.IsDirty = true;
+            }
+            isUpdatingInternal = true;
+            try
+            {
+                TotalPage = allNodes.Count;
+                CurrentPageIndex = index;
+            }
+            finally { isUpdatingInternal = false; }
+            layoutService.UpdateActiveLayout(state, allNodes, index, pageSpacing,
+                IsFitToModeSize, viewSize, layoutCache);
+            if (wasPreparing) ResetZoom();
+            IsPreparingPages = false;
+            SyncSourcePageIndex();
+        }
     }
 }

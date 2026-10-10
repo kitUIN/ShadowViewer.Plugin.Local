@@ -14,7 +14,7 @@ namespace ShadowViewer.Plugin.Local.Readers.Rendering;
 internal sealed partial class Win2DPageRenderer
 {
     private static void DrawDiagonalBitmap(CanvasDrawingSession session, Rect bounds, CanvasBitmap front,
-        CanvasBitmap? back, Rect backBounds, bool fromRight, PageCurlGeometry curl)
+        CanvasBitmap? back, Rect backBounds, bool fromRight, PageCurlGeometry curl, Rect frontSource, Rect backSource)
     {
         using var frontBrush = new CanvasImageBrush(session, front);
         using var backBrush = new CanvasImageBrush(session, back ?? front);
@@ -39,8 +39,9 @@ internal sealed partial class Win2DPageRenderer
                 var brush = useBack ? backBrush : frontBrush;
                 var fold = strip.Transform * (useBack ? backFit : Matrix3x2.Identity);
                 // 背面纹理先镜像到纸张坐标，再随纸面一起卷曲，文字朝向保持正确。
-                var texture = Matrix3x2.CreateScale(width / (float)bitmap.Size.Width,
-                    height / (float)bitmap.Size.Height);
+                var source = useBack ? backSource : frontSource;
+                var texture = Matrix3x2.CreateTranslation(-(float)source.X, -(float)source.Y) *
+                    Matrix3x2.CreateScale(width / (float)source.Width, height / (float)source.Height);
                 if (useBack) texture *= new Matrix3x2(-1, 0, 0, 1, width, 0);
                 brush.Transform = texture * Matrix3x2.CreateTranslation((float)bounds.X, (float)bounds.Y) * fold;
                 using var geometry = CanvasGeometry.CreatePolygon(session,

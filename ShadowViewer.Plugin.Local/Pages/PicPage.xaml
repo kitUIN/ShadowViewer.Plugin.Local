@@ -28,9 +28,20 @@
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             ChapterNavigationRequested="MangaReader_ChapterNavigationRequested"
-            CurrentPageIndex="{x:Bind ViewModel.CurrentPageIndex, Mode=TwoWay}"
+            SourcePageIndex="{x:Bind ViewModel.CurrentPageIndex, Mode=TwoWay}"
+            BuildPageIndex="{x:Bind LocalPluginConfig.BuildPageIndex, Mode=OneWay}"
+            SplitWidePages="{x:Bind LocalPluginConfig.SplitWidePages, Mode=OneWay}"
+            SplitWidePagesScope="{x:Bind LocalPluginConfig.SplitWidePagesScope, Mode=OneWay}"
             ItemsSource="{x:Bind ViewModel.Images, Mode=OneWay}"
             Mode="{x:Bind LocalPluginConfig.LocalReaderMode, Mode=TwoWay}" />
+        <ProgressRing
+            Width="40"
+            Height="40"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsActive="{x:Bind MangaReader.IsPagePreparationVisible, Mode=OneWay}"
+            IsHitTestVisible="False"
+            Visibility="{x:Bind MangaReader.IsPagePreparationVisible, Mode=OneWay}" />
         <controls:FlashIcon
             Margin="0,0,0,0"
             HorizontalAlignment="Right"
@@ -297,21 +308,22 @@
                             <TextBlock
                                 Grid.Column="1"
                                 VerticalAlignment="Center"
-                                Text="{x:Bind ViewModel.CurrentPage(ViewModel.CurrentPageIndex), Mode=OneWay}"
+                                Text="{x:Bind ReadingPageText(MangaReader.IsPreparingPages, MangaReader.CurrentPageIndex, MangaReader.TotalPage), Mode=OneWay}"
                                 TextAlignment="Right" />
                             <controls:ReaderSlider
                                 x:Name="PageSlider"
                                 Grid.Column="2"
                                 VerticalAlignment="Center"
-                                Maximum="{x:Bind ViewModel.Images.Count, Mode=OneWay}"
+                                IsEnabled="{x:Bind CanNavigatePages(MangaReader.IsPreparingPages, MangaReader.TotalPage), Mode=OneWay}"
+                                Maximum="{x:Bind MangaReader.TotalPage, Mode=OneWay}"
                                 Minimum="1"
                                 SmallChange="1"
                                 StepFrequency="1"
-                                Value="{x:Bind ViewModel.CurrentPage(ViewModel.CurrentPageIndex), Mode=TwoWay, BindBack=ViewModel.CurrentPageBack}" />
+                                Value="{x:Bind ViewModel.CurrentPage(MangaReader.CurrentPageIndex), Mode=TwoWay, BindBack=CurrentReadingPageBack}" />
                             <TextBlock
                                 Grid.Column="3"
                                 VerticalAlignment="Center"
-                                Text="{x:Bind ViewModel.Images.Count, Mode=OneWay}" />
+                                Text="{x:Bind ReadingTotalText(MangaReader.IsPreparingPages, MangaReader.TotalPage), Mode=OneWay}" />
 
                             <Button
                                 Grid.Column="4"

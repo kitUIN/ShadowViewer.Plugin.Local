@@ -27,6 +27,8 @@ public sealed partial class MangaReader
     private float pageTurnAnimCurlAmount, pageTurnAnimTargetCurl, pageTurnAnimVelocity, baseZoomScale = 1;
     private RenderNode? pageTurnCurlingNode;
     private int currentPageIndex;
+    private bool isPreparingPages;
+    public void SetPreparingPages(bool value) => isPreparingPages = value;
 
     public MangaReader(EngineState state, List<RenderNode> nodes, int index)
     {

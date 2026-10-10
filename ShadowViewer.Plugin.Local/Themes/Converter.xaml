@@ -3,4 +3,5 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:ShadowViewer.Plugin.Local.Converters">
     <converters:LocalReaderModeConverter x:Key="LocalReaderModeConverter" />
+    <converters:WidePageSplitScopeConverter x:Key="WidePageSplitScopeConverter" />
 </ResourceDictionary>

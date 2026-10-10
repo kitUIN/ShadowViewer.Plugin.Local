@@ -691,6 +691,9 @@ foreach (bool refreshImages in new[] { false, true })
 }
 
 ChapterNavigationChecks.Run(Check);
+WidePageChecks.Run(Check);
+await PageIndexPreparationChecks.RunAsync(Check);
+await ImageSizeCacheChecks.RunAsync(Check);
 DiagonalPageTurnChecks.Run(Check);
 await ImageLoadingChecks.RunAsync(Check);
 
