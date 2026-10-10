@@ -124,6 +124,31 @@ internal sealed class ReaderInputController
     private double lastPointerTime;
     private Vector2 pointerVelocity;
     private bool hadMultiplePointers;
+    private readonly ReaderWheelScrollController wheelScroll = new();
+    private double lastWheelTime = double.NegativeInfinity;
+
+    /// <summary>滚轮动画是否尚未结束，用于延后会改变页面位置的布局刷新。</summary>
+    public bool HasPendingWheel
+    {
+        get { lock (activePointers) return wheelScroll.IsActive; }
+    }
+
+    /// <summary>保留细粒度事件之间的短暂空隙，避免在手势中途刷新布局。</summary>
+    public bool IsWheelInteracting
+    {
+        get { lock (activePointers) return wheelScroll.IsActive || getTimestamp() - lastWheelTime < 0.1; }
+    }
+
+    /// <summary>累计屏幕坐标下的滚轮位移，反向输入立即接管。</summary>
+    public void HandleWheel(float delta)
+    {
+        lock (activePointers)
+        {
+            if (!float.IsFinite(delta) || delta == 0 || activePointers.Count > 0) return;
+            wheelScroll.AddDelta(delta);
+            lastWheelTime = getTimestamp();
+        }
+    }
 
     public ReaderInputController(Func<double>? getTimestamp = null)
     {
@@ -139,6 +164,8 @@ internal sealed class ReaderInputController
         {
             activePointers.Clear();
             pendingDelta = Vector2.Zero;
+            wheelScroll.Reset();
+            lastWheelTime = double.NegativeInfinity;
             pendingZoomDelta = 1f;
             pendingZoomCenter = Vector2.Zero;
             pointerVelocity = Vector2.Zero;
@@ -248,6 +275,8 @@ internal sealed class ReaderInputController
         lock (activePointers)
         {
             activePointers[id] = pos;
+            wheelScroll.Reset();
+            lastWheelTime = double.NegativeInfinity;
 
             if (activePointers.Count == 1)
             {
@@ -346,14 +375,17 @@ internal sealed class ReaderInputController
     /// <summary>
     /// 消费并重置当前帧输入增量。
     /// </summary>
+    /// <param name="deltaTime">帧间隔（秒），用于平滑释放滚轮位移。</param>
     /// <returns>包含平移、缩放和活跃指针信息的帧增量快照。</returns>
-    public InputFrameDelta ConsumeFrameDelta()
+    public InputFrameDelta ConsumeFrameDelta(float deltaTime = 0)
     {
         lock (activePointers)
         {
             if (activePointers.Count == 2) UpdatePinchVelocity();
             Vector2 panDelta = pendingDelta;
             pendingDelta = Vector2.Zero;
+
+            panDelta.Y += wheelScroll.ConsumeDelta(deltaTime);
 
             float zoomDelta = pendingZoomDelta;
             pendingZoomDelta = 1.0f;

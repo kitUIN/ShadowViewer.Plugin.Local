@@ -11,6 +11,7 @@
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/MangaReader.PageTurn.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderFrameOrchestrator.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderInputController.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderWheelScrollController.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderLayoutService.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderUiSyncService.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Rendering/Win2DPageRenderer.cs" />

@@ -484,7 +484,8 @@ public sealed partial class MangaReader : Control
     /// <returns>无返回值。</returns>
     private void MangaReader_Unloaded(object sender, RoutedEventArgs e)
     {
-        CancelWheelInteractionClear();
+        inputController.Reset();
+        isUserInteracting = false;
 
         lock (setItemsRequestLock)
         {
@@ -556,6 +557,8 @@ public sealed partial class MangaReader : Control
 
         if (mainCanvas != null)
         {
+            // 每次绘制按实际经过时间推进，避免固定 60 Hz 更新在高刷新率屏幕上重复位置。
+            mainCanvas.IsFixedTimeStep = false;
             var brush = rootGrid?.Background as Microsoft.UI.Xaml.Media.SolidColorBrush;
             if (brush != null)
             {
@@ -605,7 +608,8 @@ public sealed partial class MangaReader : Control
         try
         {
             var dt = (float)args.Timing.ElapsedTime.TotalSeconds;
-            var inputDelta = inputController.ConsumeFrameDelta();
+            var inputDelta = inputController.ConsumeFrameDelta(dt);
+            isUserInteracting = isDragging || inputController.IsWheelInteracting;
 
             if (inputDelta.HasActivePointer)
             {
@@ -652,7 +656,7 @@ public sealed partial class MangaReader : Control
                 });
             }
 
-            if (sizeLoadPendingLayout && !isDragging && !isAnimatingPageTurn) ScheduleSizeLoadLayoutFlush();
+            if (sizeLoadPendingLayout) ScheduleSizeLoadLayoutFlush();
 
             // 2. 资源管理
             UpdateVisibleNodes(sender);

@@ -460,6 +460,137 @@ foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
         "symmetric pinch retains zero translation velocity at release");
 }
 
+foreach (int hz in new[] { 30, 60, 120, 144 })
+{
+    var input = new ReaderInputController();
+    var frame = new ReaderFrameOrchestrator();
+    var state = new EngineState { Zoom = 2 };
+    input.HandleWheel(-120);
+    float first = input.ConsumeFrameDelta(1f / hz).PanDelta.Y;
+    Check($"Wheel starts smoothly at {hz} Hz", first < 0 && first > -120, $"first step {first}");
+    float second = input.ConsumeFrameDelta(1f / hz).PanDelta.Y;
+    Check($"Wheel accelerates instead of jumping at {hz} Hz", Math.Abs(second) > Math.Abs(first),
+        $"first step {first}, second step {second}");
+    input.Reset();
+    input.HandleWheel(-120);
+    input.HandleWheel(-120);
+    for (int i = 0; i < hz; i++)
+    {
+        var delta = input.ConsumeFrameDelta(1f / hz);
+        frame.Step(state, delta, 1f / hz, 1, new Vector2(1000, 1400), false, false,
+            false, 0, 0, 0, Vector2.Zero, service);
+    }
+    Check($"Wheel preserves accumulated distance and zoom at {hz} Hz",
+        Math.Abs(state.CameraPos.Y - 120) < 0.001f && state.Velocity == Vector2.Zero,
+        $"camera {state.CameraPos}, velocity {state.Velocity}");
+    Check($"Wheel settles at {hz} Hz", input.ConsumeFrameDelta(1f / hz).PanDelta == Vector2.Zero && !input.HasPendingWheel,
+        "no residual movement after one second");
+}
+{
+    var continued = new ReaderInputController();
+    var baseline = new ReaderInputController();
+    continued.HandleWheel(-120);
+    baseline.HandleWheel(-120);
+    continued.ConsumeFrameDelta(0.08f);
+    baseline.ConsumeFrameDelta(0.08f);
+    continued.HandleWheel(-120);
+    float continuedStep = continued.ConsumeFrameDelta(0.0001f).PanDelta.Y;
+    float baselineStep = baseline.ConsumeFrameDelta(0.0001f).PanDelta.Y;
+    Check("Repeated wheel notch preserves velocity continuity",
+        Math.Abs(continuedStep / baselineStep - 1) < 0.01f,
+        $"step with new notch {continuedStep}, without notch {baselineStep}");
+
+    float Travel(params float[] intervals)
+    {
+        var input = new ReaderInputController();
+        input.HandleWheel(-120);
+        return intervals.Sum(dt => input.ConsumeFrameDelta(dt).PanDelta.Y);
+    }
+    float uniform = Travel(Enumerable.Repeat(0.01f, 20).ToArray());
+    float uneven = Travel(0.007f, 0.023f, 0.011f, 0.059f, 0.1f);
+    Check("Wheel trajectory survives uneven frame timing", Math.Abs(uniform - uneven) < 0.001f,
+        $"uniform frames {uniform}, uneven frames {uneven}");
+    var pending = new ReaderInputController();
+    pending.HandleWheel(-1200);
+    pending.ConsumeFrameDelta(0.2f);
+    Check("Layout stays deferred until wheel tail finishes", pending.HasPendingWheel,
+        "layout cannot change while the scroll animation is running");
+    pending.ConsumeFrameDelta(0.05f);
+    Check("Wheel reaches its target without a long spring tail", !pending.HasPendingWheel,
+        "even a large burst finishes within 250 ms of its last input");
+    pending.Reset();
+    Check("Reset clears pending wheel layout guard", !pending.HasPendingWheel,
+        "canceled scrolling no longer delays layout");
+}
+{
+    var input = new ReaderInputController();
+    input.HandleWheel(-360);
+    input.ConsumeFrameDelta(1f / 60);
+    input.HandleWheel(120);
+    Check("Wheel reversal responds on next frame", input.ConsumeFrameDelta(1f / 60).PanDelta.Y > 0,
+        "old direction is discarded");
+    input.Reset();
+    Check("Input reset cancels wheel animation", input.ConsumeFrameDelta(1f / 60).PanDelta == Vector2.Zero,
+        "mode, content and zoom resets leave no wheel movement");
+    input.HandleWheel(-120);
+    input.TryHandlePointerPressed(1, Vector2.Zero, false, 0, 1, false);
+    input.HandleWheel(-120);
+    input.HandlePointerMoved(1, new Vector2(0, 20));
+    Check("Dragging takes over wheel animation", input.ConsumeFrameDelta(1f / 60).PanDelta == new Vector2(0, 20),
+        "only pointer movement is applied");
+}
+
+foreach (int hz in new[] { 60, 120, 144 })
+{
+    var wheel = new ReaderWheelScrollController();
+    float total = 0;
+    var steps = new List<float>();
+    int notches = 0;
+    for (int i = 0; i < hz * 2; i++)
+    {
+        if ((double)i / hz >= notches * 0.1)
+        {
+            wheel.AddDelta(-120);
+            notches++;
+        }
+        float step = wheel.ConsumeDelta(1f / hz);
+        total += step;
+        if (i >= hz) steps.Add(Math.Abs(step));
+    }
+    Check($"Continuous wheel cadence avoids stop-start pulses at {hz} Hz",
+        steps.Min() > 0 && steps.Max() / steps.Min() < 1.5f,
+        $"frame distances {steps.Min():F2}..{steps.Max():F2}");
+    total += wheel.ConsumeDelta(0.25f);
+    Check($"Continuous wheel conserves distance at {hz} Hz",
+        Math.Abs(total + notches * 120) < 0.01f && !wheel.IsActive,
+        $"{notches} notches, total {total}");
+}
+{
+    double now = 0;
+    var input = new ReaderInputController(() => now);
+    foreach (float delta in new[] { -1f, -4f, -12f, -120f, -240f, -30f, -9f, -2f, 3f, 0.5f })
+    {
+        input.HandleWheel(delta);
+        float applied = input.ConsumeFrameDelta(1f / 120).PanDelta.Y;
+        Check($"Precision scroll follows delta {delta} without added easing", applied == delta,
+            $"applied {applied} on the next frame");
+        now += 1.0 / 120;
+    }
+    Check("Precision gesture gaps keep layout stable", input.IsWheelInteracting,
+        "no layout refresh between device samples");
+    now += 0.11;
+    Check("Precision scroll adds no synthetic inertia",
+        !input.IsWheelInteracting && input.ConsumeFrameDelta(1f / 60).PanDelta == Vector2.Zero,
+        "device inertia ends when the device stops sending deltas");
+    input.HandleWheel(-120);
+    input.ConsumeFrameDelta(1f / 60);
+    input.HandleWheel(5);
+    input.HandleWheel(7);
+    Check("Precision input takes over a pending mouse animation",
+        input.ConsumeFrameDelta(1f / 60).PanDelta.Y == 12 && !input.HasPendingWheel,
+        "new samples accumulate; old animation does not move the view");
+}
+
 await ImageLoadingChecks.RunAsync(Check);
 
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");

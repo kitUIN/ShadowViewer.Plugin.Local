@@ -403,6 +403,7 @@ public sealed partial class MangaReader
     /// <returns>无返回值。</returns>
     private void ScheduleSizeLoadLayoutFlush()
     {
+        if (IsLayoutInteractionActive) return;
         if (Interlocked.Exchange(ref isSizeLoadFlushScheduled, 1) == 1)
         {
             return;
@@ -441,14 +442,18 @@ public sealed partial class MangaReader
         });
     }
 
+    /// <summary>拖动、滚轮及卷页期间延后尺寸布局，避免页面边界在滚动中跳动。</summary>
+    private bool IsLayoutInteractionActive =>
+        isAnimatingPageTurn || isDragging || isUserInteracting || inputController.HasPendingWheel;
+
     /// <summary>
     /// 更新布局，同时保持当前页码不变（锁定摄像机到当前页面）。
     /// </summary>
     private void UpdateLayoutWithPageLock()
     {
         layoutCache.IsDirty = true;
-        // 延迟加载的邻页尺寸不应打断正在进行的卷页或双指交互。
-        if (isAnimatingPageTurn || isDragging)
+        // 延迟加载的邻页尺寸不应打断拖动、滚轮或卷页。
+        if (IsLayoutInteractionActive)
         {
             sizeLoadPendingLayout = true;
             return;
@@ -458,22 +463,6 @@ public sealed partial class MangaReader
         {
             UpdateActiveLayout();
             if (shouldFit) ResetZoom(true);
-            return;
-        }
-
-        // 如果用户正在交互（拖拽/滚动），只更新布局，不调整摄像机位置
-        if (isUserInteracting)
-        {
-            // 标记正在更新布局，防止 UpdateCurrentPage 更新页码
-            isLayoutUpdating = true;
-            try
-            {
-                UpdateActiveLayout();
-            }
-            finally
-            {
-                isLayoutUpdating = false;
-            }
             return;
         }
 
