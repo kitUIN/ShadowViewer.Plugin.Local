@@ -48,7 +48,17 @@ internal sealed class ReaderImageLoadService(
             if (!node.Preloaded) await node.ImageStrategy.PreloadImageAsync(context).WaitAsync(token);
             token.ThrowIfCancellationRequested();
 
-            try { bitmap = await decodeAsync(context, ticket.Device, token); }
+            try
+            {
+                var decoding = decodeAsync(context, ticket.Device, token);
+                try { bitmap = await decoding.WaitAsync(token).ConfigureAwait(false); }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    // 原生解码可能无法立即取消；释放消费者，并单独回收其迟到结果。
+                    _ = DisposeAbandonedBitmapAsync(decoding);
+                    throw;
+                }
+            }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 if (recoverDecodeAsync != null) await recoverDecodeAsync(node, context, ex);
@@ -71,5 +81,11 @@ internal sealed class ReaderImageLoadService(
             if (entered) node.ImageLoadGate.Release();
             window.Complete(ticket, succeeded);
         }
+    }
+
+    private static async Task DisposeAbandonedBitmapAsync(Task<CanvasBitmap?> decoding)
+    {
+        try { (await decoding.ConfigureAwait(false))?.Dispose(); }
+        catch (Exception) { } // 旧请求已取消；观察解码异常，避免未观察任务或位图泄漏。
     }
 }

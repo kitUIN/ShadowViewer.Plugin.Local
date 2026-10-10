@@ -10,6 +10,8 @@ using ShadowPluginLoader.Attributes;
 using ShadowViewer.Plugin.Local.ViewModels;
 using ShadowViewer.Sdk.Plugins;
 using ShadowViewer.Plugin.Local.Entities;
+using ShadowViewer.Plugin.Local.Services;
+using Serilog;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
@@ -19,6 +21,8 @@ namespace ShadowViewer.Plugin.Local.Responders;
 [EntryPoint(Name = nameof(PluginResponder.PicViewResponder))]
 public partial class LocalPicViewResponder : AbstractPicViewResponder
 {
+    private ReadingProgressWriter? progressWriter;
+
     /// <summary>
     /// <inheritdoc />
     /// </summary>
@@ -56,11 +60,12 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
     public override void CurrentPageIndexChanged(object sender, PicViewContext ctx,
         int oldValue, int newValue)
     {
-        using var db = DbFactory.CreateDbContext();
         if (sender is not PicViewModel viewModel) return;
         if (oldValue == newValue) return;
         if (viewModel.Affiliation != Id) return;
-        if (viewModel.CurrentPageIndex < 0 || viewModel.Comic is not { } localComic) return;
+        if (newValue < 0 || newValue >= viewModel.Images.Count || viewModel.Comic is not { } localComic) return;
+        if (viewModel.CurrentEpisodeIndex < 0 || viewModel.CurrentEpisodeIndex >= viewModel.Episodes.Count ||
+            viewModel.Episodes[viewModel.CurrentEpisodeIndex] is not LocalUiEpisode episode) return;
         decimal percent = 0;
         if (viewModel.CurrentEpisodeIndex >= 0 && viewModel.EpisodeCounts.Count > viewModel.CurrentEpisodeIndex &&
             localComic.Count != 0)
@@ -70,11 +75,11 @@ public partial class LocalPicViewResponder : AbstractPicViewResponder
                 (decimal)localComic.Count * 100, 2);
         }
 
-        db.Set<LocalReadingRecord>().Where(x => x.Id == localComic.Id)
-            .ExecuteUpdate(setters => setters
-                .SetProperty(x => x.LastPicture, viewModel.CurrentPageIndex)
-                .SetProperty(x => x.Percent, percent)
-                .SetProperty(x => x.UpdatedDateTime, DateTime.Now));
+        // 在 UI 线程捕获不可变快照，后台不读取绑定集合或 ViewModel。
+        progressWriter ??= new ReadingProgressWriter(() => DbFactory.CreateDbContext(),
+            ex => Log.Error(ex, "Save reading progress failed"));
+        progressWriter.Enqueue(new ReadingProgressSnapshot(localComic.Id, episode.Source.Order,
+            newValue, percent, DateTime.Now));
     }
 
     /// <summary>

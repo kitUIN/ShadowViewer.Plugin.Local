@@ -80,7 +80,7 @@ public sealed partial class MangaReader : Control
     /// <summary>
     /// 图片滑动窗口加载控制器。
     /// </summary>
-    private readonly ReaderImageWindowLoadController imageWindowLoadController = new();
+    private readonly ReaderImageWindowLoadController imageWindowLoadController = new(settleDelay: TimeSpan.FromMilliseconds(80));
     private readonly ReaderImageLoadService imageLoadService;
 
     /// <summary>

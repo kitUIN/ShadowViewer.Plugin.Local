@@ -147,26 +147,32 @@ public class RenderNode
     /// <summary>永久移除节点，拒绝尚未完成的后台加载回写。</summary>
     public void Retire()
     {
+        CanvasBitmap? retiredBitmap;
         lock (bitmapLock)
         {
             isRetired = true;
-            Dispose();
+            retiredBitmap = DetachImage();
         }
+        retiredBitmap?.Dispose();
     }
 
     /// <summary>
     /// 释放托管的位图资源并将其引用置空。
     /// </summary>
-    public void Dispose()
+    public void Dispose() => DetachImage()?.Dispose();
+
+    /// <summary>原子摘除图片及加载缓冲；调用方独占返回的位图，可以在后台释放。</summary>
+    internal CanvasBitmap? DetachImage()
     {
         lock (bitmapLock)
         {
-            bitmap?.Dispose();
+            var detached = bitmap;
             bitmap = null;
             // 自定义策略的字节 Hook 也应随位图释放；重入窗口后重新执行初始化和预加载。
             if (Ctx.Bytes != null) IsSourceInitialized = false;
             Ctx.Bytes = null;
             Preloaded = false;
+            return detached;
         }
     }
 }

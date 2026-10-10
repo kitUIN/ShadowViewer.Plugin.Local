@@ -36,12 +36,17 @@ public sealed partial class MangaReader
         }
     }
     public bool AnimationActive => isAnimatingPageTurn;
+    public int LayoutUpdates { get; private set; }
     public int TargetIndex => pageTurnTargetIndex;
     public void FinishAnimation() => CompletePageTurn(pageTurnTargetIndex);
     public void InterruptAnimation() => InterruptPageTurn();
     internal void StartGesture(PageTurnPlan plan) => StartPageTurn(plan);
-    private void UpdateActiveLayout() => new ReaderLayoutService().UpdateActiveLayout(state, nodes,
-        CurrentPageIndex, 0, false, new Vector2(2000, 1400), new ReaderLayoutCacheState());
+    private void UpdateActiveLayout()
+    {
+        LayoutUpdates++;
+        new ReaderLayoutService().UpdateActiveLayout(state, nodes,
+            CurrentPageIndex, 0, false, new Vector2(2000, 1400), new ReaderLayoutCacheState());
+    }
     private void ResetZoom()
     {
         CancelPageTurn(resetInput: true);

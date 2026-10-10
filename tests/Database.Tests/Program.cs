@@ -18,6 +18,7 @@ var tests = new (string Name, Func<Task> Run)[]
     ("Fresh database migrates both contexts and repeated startup is idempotent", FreshDatabase),
     ("DryIoc factories create independent contexts during concurrent operations", FactoriesAndConcurrency),
     ("Graph inserts, tags, authors, timestamps, JSON edits and cascades work", GraphOperations),
+    ("Reading progress writes stay off the caller, coalesce seeks and reject stale chapters", ReadingProgressWrites),
     ("Actual SqlSugar schema preserves IDs, relationships, progress, JSON and passwords", LegacyDatabase),
     ("Legacy unknown columns fail without changing owned tables", UnknownColumnRollback),
     ("Legacy duplicate mapping keys fail without dropping rows", DuplicateMappingRollback),
@@ -52,6 +53,12 @@ Console.WriteLine($"{tests.Length - failed}/{tests.Length} database checks passe
 return failed == 0 ? 0 : 1;
 
 string DatabasePath(string name) => Path.Combine(testDirectory, name + ".sqlite");
+async Task ReadingProgressWrites()
+{
+    var path = DatabasePath("reading-progress");
+    Initialize(path);
+    await ReadingProgressChecks.RunAsync(() => LocalFactory(path).CreateDbContext());
+}
 SqliteContextFactory<ShadowDbContext> CoreFactory(string path) => new(path, "__EFMigrationsHistory_Sdk", options => new ShadowDbContext(options));
 SqliteContextFactory<LocalDbContext> LocalFactory(string path) => new(path, "__EFMigrationsHistory_Local", options => new LocalDbContext(options));
 void Initialize(string path)

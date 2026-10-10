@@ -591,6 +591,14 @@ foreach (int hz in new[] { 60, 120, 144 })
         "new samples accumulate; old animation does not move the view");
 }
 
+{
+    var (state, nodes) = Scene(ReadingMode.VerticalScroll, 0, 1000);
+    var control = new MangaReader(state, nodes, 0);
+    foreach (int index in new[] { 999, 5, 900, 20, 700, 100, 999 }) control.CurrentPageIndex = index;
+    Check("Vertical progress jumps reuse the chapter layout", control.LayoutUpdates == 0 && control.CurrentPageIndex == 999,
+        "repeated slider changes do not recalculate every page or acquire chapter-wide layout locks");
+}
+
 await ImageLoadingChecks.RunAsync(Check);
 
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");

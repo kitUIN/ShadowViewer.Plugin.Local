@@ -29,7 +29,12 @@ namespace Microsoft.Graphics.Canvas
         public int PageIndex { get; } = pageIndex;
         public Size Size { get; } = size;
         public bool IsDisposed { get; private set; }
-        public void Dispose() => IsDisposed = true;
+        public Action? Disposing { get; set; }
+        public void Dispose()
+        {
+            Disposing?.Invoke();
+            IsDisposed = true;
+        }
     }
     public sealed class CanvasDrawingSession
     {

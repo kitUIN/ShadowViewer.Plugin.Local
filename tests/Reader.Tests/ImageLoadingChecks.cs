@@ -22,9 +22,242 @@ internal static class ImageLoadingChecks
 
     public static async Task RunAsync(Action<string, bool, string> check)
     {
+        await WindowCancellationDoesNotBlockAsync(check);
+        await WindowCancellationReentrancyAsync(check);
+        await RapidWindowChangesAsync(check);
+        await SupersededDecodeAsync(check);
+        await LargeJumpReleasesImagesOffThreadAsync(check);
         await WindowAndLoadingAsync(check);
         await PipelineAsync(check);
         await DiskCacheAsync(check);
+    }
+
+    private static async Task LargeJumpReleasesImagesOffThreadAsync(Action<string, bool, string> check)
+    {
+        var nodes = Enumerable.Range(0, 200).Select(i => Node(i)).ToList();
+        for (int i = 0; i < nodes.Count; i++) nodes[i].Bounds = new Rect(0, i * View.Height, View.Width, View.Height);
+        var window = new ReaderImageWindowLoadController();
+        var requests = new List<ReaderImageLoadTicket>();
+        bool Enqueue(ReaderImageLoadTicket ticket) { requests.Add(ticket); return true; }
+        window.UpdateWindow(nodes, nodes, nodes[185].Bounds, 4, Device, Enqueue);
+        var releaseStarted = Signal();
+        var allowRelease = Signal();
+        var oldBitmap = new CanvasBitmap(185, new Size(200, 300))
+        {
+            Disposing = () =>
+            {
+                releaseStarted.TrySetResult();
+                allowRelease.Task.GetAwaiter().GetResult();
+            }
+        };
+        nodes[185].SetBitmap(oldBitmap);
+        requests.Clear();
+        var jump = Task.Run(() => window.UpdateWindow(nodes, nodes, nodes[33].Bounds, 4, Device, Enqueue));
+        try
+        {
+            await releaseStarted.Task.WaitAsync(Timeout);
+            bool returned = false;
+            try { await jump.WaitAsync(TimeSpan.FromSeconds(1)); returned = true; }
+            catch (TimeoutException) { }
+            check("Jump from page 186 to 34 does not wait for native bitmap release", returned,
+                "slow GPU cleanup must not block rendering or enqueueing the destination page");
+            if (returned)
+            {
+                check("Large jump enqueues page 34 before releasing page 186",
+                    requests.Count == 9 && requests[0].Node == nodes[33] && !oldBitmap.IsDisposed && !nodes[185].IsLoaded,
+                    "old image ownership is detached immediately while native cleanup runs independently");
+                window.UpdateWindow(nodes, nodes, nodes[185].Bounds, 0, Device, Enqueue);
+                var replacement = new CanvasBitmap(185, new Size(200, 300));
+                nodes[185].SetBitmap(replacement);
+                allowRelease.TrySetResult();
+                for (int i = 0; i < 100 && !oldBitmap.IsDisposed; i++) await Task.Delay(10);
+                check("Delayed release cannot dispose a reloaded page",
+                    oldBitmap.IsDisposed && nodes[185].Bitmap == replacement && !replacement.IsDisposed,
+                    "cleanup owns the detached bitmap rather than the mutable page node");
+            }
+        }
+        finally
+        {
+            allowRelease.TrySetResult();
+            await jump.WaitAsync(Timeout);
+            window.Reset();
+            foreach (var node in nodes) node.Retire();
+        }
+    }
+
+    private static async Task SupersededDecodeAsync(Action<string, bool, string> check)
+    {
+        var nodes = new[] { Node(0), Node(1) };
+        var window = new ReaderImageWindowLoadController();
+        var oldDecode = new TaskCompletionSource<CanvasBitmap?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var decodeStarted = Signal();
+        var finalLoaded = Signal();
+        var workerReleased = Signal();
+        var errors = new System.Collections.Concurrent.ConcurrentQueue<Exception>();
+        var service = new ReaderImageLoadService(window, (context, _, _) =>
+        {
+            if ((int)context.Source == 0)
+            {
+                decodeStarted.TrySetResult();
+                return oldDecode.Task;
+            }
+            return Task.FromResult<CanvasBitmap?>(new CanvasBitmap(1, new Size(200, 300)));
+        }, node => { if (node == nodes[1]) finalLoaded.TrySetResult(); }, errors.Enqueue);
+        var pipeline = new ReaderBackgroundPipeline<ReaderImageLoadTicket>(4, 1, false, false, async (request, token) =>
+        {
+            await service.LoadAsync(request.Payload, token);
+            if (request.Payload.Node == nodes[0]) workerReleased.TrySetResult();
+        });
+        pipeline.Start();
+        var lateBitmap = new CanvasBitmap(0, new Size(200, 300));
+        try
+        {
+            window.UpdateWindow([nodes[0]], nodes, View, 0, Device, pipeline.TryEnqueue);
+            await decodeStarted.Task.WaitAsync(Timeout);
+            window.UpdateWindow([nodes[1]], nodes, View, 0, Device, pipeline.TryEnqueue);
+            bool progressed = false;
+            try { await finalLoaded.Task.WaitAsync(TimeSpan.FromSeconds(1)); progressed = true; }
+            catch (TimeoutException) { }
+            check("Superseded decode releases the worker for the final page", progressed && nodes[1].IsLoaded,
+                "an old decoder that ignores cancellation cannot block the latest visible image");
+            oldDecode.TrySetResult(lateBitmap);
+            await workerReleased.Task.WaitAsync(Timeout);
+            await finalLoaded.Task.WaitAsync(Timeout);
+            for (int i = 0; i < 100 && !lateBitmap.IsDisposed; i++) await Task.Delay(10);
+            check("Superseded decoder disposes its late bitmap", lateBitmap.IsDisposed && !nodes[0].IsLoaded && errors.IsEmpty,
+                "abandoned results are observed and cannot leak or replace the current image");
+        }
+        finally
+        {
+            oldDecode.TrySetResult(lateBitmap);
+            window.Reset();
+            pipeline.Stop();
+            foreach (var node in nodes) node.Retire();
+        }
+    }
+
+    private static async Task RapidWindowChangesAsync(Action<string, bool, string> check)
+    {
+        DateTimeOffset now = DateTimeOffset.UnixEpoch;
+        var nodes = Enumerable.Range(0, 1000).Select(i => Node(i)).ToList();
+        for (int i = 0; i < nodes.Count; i++) nodes[i].Bounds = new Rect(0, i * View.Height, View.Width, View.Height);
+        var window = new ReaderImageWindowLoadController(() => now, TimeSpan.FromMilliseconds(80));
+        var requests = new List<ReaderImageLoadTicket>();
+        var errors = new List<Exception>();
+        bool Enqueue(ReaderImageLoadTicket ticket) { requests.Add(ticket); return true; }
+        foreach (int index in Enumerable.Range(0, 100).Select(i => i * 9))
+        {
+            window.UpdateWindow(nodes, nodes, nodes[index].Bounds, 1, Device, Enqueue);
+            now += TimeSpan.FromMilliseconds(10);
+        }
+        check("Rapid vertical seeking does not enqueue intermediate pages", requests.Count == 0,
+            "100 viewport changes keep the bitmap workers available for the final position");
+        now += TimeSpan.FromMilliseconds(80);
+        window.UpdateWindow(nodes, nodes, nodes[891].Bounds, 1, Device, Enqueue);
+        check("Settled seek loads the final visible page before neighbors",
+            requests.Select(t => t.Node.PageIndex).SequenceEqual([891, 890, 892]),
+            "settling requires no further pointer event");
+        var service = new ReaderImageLoadService(window, (_, _, _) =>
+            Task.FromResult<CanvasBitmap?>(new CanvasBitmap(891, new Size(200, 300))), _ => { }, errors.Add);
+        await service.LoadAsync(requests[0], CancellationToken.None);
+        check("Final seek image is published successfully", nodes[891].IsLoaded && errors.Count == 0,
+            "the final page can replace its placeholder after scrubbing");
+        requests.Clear();
+        for (int i = 0; i < 20; i++)
+        {
+            now += TimeSpan.FromMilliseconds(10);
+            var viewport = nodes[891].Bounds;
+            viewport.Y += i / 10.0;
+            viewport.Height -= 2;
+            window.UpdateWindow(nodes, nodes, viewport, 1, Device, Enqueue);
+        }
+        check("Movement within the same visible page does not restart loading", requests.Count == 0 && nodes[891].IsLoaded,
+            "settling follows visible page identity rather than every pixel of camera motion");
+        window.Reset();
+        foreach (var node in nodes) node.Retire();
+    }
+
+    private static async Task WindowCancellationDoesNotBlockAsync(Action<string, bool, string> check)
+    {
+        var nodes = new[] { Node(0), Node(1) };
+        var requests = new List<ReaderImageLoadTicket>();
+        var window = new ReaderImageWindowLoadController();
+        bool Enqueue(ReaderImageLoadTicket ticket) { requests.Add(ticket); return true; }
+        window.UpdateWindow([nodes[0]], nodes, View, 0, Device, Enqueue);
+        var previous = requests[0];
+        var callbackStarted = Signal();
+        var releaseCallback = Signal();
+        var callbackFinished = Signal();
+        using var registration = previous.CancellationToken.Register(() =>
+        {
+            callbackStarted.TrySetResult();
+            releaseCallback.Task.GetAwaiter().GetResult();
+            callbackFinished.TrySetResult();
+        });
+        var update = Task.Run(() => window.UpdateWindow([nodes[1]], nodes, View, 0, Device, Enqueue));
+        bool returned = false;
+        try
+        {
+            await callbackStarted.Task.WaitAsync(Timeout);
+            try { await update.WaitAsync(TimeSpan.FromSeconds(1)); returned = true; }
+            catch (TimeoutException) { }
+            check("Window update never waits for slow cancellation callbacks", returned,
+                "the render thread must remain available while old I/O unwinds");
+            check("Eviction marks old tickets canceled before callbacks finish",
+                previous.CancellationToken.IsCancellationRequested && !window.IsWanted(previous),
+                "late decoding cannot publish into the new viewport");
+        }
+        finally
+        {
+            releaseCallback.TrySetResult();
+            await Task.WhenAll(update, callbackFinished.Task).WaitAsync(Timeout);
+            window.Reset();
+        }
+    }
+
+    private static async Task WindowCancellationReentrancyAsync(Action<string, bool, string> check)
+    {
+        foreach (bool reset in new[] { false, true })
+        {
+            var nodes = Enumerable.Range(0, 4).Select(i => Node(i)).ToList();
+            for (int i = 0; i < nodes.Count; i++) nodes[i].Bounds = new Rect(0, i * View.Height, View.Width, View.Height);
+            var window = new ReaderImageWindowLoadController();
+            var requests = new List<ReaderImageLoadTicket>();
+            bool Enqueue(ReaderImageLoadTicket ticket) { requests.Add(ticket); return true; }
+            window.UpdateWindow(nodes, nodes, nodes[1].Bounds, 1, Device, Enqueue);
+            var previous = requests.ToArray();
+            int callbacks = 0;
+            var callbackFinished = Signal();
+            using var registration = previous[0].CancellationToken.Register(() =>
+            {
+                callbacks++;
+                // Cancellation continuations may complete other requests in the same batch.
+                foreach (var ticket in previous) window.Complete(ticket, false);
+                callbackFinished.TrySetResult();
+            });
+            Exception? failure = null;
+            try
+            {
+                if (reset) window.Reset();
+                else window.UpdateWindow(nodes, nodes, nodes[3].Bounds, 0, Device, Enqueue);
+            }
+            catch (Exception ex) { failure = ex; }
+            await callbackFinished.Task.WaitAsync(Timeout);
+            string operation = reset ? "Reset" : "Vertical window jump";
+            check($"{operation} tolerates synchronous completion during cancellation", failure == null && callbacks == 1,
+                failure?.ToString() ?? "cancellation reenters completion without invalidating the eviction batch");
+            check($"{operation} cancels every detached request",
+                previous.All(t => t.CancellationToken.IsCancellationRequested && !window.IsWanted(t)),
+                "completing another ticket must not skip its cancellation");
+
+            requests.Clear();
+            window.UpdateWindow(nodes, nodes, nodes[1].Bounds, 1, Device, Enqueue);
+            foreach (var ticket in previous) window.Complete(ticket, false);
+            check($"{operation} allows immediate return to previous pages",
+                requests.Select(t => t.Node.PageIndex).SequenceEqual([1, 0, 2]) && requests.All(window.IsWanted),
+                "late completions cannot remove replacement requests or delay them with retry backoff");
+            window.Reset();
+        }
     }
 
     private static async Task WindowAndLoadingAsync(Action<string, bool, string> check)
@@ -121,6 +354,8 @@ internal static class ImageLoadingChecks
         var abandonedBitmap = new CanvasBitmap(0, new Size(1000, 1400));
         decodeFinish.TrySetResult(abandonedBitmap);
         await loading.WaitAsync(Timeout);
+        // 取消后消费者先退出；无法取消的原生解码由独立清理任务观察并释放。
+        for (int i = 0; i < 100 && !abandonedBitmap.IsDisposed; i++) await Task.Delay(10);
         check("Canceled GPU decode disposes its unpublishable bitmap", abandonedBitmap.IsDisposed && !canceledNode.IsLoaded && canceledNode.Ctx.Bytes == null,
             "decoder completion after eviction cannot resurrect a page");
 

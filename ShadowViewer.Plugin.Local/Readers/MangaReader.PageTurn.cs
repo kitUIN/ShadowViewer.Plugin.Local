@@ -16,6 +16,17 @@ public sealed partial class MangaReader
         if (isCompletingPageTurn) return;
         bool wasAnimating = isAnimatingPageTurn;
         CancelPageTurn(resetInput: true);
+        if (state.CurrentMode == ReadingMode.VerticalScroll)
+        {
+            // 竖直模式已布局整章；进度条跳页只需定位相机，不必每次重排所有节点。
+            bool hasLayout;
+            lock (state.LayoutNodes) hasLayout = state.LayoutNodes.Count == TotalPage && state.LayoutNodes.Count > 0;
+            if (hasLayout)
+            {
+                ResetZoom();
+                return;
+            }
+        }
         if (!wasAnimating)
         {
             PageTurnPlan plan;

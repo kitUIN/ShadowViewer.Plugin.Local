@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Graphics.Canvas;
 using ShadowViewer.Plugin.Local.Readers.ImageSourceStrategies;
@@ -21,28 +22,42 @@ internal sealed class ReaderImageLoadTicket : IDisposable
     public RenderNode Node { get; }
     public CanvasDevice? Device { get; }
     public CancellationToken CancellationToken { get; }
-    public void Cancel() => cts.Cancel();
+    public async Task CancelAndDisposeAsync()
+    {
+        // 立即标记取消，但让 I/O 回调在后台执行，不能阻塞画布更新线程。
+        try { await cts.CancelAsync().ConfigureAwait(false); }
+        catch (AggregateException ex) { System.Diagnostics.Trace.TraceError($"Image cancellation error: {ex}"); }
+        finally { cts.Dispose(); }
+    }
     public void Dispose() => cts.Dispose();
 }
 
 /// <summary>管理可见页及邻页的加载、取消、释放和失败重试。</summary>
-internal sealed class ReaderImageWindowLoadController(Func<DateTimeOffset>? getTime = null)
+internal sealed class ReaderImageWindowLoadController(Func<DateTimeOffset>? getTime = null, TimeSpan? settleDelay = null)
 {
     private readonly object gate = new();
     private readonly Func<DateTimeOffset> getTime = getTime ?? (() => DateTimeOffset.UtcNow);
     private readonly Dictionary<RenderNode, ReaderImageLoadTicket> loading = new();
     private readonly Dictionary<RenderNode, (int Failures, DateTimeOffset After)> retries = new();
     private HashSet<RenderNode> wanted = new();
+    private readonly TimeSpan settleDelay = settleDelay ?? TimeSpan.Zero;
+    private HashSet<RenderNode> visibleWindow = new();
+    private DateTimeOffset loadAfter;
 
     public void Reset()
     {
+        List<ReaderImageLoadTicket> canceled;
         lock (gate)
         {
             wanted.Clear();
-            foreach (var ticket in loading.Values) { ticket.Cancel(); ticket.Dispose(); }
+            visibleWindow.Clear();
+            loadAfter = default;
+            canceled = new List<ReaderImageLoadTicket>(loading.Values);
             loading.Clear();
             retries.Clear();
         }
+        // 先摘除整批请求，再异步取消；旧回调不能干扰当前窗口，也不会阻塞渲染。
+        foreach (var ticket in canceled) _ = ticket.CancelAndDisposeAsync();
     }
 
     public bool IsWanted(ReaderImageLoadTicket ticket)
@@ -82,16 +97,19 @@ internal sealed class ReaderImageWindowLoadController(Func<DateTimeOffset>? getT
         Rect viewportRect, int preloadRange, CanvasDevice? device, Func<ReaderImageLoadTicket, bool> enqueueBitmapLoad)
     {
         var nextWindow = BuildWindow(layoutNodes, allNodes, viewportRect, preloadRange, out var visible);
+        List<ReaderImageLoadTicket> canceled;
+        var released = new List<CanvasBitmap>();
         lock (gate)
         {
-            wanted = nextWindow;
-            foreach (var node in new List<RenderNode>(loading.Keys))
+            var now = getTime();
+            if (!visibleWindow.SetEquals(visible))
             {
-                if (wanted.Contains(node)) continue;
-                var ticket = loading[node];
-                loading.Remove(node);
-                ticket.Cancel(); ticket.Dispose();
+                visibleWindow = visible;
+                loadAfter = now + settleDelay;
             }
+            wanted = nextWindow;
+            canceled = loading.Values.Where(ticket => !wanted.Contains(ticket.Node)).ToList();
+            foreach (var ticket in canceled) loading.Remove(ticket.Node);
             foreach (var node in new List<RenderNode>(retries.Keys))
                 if (!wanted.Contains(node)) retries.Remove(node);
 
@@ -100,12 +118,18 @@ internal sealed class ReaderImageWindowLoadController(Func<DateTimeOffset>? getT
                 if (!wanted.Contains(node))
                 {
                     // 即使位图未创建，也释放初始化阶段残留的字节数组。
-                    if (node.IsLoaded || node.Ctx.Bytes != null || node.Preloaded) node.Dispose();
+                    if (node.IsLoaded || node.Ctx.Bytes != null || node.Preloaded)
+                    {
+                        var bitmap = node.DetachImage();
+                        if (bitmap != null) released.Add(bitmap);
+                    }
                 }
             }
             // 可见图片先于预加载邻页入队，避免网络预取占满消费者。
             foreach (var node in visible.Concat(allNodes.Where(n => wanted.Contains(n) && !visible.Contains(n))))
             {
+                // 快速跳页只更新目标窗口，短暂稳定后再加载，避免中间页堆满队列。
+                if (now < loadAfter) break;
                 if (!wanted.Contains(node) || node.IsRetired || node.IsLoaded || device == null || loading.ContainsKey(node) || node.ImageStrategy == null) continue;
                 if (retries.TryGetValue(node, out var retry) && getTime() < retry.After) continue;
                 var ticket = new ReaderImageLoadTicket(node, device);
@@ -114,6 +138,20 @@ internal sealed class ReaderImageWindowLoadController(Func<DateTimeOffset>? getT
                 loading.Remove(node);
                 ticket.Dispose(); // 队满可以在下一帧重试，不算网络失败。
             }
+        }
+        foreach (var ticket in canceled) _ = ticket.CancelAndDisposeAsync();
+        if (released.Count > 0)
+        {
+            // 大跳页会淘汰整个预加载窗口；原生资源释放不能挡住画布或新页入队。
+            // 只持有已摘除的位图，不能在后台 Dispose 节点，否则会误释放重载后的图片。
+            _ = Task.Run(() =>
+            {
+                foreach (var bitmap in released)
+                {
+                    try { bitmap.Dispose(); }
+                    catch (Exception ex) { System.Diagnostics.Trace.TraceError($"Image release error: {ex}"); }
+                }
+            });
         }
     }
 
