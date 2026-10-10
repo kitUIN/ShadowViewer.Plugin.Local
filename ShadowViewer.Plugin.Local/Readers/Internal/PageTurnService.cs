@@ -230,6 +230,14 @@ internal sealed class PageTurnService
     }
 
     /// <summary>
+    /// 双页布局以 X = 0 为书脊；只卷动对应侧的纸张，空白侧不能借用另一侧的单页。
+    /// </summary>
+    public static RenderNode? GetCurlingNode(IReadOnlyList<RenderNode> layoutNodes, bool fromRight) =>
+        fromRight
+            ? layoutNodes.FirstOrDefault(n => n.Bounds.X >= 0 && n.Bounds.Width > 0)
+            : layoutNodes.FirstOrDefault(n => n.Bounds.X < 0 && n.Bounds.X + n.Bounds.Width <= 0);
+
+    /// <summary>
     /// 将卷曲量限制在页面能够完全翻过的距离内，供拖拽绘制和释放动画共用。
     /// </summary>
     public static float ClampCurlAmount(float amount, double pageWidth)
@@ -259,8 +267,9 @@ internal sealed class PageTurnService
             layoutNodes.Any(n => GetSpreadStart(n.PageIndex) != currentStart)) return false;
 
         bool fromRight = (targetStart > currentStart) == (mode == ReadingMode.SpreadLtr);
-        var node = fromRight ? layoutNodes.MaxBy(n => n.Bounds.X) : layoutNodes.MinBy(n => n.Bounds.X);
-        float targetCurl = ClampCurlAmount(float.MaxValue, node!.Bounds.Width);
+        var node = GetCurlingNode(layoutNodes, fromRight);
+        if (node == null) return false;
+        float targetCurl = ClampCurlAmount(float.MaxValue, node.Bounds.Width);
         if (targetCurl <= 0) return false;
         plan = new PageTurnPlan(targetIndex, fromRight, 0, targetCurl,
             Math.Max(MinCurlVelocity, targetCurl / TargetDurationSeconds), node);
@@ -270,7 +279,7 @@ internal sealed class PageTurnService
     private static int GetSpreadStart(int index) => index == 0 ? 0 : (index - 1) / 2 * 2 + 1;
 
     /// <summary>
-    /// 尝试根据当前手势创建卷页动画计划。
+    /// 尝试根据当前手势创建卷页或章节导航计划；空白侧的章节导航不携带卷页节点。
     /// </summary>
     /// <param name="request">卷页判定输入参数。</param>
     /// <param name="plan">输出的卷页动画计划。</param>
@@ -293,9 +302,12 @@ internal sealed class PageTurnService
             request.CurrentPageIndex, request.TotalPage, request.Mode, direction);
 
         bool curlFromRight = request.TotalDelta.X < 0;
-        RenderNode? curlingNode = curlFromRight
-            ? request.LayoutNodes.OrderByDescending(n => n.Bounds.X).FirstOrDefault()
-            : request.LayoutNodes.OrderBy(n => n.Bounds.X).FirstOrDefault();
+        RenderNode? curlingNode = GetCurlingNode(request.LayoutNodes, curlFromRight);
+        if (curlingNode == null)
+        {
+            plan = new PageTurnPlan(request.CurrentPageIndex, curlFromRight, 0, 0, 0, null, chapterDirection);
+            return chapterDirection != 0;
+        }
 
         float currentCurl = ClampCurlAmount(absX / request.Zoom, curlingNode?.Bounds.Width ?? 0);
 

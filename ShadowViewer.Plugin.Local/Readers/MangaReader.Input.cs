@@ -123,7 +123,8 @@ public partial class MangaReader
 
                 if (hasPageTurnPlan)
                 {
-                    StartPageTurn(pageTurnPlan);
+                    if (pageTurnPlan.CurlingNode != null)
+                        StartPageTurn(pageTurnPlan);
                     if (pageTurnPlan.ChapterDirection != 0)
                         RequestChapterNavigation(pageTurnPlan.ChapterDirection);
                 }

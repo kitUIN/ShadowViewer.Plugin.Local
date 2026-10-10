@@ -45,13 +45,13 @@ internal sealed partial class Win2DPageRenderer : IPageRenderer
                 {
                     curlFromRight = true;
                     curlAmount = -dragDeltaX / context.Zoom;
-                    curlingNode = context.LayoutNodes.OrderByDescending(n => n.Bounds.X).FirstOrDefault();
+                    curlingNode = PageTurnService.GetCurlingNode(context.LayoutNodes, curlFromRight);
                 }
                 else if (dragDeltaX > 10)
                 {
                     curlFromRight = false;
                     curlAmount = dragDeltaX / context.Zoom;
-                    curlingNode = context.LayoutNodes.OrderBy(n => n.Bounds.X).FirstOrDefault();
+                    curlingNode = PageTurnService.GetCurlingNode(context.LayoutNodes, curlFromRight);
                 }
             }
         }

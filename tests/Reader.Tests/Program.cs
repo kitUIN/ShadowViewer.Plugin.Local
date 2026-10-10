@@ -120,6 +120,50 @@ foreach (var boundary in new[] { (Index: 0, Delta: 100f), (Index: 8, Delta: -100
     Check($"Boundary index {boundary.Index} rebounds", plan.TargetPageIndex == boundary.Index && plan.TargetCurl == 0,
         $"target index {plan.TargetPageIndex}, target curl {plan.TargetCurl}");
 }
+foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+foreach (var boundary in new[] { (Index: 0, Count: 8, Direction: -1), (Index: 7, Count: 8, Direction: 1),
+    (Index: 0, Count: 1, Direction: -1) })
+{
+    var (state, nodes) = Scene(mode, boundary.Index, boundary.Count);
+    float dx = boundary.Direction * (mode == ReadingMode.SpreadLtr ? -100 : 100);
+    foreach (float dy in new[] { 0f, 60f, -60f })
+    {
+        var delta = new Vector2(dx, dy);
+        string label = $"{mode} empty-side swipe at {boundary.Index}/{boundary.Count}, dy={dy}";
+        var drawing = new CanvasDrawingSession();
+        renderer.Draw(new PageRenderContext(drawing, new Rect(-1100, -800, 2200, 1600), mode,
+            1, 1, true, false, 1, delta, Vector2.Zero, 0, false, null, state.LayoutNodes, nodes));
+        Check(label + " keeps the page flat during drag", drawing.Images.Count == 1 &&
+            drawing.Images[0].Page == boundary.Index && drawing.Sprites.Count == 0 &&
+            drawing.Polygons.Count == 0 && drawing.Shadows.Count == 0 && drawing.DiagonalShadows.Count == 0,
+            "no curl, reverse page or shadow on the opposite side");
+        var plan = Plan(state, boundary.Index, delta, count: boundary.Count);
+        Check(label + " retains only chapter navigation", plan.CurlingNode == null &&
+            plan.CurrentCurl == 0 && plan.TargetCurl == 0 && plan.ChapterDirection == boundary.Direction,
+            "an outward swipe can request a chapter without animating the page");
+        foreach (bool canceled in new[] { false, true })
+        {
+            var reader = new MangaReader(state, nodes, boundary.Index);
+            var requests = new List<int>();
+            reader.ChapterNavigationRequested += (_, direction) => requests.Add(direction);
+            reader.PointerDown(1, Vector2.Zero);
+            reader.PointerMove(1, delta);
+            if (canceled) reader.PointerCancel(1);
+            else reader.PointerUp(1, delta);
+            Check(label + $" release (canceled={canceled}) starts no animation", !reader.AnimationActive &&
+                reader.CurrentPageIndex == boundary.Index &&
+                requests.SequenceEqual(canceled ? Array.Empty<int>() : new[] { boundary.Direction }),
+                "page stays still; only a completed swipe requests a chapter");
+        }
+    }
+    if (boundary.Count > 1)
+    {
+        var valid = Plan(state, boundary.Index, new Vector2(-dx, 0), count: boundary.Count);
+        Check($"{mode} occupied-side swipe at {boundary.Index} still turns", valid.CurlingNode == nodes[boundary.Index] &&
+            valid.TargetCurl > 0 && valid.TargetPageIndex != boundary.Index,
+            "the first page can advance and the final page can go back");
+    }
+}
 {
     var (state, nodes) = Scene(ReadingMode.SpreadLtr, 3);
     double time = 0;
