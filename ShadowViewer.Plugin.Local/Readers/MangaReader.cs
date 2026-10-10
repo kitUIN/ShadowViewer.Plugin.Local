@@ -751,58 +751,7 @@ public sealed partial class MangaReader : Control
     {
         try
         {
-            var ds = args.DrawingSession;
-            var size = viewSize;
-            if (size == Vector2.Zero) return;
-
-            var center = size / 2;
-            var transform = Matrix3x2.CreateTranslation(-state.CameraPos) *
-                            Matrix3x2.CreateScale(state.Zoom) *
-                            Matrix3x2.CreateTranslation(center);
-
-            ds.Transform = transform;
-
-            // 计算视口 (用于剔除)
-            if (!Matrix3x2.Invert(transform, out var inverseTransform)) return;
-            var topLeft = Vector2.Transform(Vector2.Zero, inverseTransform);
-            var bottomRight = Vector2.Transform(size, inverseTransform);
-            var viewportRect = new Rect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
-
-            List<RenderNode> layoutSnapshot;
-            lock (state.LayoutNodes)
-            {
-                layoutSnapshot = state.LayoutNodes.ToList();
-            }
-
-            List<RenderNode> allNodesSnapshot;
-            lock (allNodes)
-            {
-                allNodesSnapshot = allNodes.ToList();
-            }
-
-            PageRenderContext renderContext;
-            lock (pageTurnLock)
-            {
-                renderContext = new PageRenderContext(
-                    ds,
-                    viewportRect,
-                    state.CurrentMode,
-                    state.Zoom,
-                    baseZoomScale,
-                    isDragging,
-                    isAnimatingPageTurn,
-                    inputController.ActivePointerCount,
-                    lastPointerPos,
-                    inputController.DragStartPos,
-                    pageTurnAnimCurlAmount,
-                    pageTurnCurlFromRight,
-                    pageTurnCurlingNode,
-                    layoutSnapshot,
-                    allNodesSnapshot,
-                    inputController.IsPageTurnGesture);
-            }
-
-            pageRenderer.Draw(renderContext);
+            DrawFrame(args.DrawingSession);
         }
         catch (Exception ex)
         {
@@ -847,40 +796,7 @@ public sealed partial class MangaReader : Control
     /// </summary>
     private void UpdateVisibleNodes(ICanvasAnimatedControl sender)
     {
-        var size = viewSize;
-        if (size == Vector2.Zero) return;
-
-        var center = size / 2;
-        var transform = Matrix3x2.CreateTranslation(-state.CameraPos) *
-                        Matrix3x2.CreateScale(state.Zoom) *
-                        Matrix3x2.CreateTranslation(center);
-
-        if (!Matrix3x2.Invert(transform, out var inverseTransform)) return;
-        var topLeft = Vector2.Transform(Vector2.Zero, inverseTransform);
-        var bottomRight = Vector2.Transform(size, inverseTransform);
-        var viewportRect = new Rect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
-
-        var device = sender.Device;
-
-        List<RenderNode> layoutSnapshot;
-        lock (state.LayoutNodes)
-        {
-            layoutSnapshot = state.LayoutNodes.ToList();
-        }
-
-        List<RenderNode> allNodesSnapshot;
-        lock (allNodes)
-        {
-            allNodesSnapshot = allNodes.ToList();
-        }
-
-        imageWindowLoadController.UpdateWindow(
-            layoutSnapshot,
-            allNodesSnapshot,
-            viewportRect,
-            preloadRange,
-            device,
-            TryEnqueueBitmapLoad);
+        UpdateImageWindow(sender.Device);
     }
 
     /// <summary>

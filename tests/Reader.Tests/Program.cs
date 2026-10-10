@@ -599,6 +599,53 @@ foreach (int hz in new[] { 60, 120, 144 })
         "repeated slider changes do not recalculate every page or acquire chapter-wide layout locks");
 }
 
+// Pause the UI completion callback while a real render/cache worker tries to read the frame.
+// It must wait before reading any layout or camera state, then observe only the target spread.
+foreach (var mode in new[] { ReadingMode.SpreadLtr, ReadingMode.SpreadRtl })
+foreach (bool automatic in new[] { false, true })
+foreach (var transition in new[] { (From: 3, To: 5), (From: 5, To: 3) })
+foreach (bool refreshImages in new[] { false, true })
+{
+    var (state, nodes) = Scene(mode, transition.From);
+    var control = new MangaReader(state, nodes, transition.From);
+    if (automatic) control.CurrentPageIndex = transition.To;
+    else
+    {
+        float delta = Math.Sign(transition.To - transition.From) * (mode == ReadingMode.SpreadLtr ? -100 : 100);
+        control.StartGesture(Plan(state, transition.From, new Vector2(delta, 0)));
+    }
+    var targetBitmaps = nodes.Skip(transition.To).Take(2).Select(n => n.Bitmap).ToArray();
+    var drawing = new CanvasDrawingSession();
+    using var started = new ManualResetEventSlim();
+    Exception? workerError = null;
+    var worker = new Thread(() =>
+    {
+        started.Set();
+        try
+        {
+            if (refreshImages) control.RefreshImages();
+            else control.Draw(drawing);
+        }
+        catch (Exception ex) { workerError = ex; }
+    }) { IsBackground = true };
+    bool waited;
+    lock (control.FrameGate)
+    {
+        worker.Start();
+        bool running = started.Wait(TimeSpan.FromSeconds(5));
+        waited = running && SpinWait.SpinUntil(() => !worker.IsAlive ||
+            (worker.ThreadState & ThreadState.WaitSleepJoin) != 0, TimeSpan.FromSeconds(5)) && worker.IsAlive;
+        control.FinishAnimation();
+    }
+    bool completed = worker.Join(TimeSpan.FromSeconds(5));
+    if (refreshImages && completed && workerError == null) control.Draw(drawing);
+    Check($"{mode} {(automatic ? "automatic" : "gesture")} {transition.From}->{transition.To} {(refreshImages ? "cache" : "draw")} handoff",
+        waited && completed && workerError == null && drawing.Sprites.Count == 0 &&
+        drawing.Images.Select(i => i.Page).Order().SequenceEqual(new[] { transition.To, transition.To + 1 }) &&
+        targetBitmaps.Select((bitmap, i) => ReferenceEquals(bitmap, nodes[transition.To + i].Bitmap) && !bitmap!.IsDisposed).All(same => same),
+        $"waited={waited}, completed={completed}, pages={string.Join(",", drawing.Images.Select(i => i.Page))}, error={workerError?.Message}");
+}
+
 await ImageLoadingChecks.RunAsync(Check);
 
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");

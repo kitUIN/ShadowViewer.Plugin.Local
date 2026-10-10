@@ -38,6 +38,7 @@ namespace Microsoft.Graphics.Canvas
     }
     public sealed class CanvasDrawingSession
     {
+        public Matrix3x2 Transform { get; set; }
         public List<(int Page, Rect Bounds)> Images { get; } = [];
         public List<(int Page, Matrix3x2 Transform, Rect Source)> Sprites { get; } = [];
         public List<Vector4> Tints { get; } = [];
