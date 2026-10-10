@@ -320,10 +320,16 @@
   <data name="AutoPage" xml:space="preserve"> <value>Auto Page Flip</value> </data>
   <data name="AutoPageSpeed" xml:space="preserve"> <value>Page Flip Speed (seconds per page)</value> </data>
   <data name="NextEpisodeTipTitle" xml:space="preserve">
-    <value></value>
+    <value>End of chapter</value>
   </data>
   <data name="NextEpisodeTipSubTitle" xml:space="preserve">
-    <value></value>
+    <value>Go to the next chapter?</value>
+  </data>
+  <data name="PrevEpisodeTipTitle" xml:space="preserve">
+    <value>Beginning of chapter</value>
+  </data>
+  <data name="PrevEpisodeTipSubTitle" xml:space="preserve">
+    <value>Go to the previous chapter?</value>
   </data>
   <data name="SingleComicFolderImporterDescription" xml:space="preserve">
     <value></value>

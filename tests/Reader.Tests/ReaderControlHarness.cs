@@ -15,10 +15,12 @@ public sealed partial class MangaReader
     private readonly IPageRenderer pageRenderer = new Win2DPageRenderer();
     private readonly ReaderImageWindowLoadController imageWindowLoadController = new();
     private readonly Vector2 viewSize = new(2000, 1400);
-    private readonly Vector2 lastPointerPos = Vector2.Zero;
+    private Vector2 lastPointerPos = Vector2.Zero;
     private readonly int preloadRange = 0;
     private readonly PageTurnService pageTurnService = new();
-    private readonly ReaderInputController inputController = new();
+    private readonly Microsoft.UI.Xaml.Input.TestCanvas mainCanvas = new();
+    private bool allowHorizontalDragInScrollMode = false;
+    public bool EnableMouseWheelNavigation { get; set; } = true;
     private readonly object pageTurnLock = new();
     private int pageTurnVersion, pageTurnTargetIndex = -1, lastReportedPage = -1;
     private bool isAnimatingPageTurn, isDragging, isUserInteracting, pageTurnCurlFromRight;
@@ -44,6 +46,11 @@ public sealed partial class MangaReader
         }
     }
     public bool AnimationActive => isAnimatingPageTurn;
+    public void Wheel(int delta) => MainCanvas_PointerWheelChanged(this, new(1, Vector2.Zero, delta));
+    public void PointerDown(uint id, Vector2 position) => MainCanvas_PointerPressed(this, new(id, position));
+    public void PointerMove(uint id, Vector2 position) => MainCanvas_PointerMoved(this, new(id, position));
+    public void PointerUp(uint id, Vector2 position) => MainCanvas_PointerReleased(this, new(id, position));
+    public void PointerCancel(uint id) => MainCanvas_PointerCanceled(this, new(id, Vector2.Zero));
     public int LayoutUpdates { get; private set; }
     public int TargetIndex => pageTurnTargetIndex;
     public void FinishAnimation()

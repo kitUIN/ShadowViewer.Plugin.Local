@@ -96,13 +96,15 @@ internal readonly struct PageTurnPlan
     /// <param name="targetCurl">目标卷曲量。</param>
     /// <param name="animVelocity">卷曲动画速度。</param>
     /// <param name="curlingNode">参与卷页的节点。</param>
+    /// <param name="chapterDirection">越过章节边界的方向。</param>
     public PageTurnPlan(
         int targetPageIndex,
         bool curlFromRight,
         float currentCurl,
         float targetCurl,
         float animVelocity,
-        RenderNode? curlingNode)
+        RenderNode? curlingNode,
+        int chapterDirection = 0)
     {
         TargetPageIndex = targetPageIndex;
         CurlFromRight = curlFromRight;
@@ -110,6 +112,7 @@ internal readonly struct PageTurnPlan
         TargetCurl = targetCurl;
         AnimVelocity = animVelocity;
         CurlingNode = curlingNode;
+        ChapterDirection = chapterDirection;
     }
 
     /// <summary>
@@ -141,6 +144,9 @@ internal readonly struct PageTurnPlan
     /// 获取参与卷页的节点。
     /// </summary>
     public RenderNode? CurlingNode { get; }
+
+    /// <summary>有效手势越过章节边界时请求的方向，0 表示不切换章节。</summary>
+    public int ChapterDirection { get; }
 }
 
 /// <summary>
@@ -182,16 +188,6 @@ internal readonly struct PageTurnAnimationStepResult
 /// </summary>
 internal sealed class PageTurnService
 {
-    /// <summary>
-    /// 触发滑动判定的最小位移阈值（像素）。
-    /// </summary>
-    private const float SwipeDistanceThreshold = 50f;
-
-    /// <summary>
-    /// 触发滑动判定的最小速度阈值（像素/秒）。
-    /// </summary>
-    private const float SwipeVelocityThreshold = 500f;
-
     /// <summary>
     /// 触发卷页动画的最小水平拖拽阈值（像素）。
     /// </summary>
@@ -277,16 +273,12 @@ internal sealed class PageTurnService
         }
 
         // 仅当水平意图明显时允许翻页，避免垂直拖动误触发分页跳转。
-        bool isSwipe = !request.IsCanceled &&
-                       (absX > SwipeDistanceThreshold || Math.Abs(request.VelocityX * request.Zoom) > SwipeVelocityThreshold);
-
-        int targetIndex = request.CurrentPageIndex;
-        if (isSwipe && absX > Math.Abs(request.TotalDelta.Y))
-        {
-            int direction = GetPageDirection(request.TotalDelta.X < 0, request.Mode);
-            int step = request.Mode == ReadingMode.SinglePage ? 1 : 2;
-            targetIndex = ClampPageIndex(request.CurrentPageIndex + direction * step, request.TotalPage);
-        }
+        int direction = ReaderNavigationService.GetSwipeDirection(request.TotalDelta,
+            request.VelocityX * request.Zoom, request.Mode, request.IsCanceled);
+        int chapterDirection = ReaderNavigationService.IsPageBoundary(
+            request.CurrentPageIndex, request.TotalPage, request.Mode, direction) ? direction : 0;
+        int targetIndex = ReaderNavigationService.GetTargetPageIndex(
+            request.CurrentPageIndex, request.TotalPage, request.Mode, direction);
 
         bool curlFromRight = request.TotalDelta.X < 0;
         RenderNode? curlingNode = curlFromRight
@@ -309,7 +301,7 @@ internal sealed class PageTurnService
             velocity = -velocity;
         }
 
-        plan = new PageTurnPlan(targetIndex, curlFromRight, currentCurl, targetCurl, velocity, curlingNode);
+        plan = new PageTurnPlan(targetIndex, curlFromRight, currentCurl, targetCurl, velocity, curlingNode, chapterDirection);
         return true;
     }
 
@@ -347,25 +339,4 @@ internal sealed class PageTurnService
         return new PageTurnAnimationStepResult(nextCurl, nextVelocity, isFinished);
     }
 
-    /// <summary>
-    /// 将页码索引限制在有效范围内。
-    /// </summary>
-    /// <param name="index">待限制的页码索引。</param>
-    /// <param name="totalPage">总页数。</param>
-    /// <returns>限制后的有效页码索引。</returns>
-    private static int ClampPageIndex(int index, int totalPage)
-    {
-        if (index < 0)
-        {
-            return 0;
-        }
-
-        int maxIndex = totalPage > 0 ? totalPage - 1 : 0;
-        if (index > maxIndex)
-        {
-            return maxIndex;
-        }
-
-        return index;
-    }
 }

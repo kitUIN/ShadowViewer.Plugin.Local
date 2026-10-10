@@ -38,7 +38,6 @@ public partial class PicViewModel : ObservableObject
     /// </summary>
     [NotifyCanExecuteChangedFor(nameof(NextEpisodeCommand))]
     [NotifyCanExecuteChangedFor(nameof(PrevEpisodeCommand))]
-    [NotifyPropertyChangedFor(nameof(NextEpisodeTip))]
     [ObservableProperty]
     public partial int CurrentEpisodeIndex { get; set; } = -1;
 
@@ -56,13 +55,32 @@ public partial class PicViewModel : ObservableObject
     /// 当前页
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(NextEpisodeTip))]
     public partial int CurrentPageIndex { get; set; }
 
     /// <summary>
     ///  下一页显示
     /// </summary> 
-    public bool NextEpisodeTip => CurrentPageIndex + 1 == Images.Count && CanNextEpisode;
+    [ObservableProperty]
+    public partial bool NextEpisodeTip { get; set; }
+
+    /// <summary>上一话提示，仅在用户继续越过首页时显示。</summary>
+    [ObservableProperty]
+    public partial bool PrevEpisodeTip { get; set; }
+
+    /// <summary>交给阅读器按当前阅读模式处理翻页。</summary>
+    public event EventHandler<int>? PageNavigationRequested;
+
+    public void ShowEpisodeTip(int direction)
+    {
+        NextEpisodeTip = direction > 0 && Images.Count > 0 && CanNextEpisode;
+        PrevEpisodeTip = direction < 0 && Images.Count > 0 && CanPrevEpisode;
+    }
+
+    public void DismissEpisodeTips()
+    {
+        NextEpisodeTip = false;
+        PrevEpisodeTip = false;
+    }
 
     /// <summary>
     /// 菜单可见性
@@ -116,6 +134,7 @@ public partial class PicViewModel : ObservableObject
     /// <param name="arg"></param>
     public void Init(PicViewArg arg)
     {
+        DismissEpisodeTips();
         Affiliation = arg.Affiliation;
         if (arg.Parameter is LocalComic comic) Comic = comic;
         Images.Clear();
@@ -138,6 +157,7 @@ public partial class PicViewModel : ObservableObject
     /// <param name="newValue"></param>
     partial void OnCurrentEpisodeIndexChanged(int oldValue, int newValue)
     {
+        DismissEpisodeTips();
         PicViewResponder?.CurrentEpisodeIndexChanged(this, Context, oldValue, newValue);
     }
 
@@ -148,6 +168,7 @@ public partial class PicViewModel : ObservableObject
     /// <param name="newValue"></param>
     partial void OnCurrentPageIndexChanged(int oldValue, int newValue)
     {
+        DismissEpisodeTips();
         PicViewResponder?.CurrentPageIndexChanged(this, Context, oldValue, newValue);
     }
 
@@ -167,7 +188,7 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 允许下一话
     /// </summary>
-    public bool CanNextEpisode => Episodes.Count > CurrentEpisodeIndex + 1;
+    public bool CanNextEpisode => CurrentEpisodeIndex >= 0 && Episodes.Count > CurrentEpisodeIndex + 1;
 
     /// <summary>
     /// 允许上一话
@@ -205,21 +226,21 @@ public partial class PicViewModel : ObservableObject
     /// <summary>
     /// 下一页
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanNextPage))]
+    [RelayCommand]
     private void NextPage()
     {
-        if (!CanNextPage) return;
-        CurrentPageIndex += 1;
+        if (Images.Count == 0) return;
+        PageNavigationRequested?.Invoke(this, 1);
     }
 
     /// <summary>
     /// 上一页
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanPrevPage))]
+    [RelayCommand]
     private void PrevPage()
     {
-        if (!CanPrevPage) return;
-        CurrentPageIndex -= 1;
+        if (Images.Count == 0) return;
+        PageNavigationRequested?.Invoke(this, -1);
     }
 
     /// <summary>
@@ -246,6 +267,7 @@ public partial class PicViewModel : ObservableObject
     /// </summary>
     public void ReleaseResources()
     {
+        DismissEpisodeTips();
         Images.Clear();
         Episodes.Clear();
         EpisodeCounts.Clear();

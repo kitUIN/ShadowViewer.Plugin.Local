@@ -52,7 +52,8 @@ public sealed partial class PicPage
     /// <param name="e">事件参数。</param>
     private void AutoPageTimer_Tick(DispatcherQueueTimer sender, object e)
     {
-        if (LocalPluginConfig.PageAutoTurn && !ViewModel.IsMenu)
+        if (LocalPluginConfig.PageAutoTurn && !ViewModel.IsMenu &&
+            !ViewModel.NextEpisodeTip && !ViewModel.PrevEpisodeTip)
         {
             ViewModel.NextPageCommand.Execute(null);
         }
@@ -103,6 +104,8 @@ public sealed partial class PicPage
         SettingsHelper.SettingChanged += SettingsHelper_SettingChanged;
         Unloaded -= PicPage_Unloaded;
         Unloaded += PicPage_Unloaded;
+        ViewModel.PageNavigationRequested -= PageNavigationRequested;
+        ViewModel.PageNavigationRequested += PageNavigationRequested;
 
         isPageCleanupCompleted = false;
         ViewModel.Affiliation = arg.Affiliation;
@@ -146,9 +149,21 @@ public sealed partial class PicPage
         autoPageTimer.Tick -= AutoPageTimer_Tick;
         SettingsHelper.SettingChanged -= SettingsHelper_SettingChanged;
         Unloaded -= PicPage_Unloaded;
+        ViewModel.PageNavigationRequested -= PageNavigationRequested;
 
         MangaReader.ClearItems(scheduleLayoutUpdate: false);
         ViewModel.ReleaseResources();
+    }
+
+    private void PageNavigationRequested(object? sender, int direction)
+    {
+        ViewModel.DismissEpisodeTips();
+        MangaReader.TurnPage(direction);
+    }
+
+    private void MangaReader_ChapterNavigationRequested(object? sender, int direction)
+    {
+        ViewModel.ShowEpisodeTip(direction);
     }
 
     private void PageTapped(object sender, TappedRoutedEventArgs e)
@@ -278,6 +293,7 @@ public sealed partial class PicPage
 
     private void ReadModeClosed(object? sender, object e)
     {
+        ViewModel.DismissEpisodeTips();
         ViewModel.ScrollingPaddingEnabled =
             MangaReader.Mode == ReadingMode.VerticalScroll && !ViewModel.TappedGridSetting;
     }

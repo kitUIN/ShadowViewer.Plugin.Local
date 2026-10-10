@@ -435,6 +435,12 @@
   <data name="NextEpisodeTipTitle" xml:space="preserve">
     <value>已读完本话</value>
   </data>
+  <data name="PrevEpisodeTipTitle" xml:space="preserve">
+    <value>已到达本话开头</value>
+  </data>
+  <data name="PrevEpisodeTipSubTitle" xml:space="preserve">
+    <value>是否跳转到上一话？</value>
+  </data>
   <data name="NextEpisodeTipSubTitle" xml:space="preserve">
     <value>是否跳转到下一话？</value>
   </data>

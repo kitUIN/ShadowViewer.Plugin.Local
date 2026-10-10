@@ -646,6 +646,7 @@ foreach (bool refreshImages in new[] { false, true })
         $"waited={waited}, completed={completed}, pages={string.Join(",", drawing.Images.Select(i => i.Page))}, error={workerError?.Message}");
 }
 
+ChapterNavigationChecks.Run(Check);
 await ImageLoadingChecks.RunAsync(Check);
 
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");

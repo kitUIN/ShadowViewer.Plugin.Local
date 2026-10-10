@@ -13,6 +13,8 @@ public partial class MangaReader
     /// 输入控制器，负责指针状态与增量计算。
     /// </summary>
     private readonly ReaderInputController inputController = new();
+    private bool dragStartedAtTop;
+    private bool dragStartedAtBottom;
 
     /// <summary>
     /// 指针按下处理：开始拖拽并捕获指针以实现平移交互。
@@ -40,7 +42,8 @@ public partial class MangaReader
                 isUserInteracting = true;
                 lastPointerPos = pos;
                 state.Velocity = Vector2.Zero;
-
+                dragStartedAtTop = ReaderNavigationService.IsScrollBoundary(state, viewSize, -1);
+                dragStartedAtBottom = ReaderNavigationService.IsScrollBoundary(state, viewSize, 1);
             }
 
             mainCanvas?.CapturePointer(e.Pointer);
@@ -92,6 +95,7 @@ public partial class MangaReader
             // 最后一个手指离开，触发翻页或惯性
             Vector2 currentPos = snapshot.PointerPosition;
             bool isZoomed = Math.Abs(state.Zoom - baseZoomScale) > 0.001f;
+            bool handledNavigationGesture = false;
 
             if (!isZoomed && snapshot.IsPageTurnGesture &&
                 (state.CurrentMode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl))
@@ -119,6 +123,32 @@ public partial class MangaReader
                 if (hasPageTurnPlan)
                 {
                     StartPageTurn(pageTurnPlan);
+                    if (pageTurnPlan.ChapterDirection != 0)
+                        RequestChapterNavigation(pageTurnPlan.ChapterDirection);
+                }
+            }
+            else if (!isZoomed && snapshot.IsPageTurnGesture)
+            {
+                var totalDelta = currentPos - inputController.DragStartPos;
+                if (state.CurrentMode == ReadingMode.SinglePage)
+                {
+                    int direction = ReaderNavigationService.GetSwipeDirection(
+                        totalDelta, snapshot.Velocity.X, state.CurrentMode, canceled);
+                    if (direction != 0)
+                    {
+                        TurnPage(direction);
+                        handledNavigationGesture = true;
+                    }
+                }
+                else if (state.CurrentMode == ReadingMode.VerticalScroll)
+                {
+                    int direction = ReaderNavigationService.GetScrollSwipeDirection(
+                        totalDelta, dragStartedAtTop, dragStartedAtBottom, canceled);
+                    if (direction != 0 && ReaderNavigationService.IsScrollBoundary(state, viewSize, direction))
+                    {
+                        RequestChapterNavigation(direction);
+                        handledNavigationGesture = true;
+                    }
                 }
             }
 
@@ -128,7 +158,7 @@ public partial class MangaReader
             if (!isAnimatingPageTurn)
             {
                 bool isSpread = state.CurrentMode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl;
-                state.Velocity = canceled || (!isZoomed && isSpread && snapshot.IsPageTurnGesture)
+                state.Velocity = canceled || handledNavigationGesture || (!isZoomed && isSpread && snapshot.IsPageTurnGesture)
                     ? Vector2.Zero : -snapshot.Velocity / state.Zoom;
                 if (!isZoomed && state.CurrentMode == ReadingMode.VerticalScroll && !allowHorizontalDragInScrollMode)
                 {
@@ -184,6 +214,14 @@ public partial class MangaReader
             }
             // 停止惯性
             state.Velocity = Vector2.Zero;
+            int direction = Math.Sign(-delta);
+            if (Math.Abs(state.Zoom - baseZoomScale) <= 0.001f &&
+                ReaderNavigationService.IsScrollBoundary(state, viewSize, direction))
+            {
+                RequestChapterNavigation(direction);
+                e.Handled = true;
+                return;
+            }
             // 滚轮位移在帧循环中平滑应用，避免每个刻度直接跳动相机。
             isUserInteracting = true;  // 标记用户正在滚动
             inputController.HandleWheel(delta);
@@ -194,18 +232,7 @@ public partial class MangaReader
             // 单页或双页模式：滚轮翻页
             if (delta != 0)
             {
-                int direction = delta < 0 ? 1 : -1;
-                int step = (state.CurrentMode == ReadingMode.SinglePage) ? 1 : 2;
-
-                int target = CurrentPageIndex + (direction * step);
-
-                if (target < 0) target = 0;
-                if (target >= TotalPage) target = TotalPage > 0 ? TotalPage - 1 : 0;
-
-                if (target != CurrentPageIndex)
-                {
-                    CurrentPageIndex = target;
-                }
+                TurnPage(delta < 0 ? 1 : -1);
             }
         }
 

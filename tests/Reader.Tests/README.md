@@ -4,6 +4,8 @@ The executable links the production page-turn lifecycle, input, layout, frame an
 
 Checks cover both reading directions, covers, boundaries, neighboring layouts, different image sizes, excessive drag distance, shadow clipping/fading, automatic animation convergence, cancellation, short flicks, two-finger pan/pinch and pointer transitions.
 
+Chapter-navigation checks exercise the production command, wheel and pointer handlers in vertical, single-page and spread modes. They verify that arriving at a boundary is silent, continuing beyond it requests the matching chapter, the final spread is treated as a unit, tall vertical pages must reach their content edge, and canceled/zoomed/multi-pointer gestures remain silent. WinUI input adapters supply event data; popup bindings and native event routing are not simulated.
+
 Concurrent frame handoff checks link the production drawing and image-window entry points. They pause the completion callback while a worker starts drawing or updating the cache, then verify that forward/backward automatic and gesture turns draw only the target spread and retain its bitmap instances.
 
 Image-loading checks link the production disk cache, window controller, load service and background pipeline. A fake HTTP handler and real temporary files verify streaming, URL deduplication, corrupted-cache recovery, interrupted/canceled body cleanup and retries. Strategy/decoder adapters verify Hook compatibility, late dimensions, byte/bitmap ownership, canceled result rejection, mutable page indexes, queue pressure and pipeline restart. The cache validator uses a synthetic payload. The full Windows build verifies integration; native codec behavior is not simulated here.
