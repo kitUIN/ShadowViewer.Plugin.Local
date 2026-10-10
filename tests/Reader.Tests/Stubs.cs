@@ -23,6 +23,7 @@ namespace Microsoft.Graphics.Canvas
     public enum CanvasSpriteSortMode { None }
     public enum CanvasImageInterpolation { Linear }
     public enum CanvasSpriteOptions { None }
+    public enum CanvasAntialiasing { Antialiased, Aliased }
     public sealed class CanvasDevice { }
     public sealed class CanvasBitmap(int pageIndex, Size size) : IDisposable
     {
@@ -39,6 +40,14 @@ namespace Microsoft.Graphics.Canvas
     public sealed class CanvasDrawingSession
     {
         public Matrix3x2 Transform { get; set; }
+        public CanvasAntialiasing Antialiasing { get; set; }
+        public List<(int Page, Vector2[] Polygon, Matrix3x2 Texture)> Polygons { get; } = [];
+        public List<(Vector2[] Polygon, Vector2 Start, Vector2 End)> DiagonalShadows { get; } = [];
+        public void FillGeometry(Geometry.CanvasGeometry geometry, Brushes.CanvasImageBrush brush) =>
+            Polygons.Add((brush.Bitmap.PageIndex, geometry.Points, brush.Transform));
+        public void FillGeometry(Geometry.CanvasGeometry geometry, Brushes.CanvasLinearGradientBrush brush) =>
+            DiagonalShadows.Add((geometry.Points, brush.StartPoint, brush.EndPoint));
+        public void FillGeometry(Geometry.CanvasGeometry geometry, Windows.UI.Color color) { }
         public List<(int Page, Rect Bounds)> Images { get; } = [];
         public List<(int Page, Matrix3x2 Transform, Rect Source)> Sprites { get; } = [];
         public List<Vector4> Tints { get; } = [];
@@ -62,12 +71,29 @@ namespace Microsoft.Graphics.Canvas
 }
 namespace Microsoft.Graphics.Canvas.Brushes
 {
+    public sealed class CanvasImageBrush(Microsoft.Graphics.Canvas.CanvasDrawingSession session,
+        Microsoft.Graphics.Canvas.CanvasBitmap bitmap) : IDisposable
+    {
+        public Microsoft.Graphics.Canvas.CanvasBitmap Bitmap { get; } = bitmap;
+        public Matrix3x2 Transform { get; set; }
+        public void Dispose() { }
+    }
     public struct CanvasGradientStop { public float Position; public Windows.UI.Color Color; }
     public sealed class CanvasLinearGradientBrush(Microsoft.Graphics.Canvas.CanvasDrawingSession session, CanvasGradientStop[] stops) : IDisposable
     {
         public CanvasGradientStop[] Stops { get; } = stops;
         public Vector2 StartPoint { get; set; }
         public Vector2 EndPoint { get; set; }
+        public void Dispose() { }
+    }
+}
+namespace Microsoft.Graphics.Canvas.Geometry
+{
+    public sealed class CanvasGeometry(Vector2[] points) : IDisposable
+    {
+        public Vector2[] Points { get; } = points;
+        public static CanvasGeometry CreatePolygon(Microsoft.Graphics.Canvas.CanvasDrawingSession session,
+            Vector2[] points) => new(points);
         public void Dispose() { }
     }
 }

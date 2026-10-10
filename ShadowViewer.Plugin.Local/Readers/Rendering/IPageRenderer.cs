@@ -37,4 +37,5 @@ internal readonly record struct PageRenderContext(
     RenderNode? PageTurnCurlingNode,
     IReadOnlyList<RenderNode> LayoutNodes,
     IReadOnlyList<RenderNode> AllNodes,
-    bool IsPageTurnGesture = true);
+    bool IsPageTurnGesture = true,
+    float PageTurnCurlTilt = 0);

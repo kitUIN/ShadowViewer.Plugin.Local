@@ -33,7 +33,8 @@ public partial class MangaReader
                 isAnimatingPageTurn,
                 pageTurnAnimCurlAmount,
                 state.Zoom,
-                pageTurnCurlFromRight);
+                pageTurnCurlFromRight,
+                pageTurnCurlTilt);
 
             if (isPrimaryPointer)
             {

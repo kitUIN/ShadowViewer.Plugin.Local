@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/PageTurnService.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/PageCurlGeometry.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderNavigationService.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/MangaReader.Navigation.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/MangaReader.Input.cs" />
@@ -19,6 +20,7 @@
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderLayoutService.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderUiSyncService.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Rendering/Win2DPageRenderer.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Rendering/Win2DPageRenderer.Diagonal.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Rendering/IPageRenderer.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/EngineState.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Readers/ReadingMode.cs" />

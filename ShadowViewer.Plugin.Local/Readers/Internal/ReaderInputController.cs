@@ -269,8 +269,10 @@ internal sealed class ReaderInputController
     /// <param name="pageTurnAnimCurlAmount">当前翻页卷曲量。</param>
     /// <param name="currentZoom">当前缩放值。</param>
     /// <param name="pageTurnCurlFromRight">当前卷曲方向是否从右侧开始。</param>
+    /// <param name="pageTurnCurlTilt">接管动画时保留的卷轴倾角。</param>
     /// <returns>若本次按下成为首个活跃指针则返回 <c>true</c>。</returns>
-    public bool TryHandlePointerPressed(uint id, Vector2 pos, bool wasAnimatingPageTurn, float pageTurnAnimCurlAmount, float currentZoom, bool pageTurnCurlFromRight)
+    public bool TryHandlePointerPressed(uint id, Vector2 pos, bool wasAnimatingPageTurn, float pageTurnAnimCurlAmount, float currentZoom, bool pageTurnCurlFromRight,
+        float pageTurnCurlTilt = 0)
     {
         lock (activePointers)
         {
@@ -292,7 +294,8 @@ internal sealed class ReaderInputController
                         currentDragDelta = -currentDragDelta;
                     }
 
-                    DragStartPos = new Vector2(pos.X - currentDragDelta, pos.Y);
+                    DragStartPos = new Vector2(pos.X - currentDragDelta,
+                        pos.Y + MathF.Tan(pageTurnCurlTilt) * Math.Abs(currentDragDelta));
                 }
                 else
                 {

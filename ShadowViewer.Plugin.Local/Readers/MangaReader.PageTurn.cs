@@ -7,6 +7,7 @@ public sealed partial class MangaReader
 {
     private bool isCompletingPageTurn;
     private int pageTurnSourceIndex;
+    private float pageTurnCurlTilt;
 
     /// <summary>
     /// 保留旧双页直到自动动画完成；连续请求会取消动画并直接定位最新目标。
@@ -58,6 +59,7 @@ public sealed partial class MangaReader
             pageTurnSourceIndex = sourceIndex ?? CurrentPageIndex;
             pageTurnTargetIndex = plan.TargetPageIndex;
             pageTurnCurlFromRight = plan.CurlFromRight;
+            pageTurnCurlTilt = plan.CurlTilt;
             pageTurnAnimCurlAmount = plan.CurrentCurl;
             pageTurnCurlingNode = plan.CurlingNode;
             pageTurnAnimTargetCurl = plan.TargetCurl;
@@ -116,6 +118,7 @@ public sealed partial class MangaReader
             pageTurnAnimCurlAmount = 0;
             pageTurnAnimTargetCurl = 0;
             pageTurnAnimVelocity = 0;
+            pageTurnCurlTilt = 0;
             pageTurnCurlingNode = null;
             lastReportedPage = -1;
         }

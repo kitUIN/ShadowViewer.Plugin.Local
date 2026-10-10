@@ -41,7 +41,7 @@ CanvasDrawingSession DrawPlan(EngineState state, List<RenderNode> nodes, PageTur
     var drawing = new CanvasDrawingSession();
     renderer.Draw(new PageRenderContext(drawing, new Rect(-1100, -800, 2200, 1600), state.CurrentMode,
         1, 1, false, true, 0, Vector2.Zero, Vector2.Zero, curl ?? plan.CurrentCurl,
-        plan.CurlFromRight, plan.CurlingNode, state.LayoutNodes, nodes));
+        plan.CurlFromRight, plan.CurlingNode, state.LayoutNodes, nodes, PageTurnCurlTilt: plan.CurlTilt));
     return drawing;
 }
 foreach (var sample in new[]
@@ -647,6 +647,7 @@ foreach (bool refreshImages in new[] { false, true })
 }
 
 ChapterNavigationChecks.Run(Check);
+DiagonalPageTurnChecks.Run(Check);
 await ImageLoadingChecks.RunAsync(Check);
 
 Console.WriteLine($"TOTAL {passed + failed}: PASS {passed}, FAIL {failed}");

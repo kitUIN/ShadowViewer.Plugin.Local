@@ -25,7 +25,9 @@ internal static class ReaderNavigationService
     public static int GetSwipeDirection(Vector2 delta, float velocityX, ReadingMode mode, bool canceled)
     {
         float distance = Math.Abs(delta.X);
-        if (canceled || distance <= 10 || distance <= Math.Abs(delta.Y) ||
+        bool isSpread = mode is ReadingMode.SpreadLtr or ReadingMode.SpreadRtl;
+        // 双页允许约 45 度的斜向卷页，仍忽略明显以垂直方向为主的拖动。
+        if (canceled || distance <= 10 || distance * (isSpread ? 1.5f : 1f) <= Math.Abs(delta.Y) ||
             (distance <= 50 && Math.Abs(velocityX) <= 500)) return 0;
         return PageTurnService.GetPageDirection(delta.X < 0, mode);
     }

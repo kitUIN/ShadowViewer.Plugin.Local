@@ -12,7 +12,7 @@ namespace ShadowViewer.Plugin.Local.Readers.Rendering;
 /// <summary>
 /// 基于 Win2D 的页面渲染器实现。
 /// </summary>
-internal sealed class Win2DPageRenderer : IPageRenderer
+internal sealed partial class Win2DPageRenderer : IPageRenderer
 {
     /// <inheritdoc/>
     public void Draw(in PageRenderContext context)
@@ -26,6 +26,7 @@ internal sealed class Win2DPageRenderer : IPageRenderer
         RenderNode? curlingNode = null;
         bool curlFromRight = false;
         float curlAmount = 0;
+        float curlTilt = 0;
 
         if (isCurling)
         {
@@ -34,10 +35,12 @@ internal sealed class Win2DPageRenderer : IPageRenderer
                 curlFromRight = context.PageTurnCurlFromRight;
                 curlAmount = context.PageTurnAnimCurlAmount;
                 curlingNode = context.PageTurnCurlingNode;
+                curlTilt = context.PageTurnCurlTilt;
             }
             else
             {
                 float dragDeltaX = context.LastPointerPos.X - context.DragStartPos.X;
+                curlTilt = PageTurnService.GetCurlTilt(context.LastPointerPos - context.DragStartPos);
                 if (dragDeltaX < -10)
                 {
                     curlFromRight = true;
@@ -94,9 +97,17 @@ internal sealed class Win2DPageRenderer : IPageRenderer
             DrawNodeNormal(drawingSession, nodeUnderneath);
         }
 
-        DrawCurlShadow(drawingSession, curlingNode, curlAmount, curlFromRight,
-            context.LayoutNodes.Where(n => n != curlingNode).Append(nodeUnderneath).Where(n => n != null).Select(n => n!.Bounds));
-        DrawCurledPage(drawingSession, curlingNode, nodeBack, curlAmount, curlFromRight);
+        var receivers = context.LayoutNodes.Where(n => n != curlingNode).Append(nodeUnderneath)
+            .Where(n => n != null).Select(n => n!.Bounds);
+        float clampedAmount = PageTurnService.ClampCurlAmount(curlAmount, curlingNode.Bounds.Width);
+        PageCurlGeometry? diagonal = Math.Abs(curlTilt) > 0.0001f && clampedAmount > 0 &&
+            clampedAmount < curlingNode.Bounds.Width * 2
+            ? new PageCurlGeometry(curlingNode.Bounds, clampedAmount, curlFromRight, curlTilt) : null;
+        if (diagonal != null)
+            DrawDiagonalShadow(drawingSession, diagonal, curlingNode.Bounds, receivers);
+        else
+            DrawCurlShadow(drawingSession, curlingNode, curlAmount, curlFromRight, receivers);
+        DrawCurledPage(drawingSession, curlingNode, nodeBack, curlAmount, curlFromRight, diagonal);
     }
 
     /// <summary>
@@ -191,7 +202,9 @@ internal sealed class Win2DPageRenderer : IPageRenderer
     /// <param name="nodeUnderneath">背面页面节点。</param>
     /// <param name="curlAmount">卷曲量。</param>
     /// <param name="curlFromRight">是否从右侧卷起。</param>
-    private static void DrawCurledPage(CanvasDrawingSession drawingSession, RenderNode node, RenderNode? nodeUnderneath, float curlAmount, bool curlFromRight)
+    /// <param name="diagonal">可选的倾斜卷轴几何。</param>
+    private static void DrawCurledPage(CanvasDrawingSession drawingSession, RenderNode node, RenderNode? nodeUnderneath, float curlAmount, bool curlFromRight,
+        PageCurlGeometry? diagonal = null)
     {
         curlAmount = PageTurnService.ClampCurlAmount(curlAmount, node.Bounds.Width);
         if (curlAmount <= 0)
@@ -206,12 +219,18 @@ internal sealed class Win2DPageRenderer : IPageRenderer
             bool drewBack = false;
             nodeUnderneath?.UseBitmap(backBitmap =>
             {
-                DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, nodeUnderneath.Bounds, curlAmount, curlFromRight);
+                if (diagonal != null)
+                    DrawDiagonalBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, nodeUnderneath.Bounds, curlFromRight, diagonal);
+                else
+                    DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, backBitmap, nodeUnderneath.Bounds, curlAmount, curlFromRight);
                 drewBack = true;
             });
             if (!drewBack)
             {
-                DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, null, node.Bounds, curlAmount, curlFromRight);
+                if (diagonal != null)
+                    DrawDiagonalBitmap(drawingSession, node.Bounds, frontBitmap, null, node.Bounds, curlFromRight, diagonal);
+                else
+                    DrawCurledBitmap(drawingSession, node.Bounds, frontBitmap, null, node.Bounds, curlAmount, curlFromRight);
             }
             drew = true;
         });

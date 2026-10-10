@@ -97,6 +97,7 @@ internal readonly struct PageTurnPlan
     /// <param name="animVelocity">卷曲动画速度。</param>
     /// <param name="curlingNode">参与卷页的节点。</param>
     /// <param name="chapterDirection">越过章节边界的方向。</param>
+    /// <param name="curlTilt">卷轴相对竖直方向的倾角（弧度）。</param>
     public PageTurnPlan(
         int targetPageIndex,
         bool curlFromRight,
@@ -104,7 +105,8 @@ internal readonly struct PageTurnPlan
         float targetCurl,
         float animVelocity,
         RenderNode? curlingNode,
-        int chapterDirection = 0)
+        int chapterDirection = 0,
+        float curlTilt = 0)
     {
         TargetPageIndex = targetPageIndex;
         CurlFromRight = curlFromRight;
@@ -113,6 +115,7 @@ internal readonly struct PageTurnPlan
         AnimVelocity = animVelocity;
         CurlingNode = curlingNode;
         ChapterDirection = chapterDirection;
+        CurlTilt = curlTilt;
     }
 
     /// <summary>
@@ -147,6 +150,9 @@ internal readonly struct PageTurnPlan
 
     /// <summary>有效手势越过章节边界时请求的方向，0 表示不切换章节。</summary>
     public int ChapterDirection { get; }
+
+    /// <summary>卷轴相对竖直方向的倾角，松手后继续用于完成或回弹动画。</summary>
+    public float CurlTilt { get; }
 }
 
 /// <summary>
@@ -207,6 +213,12 @@ internal sealed class PageTurnService
     /// 全卷曲目标倍率。
     /// </summary>
     private const float FullCurlScale = 2f;
+
+    /// <summary>垂直位移控制卷轴倾角；限制角度以避免接近垂直拖动时纸张翻转失稳。</summary>
+    public static float GetCurlTilt(Vector2 delta) =>
+        float.IsFinite(delta.X) && float.IsFinite(delta.Y) && Math.Abs(delta.X) > 0
+            ? Math.Clamp(MathF.Atan2(-delta.Y, Math.Abs(delta.X)), -0.7f, 0.7f)
+            : 0;
 
     /// <summary>
     /// 将物理卷曲方向转换为当前阅读顺序中的页码方向。
@@ -301,7 +313,8 @@ internal sealed class PageTurnService
             velocity = -velocity;
         }
 
-        plan = new PageTurnPlan(targetIndex, curlFromRight, currentCurl, targetCurl, velocity, curlingNode, chapterDirection);
+        plan = new PageTurnPlan(targetIndex, curlFromRight, currentCurl, targetCurl, velocity, curlingNode,
+            chapterDirection, GetCurlTilt(request.TotalDelta));
         return true;
     }
 
