@@ -50,6 +50,6 @@
 
 
 	<ItemGroup Condition="'$(Configuration)' == 'Release' And '$(DepsUseNuget)' == 'true'">
-		<PackageReference Include="ShadowViewer.Sdk" Version="4.0.0" />
+		<PackageReference Include="ShadowViewer.Sdk" Version="4.0.1" />
 	</ItemGroup>
 </Project>
