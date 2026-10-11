@@ -416,13 +416,25 @@
     <value>Prepare page index before reading</value>
   </data>
   <data name="BuildPageIndexDescription" xml:space="preserve">
-    <value>Read image dimensions when opening a manga to reduce changes in page numbers and totals, at the cost of a longer wait. When off, images load on demand; automatic wide image splitting remains independent. Enabled by default. Changes apply the next time you open a manga.</value>
+    <value>Create a page index the first time you open a manga for faster loading on subsequent opens. Changes to this switch take effect when you reopen the manga.</value>
   </data>
   <data name="SplitWidePages" xml:space="preserve">
     <value>Automatically split wide images</value>
   </data>
-  <data name="SplitWidePagesDescription" xml:space="preserve">
-    <value>Only applies in double-page mode: split wide images into left and right pages and pair them in reading order. Checking image dimensions increases loading time. Changing this switch or its scope rebuilds the reading page index, reusing known dimensions without rescanning the chapter. With index preparation off, page counts may change as images load.</value>
+  <data name="SplitWidePagesHelp" xml:space="preserve">
+    <value>About automatic wide image splitting</value>
+  </data>
+  <data name="SplitWidePagesIllustration" xml:space="preserve">
+    <value>A wide image split down the middle into two reading pages</value>
+  </data>
+  <data name="SplitWidePagesHelpMode" xml:space="preserve">
+    <value>Double-page mode only: split wide images into left and right pages, paired in reading order.</value>
+  </data>
+  <data name="SplitWidePagesHelpLoading" xml:space="preserve">
+    <value>Checking image dimensions increases loading time. With index preparation off, page counts may change as images load.</value>
+  </data>
+  <data name="SplitWidePagesHelpIndex" xml:space="preserve">
+    <value>Changing the switch or scope rebuilds the page index using cached dimensions, without rescanning the chapter.</value>
   </data>
   <data name="SplitWidePagesScope" xml:space="preserve">
     <value>Wide image splitting scope</value>

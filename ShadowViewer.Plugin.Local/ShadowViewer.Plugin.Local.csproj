@@ -38,6 +38,9 @@
 		<MetalamaAllowPreviewLanguageFeatures>true</MetalamaAllowPreviewLanguageFeatures>
 	</PropertyGroup>
 	<ItemGroup>
+		<Content Include="Assets\Reader\WidePageSplit.png" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.31" PrivateAssets="all" />
 		<!-- <PackageReference Include="ShadowPluginLoader.SourceGenerator" Version="2.1.0.20" /> -->
 		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.1.240916" />

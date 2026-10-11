@@ -541,13 +541,25 @@
     <value>预先建立页面索引</value>
   </data>
   <data name="BuildPageIndexDescription" xml:space="preserve">
-    <value>打开漫画时预先读取图片尺寸，减少页码和总页数跳动，但会增加等待时间。关闭后按需加载，不影响宽图自动拆页开关。默认开启，下次打开漫画时生效。</value>
+    <value>第一次打开漫画时进行页面索引创建，后续打开快速加载。开关后重新打开漫画生效</value>
   </data>
   <data name="SplitWidePages" xml:space="preserve">
     <value>宽图自动拆页</value>
   </data>
-  <data name="SplitWidePagesDescription" xml:space="preserve">
-    <value>仅在双页模式下生效：将宽图拆成左右两页，按阅读方向分别参与配对。开启后需要识别图片尺寸，会增加加载时间。切换此开关或作用范围会重建阅读页码索引，但会复用已有尺寸缓存，无需重新扫描整章。关闭预建索引时，页数可能随图片加载而变化。</value>
+  <data name="SplitWidePagesHelp" xml:space="preserve">
+    <value>宽图自动拆页说明</value>
+  </data>
+  <data name="SplitWidePagesIllustration" xml:space="preserve">
+    <value>一张宽图沿中线拆成左右两张阅读页</value>
+  </data>
+  <data name="SplitWidePagesHelpMode" xml:space="preserve">
+    <value>仅双页模式生效：宽图拆成左右两页，按阅读方向分别配对。</value>
+  </data>
+  <data name="SplitWidePagesHelpLoading" xml:space="preserve">
+    <value>识别图片尺寸会增加加载时间。关闭预建索引后，页数可能随加载变化。</value>
+  </data>
+  <data name="SplitWidePagesHelpIndex" xml:space="preserve">
+    <value>切换开关或作用范围会重建页码索引，复用已有尺寸缓存，无需重新扫描整章。</value>
   </data>
   <data name="SplitWidePagesScope" xml:space="preserve">
     <value>宽图拆页作用范围</value>

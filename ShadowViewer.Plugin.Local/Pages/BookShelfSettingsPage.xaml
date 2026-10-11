@@ -85,25 +85,50 @@
                 <controls:SettingsCard
                     Description="{i18N:Locale Key=BuildPageIndexDescription}"
                     Header="{i18N:Locale Key=BuildPageIndex}"
-                    HeaderIcon="{icx:FluentIcon Icon=BookTemplate}">
+                    HeaderIcon="{icx:FluentIcon Icon=DocumentPageNumber}">
                     <ToggleSwitch IsOn="{x:Bind Config.BuildPageIndex, Mode=TwoWay}" />
                 </controls:SettingsCard>
-                <controls:SettingsCard
-                    Description="{i18N:Locale Key=SplitWidePagesDescription}"
+                <controls:SettingsExpander
+                    Description="{i18N:Locale Key=SplitWidePagesHelpMode}"
                     Header="{i18N:Locale Key=SplitWidePages}"
-                    HeaderIcon="{icx:FluentIcon Icon=BookTemplate}">
-                    <ToggleSwitch IsOn="{x:Bind Config.SplitWidePages, Mode=TwoWay}" />
-                </controls:SettingsCard>
-                <controls:SettingsCard
-                    Description="{i18N:Locale Key=SplitWidePagesScopeDescription}"
-                    Header="{i18N:Locale Key=SplitWidePagesScope}"
-                    HeaderIcon="{icx:FluentIcon Icon=BookTemplate}">
-                    <controls2:EnumButton
-                        EnumSource="readers:WidePageSplitScope"
-                        IsEnabled="{x:Bind Config.SplitWidePages, Mode=OneWay}"
-                        SelectedValue="{x:Bind Config.SplitWidePagesScope, Mode=TwoWay}"
-                        TextConverter="{ThemeResource WidePageSplitScopeConverter}" />
-                </controls:SettingsCard>
+                    HeaderIcon="{icx:FluentIcon Icon=DocumentLandscapeSplit}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls1:HelpFlyoutButton
+                            VerticalAlignment="Center"
+                            AccessibleName="{i18N:Locale Key=SplitWidePagesHelp}">
+                            <controls1:HelpFlyoutButton.FlyoutContent>
+                                <StackPanel Width="320" Spacing="12">
+                                    <TextBlock
+                                        Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                        Text="{i18N:Locale Key=SplitWidePages}" />
+                                    <Border Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="8">
+                                        <Image
+                                            Height="134"
+                                            AutomationProperties.Name="{i18N:Locale Key=SplitWidePagesIllustration}"
+                                            Source="ms-appx:///ShadowViewer.Plugin.Local/Assets/Reader/WidePageSplit.png"
+                                            Stretch="Uniform" />
+                                    </Border>
+                                    <TextBlock Text="{i18N:Locale Key=SplitWidePagesHelpMode}" TextWrapping="Wrap" />
+                                    <TextBlock Text="{i18N:Locale Key=SplitWidePagesHelpLoading}" TextWrapping="Wrap" />
+                                    <TextBlock Text="{i18N:Locale Key=SplitWidePagesHelpIndex}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </controls1:HelpFlyoutButton.FlyoutContent>
+                        </controls1:HelpFlyoutButton>
+                        <ToggleSwitch VerticalAlignment="Center" IsOn="{x:Bind Config.SplitWidePages, Mode=TwoWay}" />
+                    </StackPanel>
+                    <controls:SettingsExpander.Items>
+                        <controls:SettingsCard
+                            Description="{i18N:Locale Key=SplitWidePagesScopeDescription}"
+                            Header="{i18N:Locale Key=SplitWidePagesScope}"
+                            HeaderIcon="{icx:FluentIcon Icon=Filter}">
+                            <controls2:EnumButton
+                                EnumSource="readers:WidePageSplitScope"
+                                IsEnabled="{x:Bind Config.SplitWidePages, Mode=OneWay}"
+                                SelectedValue="{x:Bind Config.SplitWidePagesScope, Mode=TwoWay}"
+                                TextConverter="{ThemeResource WidePageSplitScopeConverter}" />
+                        </controls:SettingsCard>
+                    </controls:SettingsExpander.Items>
+                </controls:SettingsExpander>
                 <controls:SettingsCard
                     Description="{i18N:Locale Key=AllowHorizontalDragInScrollDescription}"
                     Header="{i18N:Locale Key=AllowHorizontalDragInScroll}"
