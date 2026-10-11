@@ -71,9 +71,10 @@ public class LocalFileStrategy : IImageSourceStrategy
         if (source is StorageFile file) return file;
         string? path = source is IUiPicture picture ? picture.SourcePath : source as string;
         if (string.IsNullOrWhiteSpace(path)) return null;
+        // ZIP 条目使用 /；WinRT 不接受混合分隔符，兼容已导入的旧路径。
         return IsApplicationUri(path)
             ? await StorageFile.GetFileFromApplicationUriAsync(new Uri(path)).AsTask(cancellationToken)
-            : await StorageFile.GetFileFromPathAsync(path).AsTask(cancellationToken);
+            : await StorageFile.GetFileFromPathAsync(Path.GetFullPath(path)).AsTask(cancellationToken);
     }
 
     private static bool IsApplicationUri(string path) =>
@@ -98,6 +99,8 @@ public class LocalFileStrategy : IImageSourceStrategy
         };
         if (!string.IsNullOrWhiteSpace(path) && Path.IsPathFullyQualified(path))
         {
+            // 尺寸缓存和后续原生图片解码共用规范化后的物理路径。
+            path = Path.GetFullPath(path);
             ctx.Size = await SizeCache.Value.GetAsync(path, async token =>
             {
                 var file = await GetStorageFile(ctx.Source, token);

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../ShadowViewer.Plugin.Local/Models/Interfaces/IUiPicture.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/ImageSourceStrategies/LocalFileStrategy.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/ImageSourceStrategies/IImageSourceStrategy.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/ImageSourceStrategies/ImageLoadingContext.cs" />
+    <Compile Include="../../ShadowViewer.Plugin.Local/Readers/Internal/ReaderImageSizeCache.cs" />
+  </ItemGroup>
+</Project>

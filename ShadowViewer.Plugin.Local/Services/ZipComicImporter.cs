@@ -388,7 +388,7 @@ public partial class ZipComicImporter : FolderComicImporter
                 foreach (var picture in pictures)
                 {
                     picture.ComicId = comicId;
-                    picture.StoragePath = Path.Combine(path, picture.StoragePath);
+                    picture.StoragePath = Path.GetFullPath(Path.Combine(path, picture.StoragePath));
                 }
             }
             var allPictures = preview.PreviewImages.Values.SelectMany(x => x).ToList();
