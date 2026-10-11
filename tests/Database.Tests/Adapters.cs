@@ -34,7 +34,6 @@ namespace ShadowPluginLoader.WinUI
 namespace ShadowViewer.Sdk.Models.Interfaces
 {
     public interface IShadowTag { }
-    public interface IHistory { }
 }
 
 namespace ShadowViewer.Plugin.Local.Models.Interfaces

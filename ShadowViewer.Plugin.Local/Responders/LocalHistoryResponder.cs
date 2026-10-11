@@ -12,6 +12,7 @@ using ShadowViewer.Sdk.Enums;
 using ShadowViewer.Sdk.Models.Interfaces;
 using ShadowViewer.Sdk.Plugins;
 using ShadowViewer.Sdk.Services;
+using ShadowViewer.Plugin.Local.Constants;
 
 namespace ShadowViewer.Plugin.Local.Responders;
 
@@ -34,7 +35,8 @@ public partial class LocalHistoryResponder : AbstractHistoryResponder
             HistoryMode.Month => DateTime.Now.AddDays(-30),
             _ => DateTime.MinValue
         };
-        return db.Set<LocalHistory>().AsNoTracking().Where(x => x.LastReadDateTime >= since).ToList();
+        return db.Set<LocalHistory>().AsNoTracking()
+            .Where(x => x.PluginId == PluginConstants.PluginId && x.LastReadDateTime >= since).ToList();
     }
 
     /// <summary>
@@ -44,7 +46,7 @@ public partial class LocalHistoryResponder : AbstractHistoryResponder
     {
         using var db = DbFactory.CreateDbContext();
         NavigateService.Navigate(typeof(AttributesPage), history.Id);
-        db.Set<LocalHistory>().Where(x => x.Id == history.Id)
+        db.Set<LocalHistory>().Where(x => x.Id == history.Id && x.PluginId == PluginConstants.PluginId)
             .ExecuteUpdate(setters => setters
                 .SetProperty(x => x.LastReadDateTime, DateTime.Now));
     }
@@ -55,7 +57,7 @@ public partial class LocalHistoryResponder : AbstractHistoryResponder
     public override void DeleteHistoryHandler(IHistory history)
     {
         using var db = DbFactory.CreateDbContext();
-        db.Set<LocalHistory>().Where(x => x.Id == history.Id).ExecuteDelete();
+        db.Set<LocalHistory>().Where(x => x.Id == history.Id && x.PluginId == PluginConstants.PluginId).ExecuteDelete();
     }
 
     /// <summary>

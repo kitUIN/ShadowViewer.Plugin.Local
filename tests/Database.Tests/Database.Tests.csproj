@@ -15,6 +15,7 @@
   <ItemGroup>
     <Compile Include="../../../ShadowViewer.Sdk/ShadowViewer.Sdk/Database/**/*.cs" />
     <Compile Include="../../../ShadowViewer.Sdk/ShadowViewer.Sdk/Models/ShadowTag.cs" />
+    <Compile Include="../../../ShadowViewer.Sdk/ShadowViewer.Sdk/Models/Interfaces/IHistory.cs" />
     <Compile Include="../../../ShadowViewer.Sdk/ShadowViewer.Sdk/Cache/CacheZip.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Database/**/*.cs" />
     <Compile Include="../../ShadowViewer.Plugin.Local/Entities/*.cs" />
